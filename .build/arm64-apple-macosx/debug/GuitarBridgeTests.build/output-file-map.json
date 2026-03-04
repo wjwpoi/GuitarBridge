@@ -1,0 +1,33 @@
+{
+  "": {
+    "swift-dependencies": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/master.swiftdeps"
+  },
+  "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/Tests/AudioEngineTests.swift": {
+    "dependencies": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/AudioEngineTests.d",
+    "object": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/AudioEngineTests.swift.o",
+    "swiftmodule": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/AudioEngineTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/AudioEngineTests.swiftdeps",
+    "diagnostics": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/AudioEngineTests.dia"
+  },
+  "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/Tests/GuitarMathTests.swift": {
+    "dependencies": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/GuitarMathTests.d",
+    "object": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/GuitarMathTests.swift.o",
+    "swiftmodule": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/GuitarMathTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/GuitarMathTests.swiftdeps",
+    "diagnostics": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/GuitarMathTests.dia"
+  },
+  "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/Tests/TrainingEngineTests.swift": {
+    "dependencies": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/TrainingEngineTests.d",
+    "object": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/TrainingEngineTests.swift.o",
+    "swiftmodule": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/TrainingEngineTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/TrainingEngineTests.swiftdeps",
+    "diagnostics": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/TrainingEngineTests.dia"
+  },
+  "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/Tests/TuningManagerTests.swift": {
+    "dependencies": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/TuningManagerTests.d",
+    "object": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/TuningManagerTests.swift.o",
+    "swiftmodule": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/TuningManagerTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/TuningManagerTests.swiftdeps",
+    "diagnostics": "/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgeTests.build/TuningManagerTests.dia"
+  }
+}

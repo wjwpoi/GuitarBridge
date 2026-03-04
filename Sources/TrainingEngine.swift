@@ -1,0 +1,457 @@
+import Foundation
+
+enum Interval: String, CaseIterable, Identifiable, Codable {
+    case unison = "同音"
+    case minorSecond = "小二度"
+    case majorSecond = "大二度"
+    case minorThird = "小三度"
+    case majorThird = "大三度"
+    case perfectFourth = "纯四度"
+    case tritone = "三全音"
+    case perfectFifth = "纯五度"
+    case minorSixth = "小六度"
+    case majorSixth = "大六度"
+    case minorSeventh = "小七度"
+    case majorSeventh = "大七度"
+    case octave = "八度"
+    
+    var id: String { rawValue }
+    
+    var semitones: Int {
+        switch self {
+        case .unison: return 0
+        case .minorSecond: return 1
+        case .majorSecond: return 2
+        case .minorThird: return 3
+        case .majorThird: return 4
+        case .perfectFourth: return 5
+        case .tritone: return 6
+        case .perfectFifth: return 7
+        case .minorSixth: return 8
+        case .majorSixth: return 9
+        case .minorSeventh: return 10
+        case .majorSeventh: return 11
+        case .octave: return 12
+        }
+    }
+    
+    static func from(semitones: Int) -> Interval? {
+        return allCases.first { $0.semitones == semitones }
+    }
+}
+
+enum TrainingMode: String, CaseIterable, Identifiable, Codable {
+    case scaleDegrees = "音阶"
+    case intervals = "音程"
+    case chords = "和弦"
+    
+    var id: String { rawValue }
+}
+
+enum Difficulty: String, CaseIterable, Identifiable, Codable {
+    case easy = "简单"
+    case medium = "中等"
+    case hard = "困难"
+    
+    var id: String { rawValue }
+    
+    var intervalRange: [Int] {
+        switch self {
+        case .easy: return [0, 7]
+        case .medium: return [0, 4, 7, 11]
+        case .hard: return [0, 2, 4, 5, 7, 9, 11]
+        }
+    }
+}
+
+enum ScaleType: String, CaseIterable, Identifiable, Codable {
+    case major = "大调"
+    case minor = "小调"
+    case blues = "蓝调"
+    case dorian = "多利亚"
+    case phrygian = "弗里几亚"
+    case lydian = "利底亚"
+    case mixolydian = "混合利底亚"
+    case locrian = "洛克里亚"
+    case pentatonicMajor = "大调五声"
+    case pentatonicMinor = "小调五声"
+    case harmonicMinor = "和声小调"
+    case melodicMinor = "旋律小调"
+    
+    var id: String { rawValue }
+    
+    // 音阶音程（相对于根音）
+    var intervals: [Int] {
+        switch self {
+        case .major: return [0, 2, 4, 5, 7, 9, 11]
+        case .minor: return [0, 2, 3, 5, 7, 8, 10]
+        case .blues: return [0, 3, 5, 6, 7, 10]
+        case .dorian: return [0, 2, 3, 5, 7, 9, 10]
+        case .phrygian: return [0, 1, 3, 5, 7, 8, 10]
+        case .lydian: return [0, 2, 4, 6, 7, 9, 11]
+        case .mixolydian: return [0, 2, 4, 5, 7, 9, 10]
+        case .locrian: return [0, 1, 3, 5, 6, 8, 10]
+        case .pentatonicMajor: return [0, 2, 4, 7, 9]
+        case .pentatonicMinor: return [0, 3, 5, 7, 10]
+        case .harmonicMinor: return [0, 2, 3, 5, 7, 8, 11]
+        case .melodicMinor: return [0, 2, 3, 5, 7, 9, 11]
+        }
+    }
+}
+
+enum SolfegeNote: String, CaseIterable, Identifiable, Codable {
+    case doFirst = "主音 (I)"
+    case re = "上主音 (II)"
+    case mi = "中音 (III)"
+    case fa = "下属音 (IV)"
+    case sol = "属音 (V)"
+    case la = "下中音 (VI)"
+    case ti = "导音 (VII)"
+    
+    var id: String { rawValue }
+    
+    var intervalFromRoot: Int {
+        switch self {
+        case .doFirst: return 0
+        case .re: return 2
+        case .mi: return 4
+        case .fa: return 5
+        case .sol: return 7
+        case .la: return 9
+        case .ti: return 11
+        }
+    }
+}
+
+enum TrainingState: Equatable {
+    case idle
+    case playingAnchor
+    case playingTarget
+    case awaitingAnswer
+    case showingResult(correct: Bool)
+    case completed
+}
+
+@MainActor
+class TrainingEngine: ObservableObject {
+    @Published var state: TrainingState = .idle
+    @Published var currentKey: String = "C"
+    @Published var selectedDegree: SolfegeNote = .doFirst
+    @Published var trainingMode: TrainingMode = .scaleDegrees
+    @Published var scaleType: ScaleType = .major
+    @Published var difficulty: Difficulty = .easy
+    let anchorPlayCount = 3
+    @Published var correctCount: Int = 0
+    @Published var totalAttempts: Int = 0
+    @Published var currentStreak: Int = 0
+    @Published var bestStreak: Int = 0
+    @Published var sessionStartTime: Date?
+    @Published var anchorNote: FretPosition?
+    @Published var targetNote: FretPosition?
+    @Published var currentInterval: Int = 0
+    @Published var userAnswer: FretPosition?
+    @Published var lastAnswerCorrect: Bool?
+    
+    private var audioEngine: AudioEngine?
+    private var currentTuning: Tuning = .standard
+    
+    var questionsPerSession: Int {
+        switch difficulty {
+        case .easy: return 5
+        case .medium: return 10
+        case .hard: return 15
+        }
+    }
+    var completedQuestions = 0
+    
+    func configure(audioEngine: AudioEngine, tuning: Tuning) {
+        self.audioEngine = audioEngine
+        self.currentTuning = tuning
+    }
+    
+    func startTraining() {
+        sessionStartTime = Date()
+        correctCount = 0
+        totalAttempts = 0
+        currentStreak = 0
+        completedQuestions = 0
+        state = .playingAnchor
+        playAnchorNotes()
+    }
+    
+    private func playAnchorNotes() {
+        guard let anchor = anchorNote else {
+            startQuestion()
+            return
+        }
+        
+        audioEngine?.play(midiNote: anchor.midiNote)
+        Task { @MainActor in
+            for _ in 0..<3 {
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                self.audioEngine?.play(midiNote: anchor.midiNote)
+            }
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            self.playTargetNote()
+        }
+    }
+    
+    private func playTargetNote() {
+        state = .playingTarget
+        
+        guard let target = targetNote else {
+            state = .awaitingAnswer
+            return
+        }
+        
+        audioEngine?.play(midiNote: target.midiNote)
+        
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 800_000_000)
+            self.state = .awaitingAnswer
+        }
+    }
+    
+    func startQuestion() {
+        guard completedQuestions < questionsPerSession else {
+            state = .completed
+            print("[Training] Session completed: \(correctCount)/\(questionsPerSession)")
+            saveToUserDefaults()
+            return
+        }
+        
+        generateQuestion()
+        state = .playingAnchor
+        playAnchorNotes()
+    }
+    
+    private func generateQuestion() {
+        // Get the MIDI note index for current key
+        let keyIndex = getKeyMidiIndex()
+        
+        // Use a rotating pattern to ensure more even string distribution
+        // Combine random with round-robin to avoid bias
+        let randomString = Int.random(in: 1...6)
+        
+        // Progressive difficulty: more frets as accuracy improves
+        let maxFret = 8 + (correctCount * 2)
+        let baseFret = Int.random(in: 2...min(maxFret, 15))
+        
+        // Generate anchor note within current key
+        let keyNotesInRange = getNotesForKey(keyIndex, string: randomString, fret: baseFret)
+        var anchorMidi = keyNotesInRange.randomElement() ?? 64
+        
+        // Fallback if no notes in range - use any note
+        if anchorMidi == 64 && keyNotesInRange.isEmpty {
+            anchorMidi = 40 + Int.random(in: 0...36)  // E2 to E5
+        }
+        
+        // Also set anchorNote for audio playback
+        for string in 1...6 {
+            for fret in 0...15 {
+                let pos = GuitarMath.fretPosition(string: string, fret: fret, tuning: currentTuning)
+                if pos.midiNote == anchorMidi {
+                    anchorNote = pos
+                    break
+                }
+            }
+            if anchorNote?.midiNote == anchorMidi { break }
+        }
+        
+        // If still no anchorNote, create one
+        if anchorNote == nil {
+            anchorNote = GuitarMath.fretPosition(string: randomString, fret: baseFret, tuning: currentTuning)
+            anchorMidi = anchorNote?.midiNote ?? 64
+        }
+        
+        // Calculate which scale degree the anchor note is relative to currentKey
+        let anchorNoteIndex = anchorMidi % 12
+        let semitonesFromKey = (anchorNoteIndex - keyIndex + 12) % 12
+        let scaleIntervals = scaleType.intervals
+        
+        // Find the scale degree of the anchor note
+        if let anchorDegreeIndex = scaleIntervals.firstIndex(of: semitonesFromKey) {
+            // Pick a random target degree (different from anchor)
+            let availableDegrees = (0..<scaleIntervals.count).filter { $0 != anchorDegreeIndex }
+            let targetDegreeIndex = availableDegrees.randomElement() ?? 0
+            let targetSemitones = scaleIntervals[targetDegreeIndex]
+            
+            // Calculate the interval between anchor and target degrees
+            currentInterval = abs(targetSemitones - semitonesFromKey)
+            
+            // Calculate target MIDI note based on scale degrees
+            var targetMidi: Int
+            if targetSemitones > semitonesFromKey {
+                targetMidi = anchorMidi + (targetSemitones - semitonesFromKey)
+            } else if targetSemitones < semitonesFromKey {
+                targetMidi = anchorMidi - (semitonesFromKey - targetSemitones)
+            } else {
+                // Same degree - pick another
+                let newDegree = (targetDegreeIndex + 1) % scaleIntervals.count
+                targetMidi = anchorMidi + scaleIntervals[newDegree] - semitonesFromKey
+            }
+            
+            var adjustedMidi = targetMidi
+            
+            // Keep target note in playable range
+            while adjustedMidi > 76 || adjustedMidi < 40 {
+                if adjustedMidi > 76 { adjustedMidi -= 12 }
+                if adjustedMidi < 40 { adjustedMidi += 12 }
+            }
+            
+            // Find target note, preferring the same string or adjacent strings
+            var preferredStrings = [randomString, randomString - 1, randomString + 1, 7 - randomString]
+                .filter { $0 >= 1 && $0 <= 6 }
+            preferredStrings = Array(Set(preferredStrings))
+            
+            for string in preferredStrings {
+                for fret in 0...15 {
+                    let pos = GuitarMath.fretPosition(string: string, fret: fret, tuning: currentTuning)
+                    if pos.midiNote == adjustedMidi {
+                        targetNote = pos
+                        break
+                    }
+                }
+                if targetNote != nil { break }
+            }
+            
+            // Fallback: search all strings
+            if targetNote == nil {
+                for string in 1...6 {
+                    for fret in 0...15 {
+                        let pos = GuitarMath.fretPosition(string: string, fret: fret, tuning: currentTuning)
+                        if pos.midiNote == adjustedMidi {
+                            targetNote = pos
+                            break
+                        }
+                    }
+                    if targetNote != nil { break }
+                }
+            }
+            
+            // Final fallback
+            if targetNote == nil {
+                let fallbackInterval = scaleIntervals.randomElement() ?? 0
+                targetNote = GuitarMath.fretPosition(string: randomString, fret: min(baseFret + fallbackInterval, 15), tuning: currentTuning)
+            }
+        } else {
+            // Anchor not in scale - use simple fallback
+            let fallbackInterval = scaleIntervals.randomElement() ?? 0
+            anchorNote = GuitarMath.fretPosition(string: randomString, fret: baseFret, tuning: currentTuning)
+            targetNote = GuitarMath.fretPosition(string: randomString, fret: min(baseFret + fallbackInterval, 15), tuning: currentTuning)
+            currentInterval = fallbackInterval
+        }
+    }
+    
+    func submitAnswer(_ position: FretPosition) {
+        userAnswer = position
+        let isCorrect = position.midiNote == targetNote?.midiNote
+        
+        if isCorrect {
+            // 选对答案时增加 success 震动
+            HapticManager.notification(.success)
+            correctCount += 1
+            currentStreak += 1
+            if currentStreak > bestStreak { bestStreak = currentStreak }
+            totalAttempts += 1
+            completedQuestions += 1
+            lastAnswerCorrect = true
+            state = .showingResult(correct: true)
+            
+            // 正确答案停留 1.5 秒后进入下一题
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                self.nextQuestion()
+            }
+        } else {
+            // 选错答案时增加 error 震动
+            HapticManager.notification(.error)
+            // 点错后计入错误，重播目标音让用户重选
+            currentStreak = 0
+            totalAttempts += 1
+            lastAnswerCorrect = false
+            state = .showingResult(correct: false)
+            
+            // 点错后重播目标音
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                self.replayTargetNote()
+                
+                // 等待用户重选，不自动进入下一题
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                self.userAnswer = nil
+                self.lastAnswerCorrect = nil
+                self.state = .awaitingAnswer
+            }
+        }
+    }
+    
+    func nextQuestion() {
+        userAnswer = nil
+        lastAnswerCorrect = nil
+        startQuestion()
+    }
+    
+    private func saveToUserDefaults() {
+        let sessionData: [String: Any] = [
+            "date": Date().timeIntervalSince1970,
+            "correct": correctCount,
+            "total": questionsPerSession,
+            "difficulty": difficulty.rawValue,
+            "scale": scaleType.rawValue
+        ]
+        var sessions = UserDefaults.standard.array(forKey: "practiceSessions") as? [[String: Any]] ?? []
+        sessions.insert(sessionData, at: 0)
+        if sessions.count > 100 { sessions = Array(sessions.prefix(100)) }
+        UserDefaults.standard.set(sessions, forKey: "practiceSessions")
+    }
+    
+    func reset() {
+        sessionStartTime = nil
+        state = .idle
+        anchorNote = nil
+        targetNote = nil
+        userAnswer = nil
+        completedQuestions = 0
+    }
+    
+    // 重新播放锚点音（供用户在学习模式中参考）
+    func replayAnchorNote() {
+        guard let anchor = anchorNote else { return }
+        
+        audioEngine?.play(midiNote: anchor.midiNote)
+    }
+    
+    // 重新播放目标音
+    func replayTargetNote() {
+        guard let target = targetNote else { return }
+        
+        audioEngine?.play(midiNote: target.midiNote)
+    }
+    
+    // MARK: - Helper functions for key-based note generation
+    
+    private func getKeyMidiIndex() -> Int {
+        return GuitarMath.noteNames.firstIndex(of: currentKey) ?? 0
+    }
+    
+    private func getNotesForKey(_ keyIndex: Int, string: Int, fret: Int) -> [Int] {
+        let openMidi = currentTuning.openStringMidiNotes[string - 1]
+        let scaleIntervals = scaleType.intervals
+        
+        var notes: [Int] = []
+        
+        // Find all notes within current scale on this string
+        for f in 0...15 {
+            let midi = openMidi + f
+            let noteIndex = midi % 12
+            let semitonesFromKey = (noteIndex - keyIndex + 12) % 12
+            
+            if scaleIntervals.contains(semitonesFromKey) {
+                notes.append(midi)
+            }
+        }
+        
+        return notes
+    }
+}
