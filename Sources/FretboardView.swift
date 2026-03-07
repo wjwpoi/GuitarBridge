@@ -116,14 +116,14 @@ struct FretboardView: View {
     
     private func backgroundColor(for showCorrect: Bool, showIncorrect: Bool, isInScale: Bool) -> Color {
         if showCorrect {
-            return theme.accentGlowColor.opacity(0.6)
+            return theme.accentGlowColor.opacity(0.8)
         } else if showIncorrect {
-            return Color.red.opacity(0.6)
+            return Color.red.opacity(0.8)
         } else if showScale && isInScale {
-            // 显示音阶时使用蓝色高亮
-            return Color.blue.opacity(0.3)
+            // 显示音阶时使用蓝色高亮（增强对比度）
+            return Color.blue.opacity(0.5)
         }
-        return theme.inlayColor.opacity(0.3)
+        return theme.inlayColor.opacity(0.5)
     }
     
     private func isNoteInScale(_ noteIndex: Int) -> Bool {

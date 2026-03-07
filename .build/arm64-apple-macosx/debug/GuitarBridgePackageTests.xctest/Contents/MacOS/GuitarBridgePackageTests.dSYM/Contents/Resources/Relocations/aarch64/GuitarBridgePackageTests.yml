@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/wjwpoi/.openclaw/workspace/GuitarBridge/.build/arm64-apple-macosx/debug/GuitarBridgePackageTests.xctest/Contents/MacOS/GuitarBridgePackageTests'
+relocations:     []
+...

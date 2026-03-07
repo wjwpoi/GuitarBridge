@@ -42,7 +42,6 @@ struct ContentView: View {
                 .padding(.top, 8)
             }
             .background(LinearGradient(colors: [.blue.opacity(0.1), .purple.opacity(0.1)], startPoint: .top, endPoint: .bottom))
-            .navigationTitle("🎸 吉他练耳")
             .toolbar {
                 Button { showStats = true } label: {
                     Image(systemName: "chart.bar.fill")
@@ -378,6 +377,8 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .scaleEffect(trainingEngine.state == .idle ? 1.0 : 1.02)
+            .animation(.easeInOut(duration: 0.2), value: trainingEngine.state)
             .tint(trainingEngine.state == .idle ? .green : .red)
         }
         .padding(12)
