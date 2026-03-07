@@ -96,7 +96,7 @@ struct ContentView: View {
     
     private var optionsSection: some View {
         VStack(spacing: 10) {
-            // Key and Scale row
+            // 调性、音阶、调弦放同一行
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("调性")
@@ -108,8 +108,6 @@ struct ContentView: View {
                     .pickerStyle(.menu)
                 }
                 
-                Spacer()
-                
                 VStack(alignment: .leading, spacing: 2) {
                     Text("音阶")
                         .font(.caption)
@@ -119,9 +117,19 @@ struct ContentView: View {
                     }
                     .pickerStyle(.menu)
                 }
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("调弦")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Picker("调弦", selection: $selectedTuning) {
+                        ForEach(tunings) { Text($0.rawValue) }
+                    }
+                    .pickerStyle(.menu)
+                }
             }
             
-            // Difficulty and Tuning row
+            // 难度、音色放同一行
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("难度")
@@ -136,13 +144,13 @@ struct ContentView: View {
                 Spacer()
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("调弦")
+                    Text("音色")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Picker("调弦", selection: $selectedTuning) {
-                        ForEach(tunings) { Text($0.rawValue) }
+                    Picker("音色", selection: $selectedToneMode) {
+                        ForEach(toneModes) { Text($0.rawValue) }
                     }
-                    .pickerStyle(.menu)
+                    .pickerStyle(.segmented)
                 }
             }
             

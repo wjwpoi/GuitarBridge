@@ -111,7 +111,9 @@ struct FretboardView: View {
             let degreeNames = ["I", "II", "III", "IV", "V", "VI", "VII"]
             return index < degreeNames.count ? degreeNames[index] : nil
         }
-        return nil
+        
+        // 不在音阶内时显示音名，确保始终有内容显示
+        return GuitarMath.noteNames[noteIndex]
     }
     
     private func backgroundColor(for showCorrect: Bool, showIncorrect: Bool, isInScale: Bool) -> Color {
@@ -119,6 +121,9 @@ struct FretboardView: View {
             return theme.accentGlowColor.opacity(0.8)
         } else if showIncorrect {
             return Color.red.opacity(0.8)
+        } else if showDegrees {
+            // 显示级数模式：始终显示背景
+            return Color.blue.opacity(0.5)
         } else if showScale && isInScale {
             // 显示音阶时使用蓝色高亮（增强对比度）
             return Color.blue.opacity(0.5)
