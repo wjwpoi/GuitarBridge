@@ -431,14 +431,31 @@ class AudioEngine: ObservableObject {
         }
         
         print("[AudioEngine] Playing sample: \(sampleName) for MIDI note: \(midiNote)")
+        
+        // 确保音频引擎已启动
+        if !audioEngine.isRunning {
+            do {
+                try audioEngine.start()
+            } catch {
+                print("[AudioEngine] Failed to start engine: \(error)")
+                return
+            }
+        }
+        
+        playerNode.volume = volume  // 应用音量
         playerNode.scheduleBuffer(buffer, at: nil, options: [], completionHandler: nil)
-        playerNode.play()
+        
+        if !playerNode.isPlaying {
+            playerNode.play()
+        }
         
         isPlaying = true
         
+        // 采样播放完成后自动停止
         Task {
             let duration = Double(buffer.frameLength) / buffer.format.sampleRate
             try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+            playerNode.stop()
             isPlaying = false
         }
     }
