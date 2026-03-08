@@ -33,7 +33,7 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 12) {
+                VStack(spacing: 16) {
                     optionsSection
                     fretboardSection
                     statusSection
@@ -96,7 +96,7 @@ struct ContentView: View {
     }
     
     private var optionsSection: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 14) {
             // 调性、音阶、调弦放同一行
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
@@ -183,7 +183,7 @@ struct ContentView: View {
     }
     
     private var fretboardSection: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 8) {
             // 状态指示器：显示当前播放的是锚点音还是目标音
             if trainingEngine.state != .idle {
                 playbackStatusIndicator
