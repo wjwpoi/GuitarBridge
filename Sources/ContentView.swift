@@ -134,31 +134,28 @@ struct ContentView: View {
                 }
             }
             
-            // 难度、音色放同一行
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("难度")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Picker("难度", selection: $difficulty) {
-                        ForEach(difficulties) { Text($0.rawValue) }
-                    }
-                    .pickerStyle(.segmented)
-                    .tint(.blue)
+            // 难度单独一行
+            VStack(alignment: .leading, spacing: 2) {
+                Text("难度")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Picker("难度", selection: $difficulty) {
+                    ForEach(difficulties) { Text($0.rawValue) }
                 }
-                
-                Spacer()
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("音色")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Picker("音色", selection: $selectedToneMode) {
-                        ForEach(toneModes) { Text($0.rawValue) }
-                    }
-                    .pickerStyle(.segmented)
-                    .tint(.orange)
+                .pickerStyle(.segmented)
+                .tint(.blue)
+            }
+            
+            // 音色单独一行
+            VStack(alignment: .leading, spacing: 2) {
+                Text("音色")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Picker("音色", selection: $selectedToneMode) {
+                    ForEach(toneModes) { Text($0.rawValue) }
                 }
+                .pickerStyle(.segmented)
+                .tint(.orange)
             }
             
             // 显示级数 Toggle - 单独一行
