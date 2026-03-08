@@ -439,6 +439,7 @@ class AudioEngine: ObservableObject {
         if !audioEngine.isRunning {
             do {
                 try audioEngine.start()
+                print("[AudioEngine] Audio engine started successfully")
             } catch {
                 print("[AudioEngine] Failed to start engine: \(error)")
                 return
@@ -446,10 +447,13 @@ class AudioEngine: ObservableObject {
         }
         
         playerNode.volume = volume  // 应用音量
+        print("[AudioEngine] Playing sample: \(sampleName), volume: \(volume)")
+        
         playerNode.scheduleBuffer(buffer, at: nil, options: [], completionHandler: nil)
         
         if !playerNode.isPlaying {
             playerNode.play()
+            print("[AudioEngine] Player node started playing")
         }
         
         isPlaying = true
