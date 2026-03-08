@@ -40,6 +40,7 @@ struct ContentView: View {
                 }
                 .padding(.horizontal)
                 .padding(.top, 8)
+                .padding(.bottom, 20)  // 增加底部间距
             }
             .background(LinearGradient(colors: [.blue.opacity(0.1), .purple.opacity(0.1)], startPoint: .top, endPoint: .bottom))
             .toolbar {
