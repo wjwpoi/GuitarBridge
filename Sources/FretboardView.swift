@@ -121,11 +121,8 @@ struct FretboardView: View {
             return theme.accentGlowColor.opacity(0.8)
         } else if showIncorrect {
             return Color.red.opacity(0.8)
-        } else if showDegrees {
-            // 显示级数模式：始终显示背景
-            return Color.blue.opacity(0.5)
         } else if showScale && isInScale {
-            // 显示音阶时使用蓝色高亮（增强对比度）
+            // 显示音阶时使用蓝色高亮
             return Color.blue.opacity(0.5)
         }
         return theme.inlayColor.opacity(0.5)
