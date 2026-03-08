@@ -409,8 +409,11 @@ class AudioEngine: ObservableObject {
     }
     
     private func playGuitarSample(midiNote: Int) {
+        print("[AudioEngine] playGuitarSample called for midiNote: \(midiNote), sampleBuffers count: \(sampleBuffers.count)")
+        
         guard !sampleBuffers.isEmpty else {
             // Fallback to sampler if no samples
+            print("[AudioEngine] No samples, falling back to MIDI sampler")
             if let sampler = toneSamplers[activeTone] {
                 sampler.startNote(UInt8(midiNote), withVelocity: currentVelocity, onChannel: 0)
             }
