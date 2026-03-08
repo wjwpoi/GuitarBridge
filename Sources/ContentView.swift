@@ -113,7 +113,9 @@ struct ContentView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Picker("音阶", selection: $selectedScale) {
-                        ForEach(scales) { Text($0.rawValue) }
+                        ForEach(scales) { scale in
+                            Text(scale.rawValue).tag(scale)
+                        }
                     }
                     .pickerStyle(.menu)
                 }
@@ -123,7 +125,9 @@ struct ContentView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Picker("调弦", selection: $selectedTuning) {
-                        ForEach(tunings) { Text($0.rawValue) }
+                        ForEach(tunings) { tuning in
+                            Text(tuning.rawValue).tag(tuning)
+                        }
                     }
                     .pickerStyle(.menu)
                 }
@@ -139,6 +143,7 @@ struct ContentView: View {
                         ForEach(difficulties) { Text($0.rawValue) }
                     }
                     .pickerStyle(.segmented)
+                    .tint(.blue)
                 }
                 
                 Spacer()
@@ -151,18 +156,8 @@ struct ContentView: View {
                         ForEach(toneModes) { Text($0.rawValue) }
                     }
                     .pickerStyle(.segmented)
+                    .tint(.orange)
                 }
-            }
-            
-            // Tone mode selector with label
-            VStack(alignment: .leading, spacing: 2) {
-                Text("音色")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Picker("音色", selection: $selectedToneMode) {
-                    ForEach(toneModes) { Text($0.rawValue) }
-                }
-                .pickerStyle(.segmented)
             }
             
             // 显示级数 Toggle - 单独一行
