@@ -3,6 +3,18 @@ import Foundation
 import SwiftUI
 import AudioToolbox
 
+#if DEBUG
+private let debugEnabled = true
+#else
+private let debugEnabled = false
+#endif
+
+private func log(_ message: String) {
+    #if DEBUG
+    print(message)
+    #endif
+}
+
 // MARK: - Tone Mode Definition
 enum GuitarToneMode: String, CaseIterable {
     case clean = "clean"
@@ -104,16 +116,16 @@ class AudioEngine: ObservableObject {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playback, mode: .default)
             try session.setActive(true)
-            print("[AudioEngine] Audio session ready")
+            log("[AudioEngine] Audio session ready")
         } catch {
-            print("[AudioEngine] Session error: \(error)")
+            log("[AudioEngine] Session error: \(error)")
             lastError = error.localizedDescription
         }
     }
     
     private func loadGuitarSamples() {
         guard let resourcesURL = Bundle.main.resourceURL else {
-            print("[AudioEngine] Could not get resource URL")
+            log("[AudioEngine] Could not get resource URL")
             loadSamplesFromBundle()
             return
         }
@@ -142,7 +154,7 @@ class AudioEngine: ObservableObject {
                 }
                 
                 if !sampleBuffers.isEmpty {
-                    print("[AudioEngine] Loaded \(sampleBuffers.count) guitar samples from subdirectories")
+                    log("[AudioEngine] Loaded \(sampleBuffers.count) guitar samples from subdirectories")
                     return
                 }
             }
@@ -153,9 +165,9 @@ class AudioEngine: ObservableObject {
                 loadWavFile(url: file, name: file.lastPathComponent)
             }
             
-            print("[AudioEngine] Loaded \(sampleBuffers.count) guitar samples from root")
+            log("[AudioEngine] Loaded \(sampleBuffers.count) guitar samples from root")
         } catch {
-            print("[AudioEngine] Error loading samples: \(error)")
+            log("[AudioEngine] Error loading samples: \(error)")
             loadSamplesFromBundle()
         }
     }
@@ -181,7 +193,7 @@ class AudioEngine: ObservableObject {
             }
             if !sampleBuffers.isEmpty {
                 loaded = true
-                print("[AudioEngine] Loaded \(sampleBuffers.count) samples from subdirectories")
+                log("[AudioEngine] Loaded \(sampleBuffers.count) samples from subdirectories")
             }
         }
         
@@ -197,7 +209,7 @@ class AudioEngine: ObservableObject {
                     }
                 }
             }
-            print("[AudioEngine] Bundle scan loaded \(sampleBuffers.count) samples from root")
+            log("[AudioEngine] Bundle scan loaded \(sampleBuffers.count) samples from root")
         }
     }
     
@@ -208,7 +220,7 @@ class AudioEngine: ObservableObject {
             let frameCount = AVAudioFrameCount(audioFile.length)
             
             guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
-                print("[AudioEngine] Could not create buffer for: \(name)")
+                log("[AudioEngine] Could not create buffer for: \(name)")
                 return
             }
             
@@ -217,7 +229,7 @@ class AudioEngine: ObservableObject {
             sampleNames.append(name)
             
         } catch {
-            print("[AudioEngine] Error loading \(name): \(error)")
+            log("[AudioEngine] Error loading \(name): \(error)")
         }
     }
     
@@ -251,16 +263,16 @@ class AudioEngine: ObservableObject {
             loadDLSForSampler(sampler, toneMode: toneMode)
             #endif
             
-            print("[AudioEngine] Created sampler & mixer for: \(toneMode.rawValue)")
+            log("[AudioEngine] Created sampler & mixer for: \(toneMode.rawValue)")
         }
         
         // Start engine
         do {
             try audioEngine.start()
             isReady = true
-            print("[AudioEngine] Multi-tone engine ready with \(sampleBuffers.count) samples")
+            log("[AudioEngine] Multi-tone engine ready with \(sampleBuffers.count) samples")
         } catch {
-            print("[AudioEngine] Setup error: \(error)")
+            log("[AudioEngine] Setup error: \(error)")
             lastError = error.localizedDescription
             try? audioEngine.start()
             isReady = true
@@ -280,10 +292,10 @@ class AudioEngine: ObservableObject {
                     try sampler.loadInstrument(at: url)
                     // Set program for this tone mode
                     sampler.sendProgramChange(toneMode.program, bankMSB: 0, bankLSB: 0, onChannel: 0)
-                    print("[AudioEngine] Loaded DLS for \(toneMode.rawValue): program \(toneMode.program)")
+                    log("[AudioEngine] Loaded DLS for \(toneMode.rawValue): program \(toneMode.program)")
                     return
                 } catch {
-                    print("[AudioEngine] Failed to load DLS for \(toneMode.rawValue): \(error)")
+                    log("[AudioEngine] Failed to load DLS for \(toneMode.rawValue): \(error)")
                 }
             }
         }
@@ -295,7 +307,7 @@ class AudioEngine: ObservableObject {
     private func loadDefaultSoundBankForSampler(_ sampler: AVAudioUnitSampler, toneMode: GuitarToneMode) {
         guard let bankURL = Bundle.main.url(forResource: "Piano", withExtension: "sf2") ??
               Bundle.main.url(forResource: "GMGS", withExtension: "dls") else {
-            print("[AudioEngine] No default sound bank found")
+            log("[AudioEngine] No default sound bank found")
             return
         }
         
@@ -306,9 +318,9 @@ class AudioEngine: ObservableObject {
                 bankMSB: UInt8(kAUSampler_DefaultMelodicBankMSB),
                 bankLSB: UInt8(kAUSampler_DefaultBankLSB)
             )
-            print("[AudioEngine] Loaded sound bank for \(toneMode.rawValue)")
+            log("[AudioEngine] Loaded sound bank for \(toneMode.rawValue)")
         } catch {
-            print("[AudioEngine] Failed to load sound bank: \(error)")
+            log("[AudioEngine] Failed to load sound bank: \(error)")
         }
     }
     
@@ -328,7 +340,7 @@ class AudioEngine: ObservableObject {
             await MainActor.run {
                 self.activeTone = newTone
                 self.currentMode = modeString
-                print("[AudioEngine] Crossfade: \(oldTone.rawValue) -> \(newTone.rawValue), duration: \(crossfadeDuration)s")
+                log("[AudioEngine] Crossfade: \(oldTone.rawValue) -> \(newTone.rawValue), duration: \(crossfadeDuration)s")
             }
             
             // Perform crossfade with gain ramping to prevent clicks/pops
@@ -373,7 +385,7 @@ class AudioEngine: ObservableObject {
         }
         
         await crossfadeActor.endCrossfade()
-        print("[AudioEngine] Crossfade complete: now using \(newTone.rawValue)")
+        log("[AudioEngine] Crossfade complete: now using \(newTone.rawValue)")
     }
     
     private func stopAllNotesOnSampler(_ toneMode: GuitarToneMode) {
@@ -400,7 +412,7 @@ class AudioEngine: ObservableObject {
             do {
                 try audioEngine.start()
             } catch {
-                print("[AudioEngine] Failed to start engine: \(error)")
+                log("[AudioEngine] Failed to start engine: \(error)")
                 return
             }
         }
@@ -416,14 +428,14 @@ class AudioEngine: ObservableObject {
             do {
                 try audioEngine.start()
             } catch {
-                print("[AudioEngine] Failed to start: \(error)")
+                log("[AudioEngine] Failed to start: \(error)")
                 return
             }
         }
         
         // 使用当前激活的 sampler 播放 MIDI
         guard let sampler = toneSamplers[activeTone] else {
-            print("[AudioEngine] No sampler for active tone: \(activeTone)")
+            log("[AudioEngine] No sampler for active tone: \(activeTone)")
             return
         }
         
@@ -437,11 +449,11 @@ class AudioEngine: ObservableObject {
     }
     
     private func playGuitarSample(midiNote: Int) {
-        print("[AudioEngine] playGuitarSample called for midiNote: \(midiNote), sampleBuffers count: \(sampleBuffers.count)")
+        log("[AudioEngine] playGuitarSample called for midiNote: \(midiNote), sampleBuffers count: \(sampleBuffers.count)")
         
         guard !sampleBuffers.isEmpty else {
             // Fallback to sampler if no samples
-            print("[AudioEngine] No samples, falling back to MIDI sampler")
+            log("[AudioEngine] No samples, falling back to MIDI sampler")
             if let sampler = toneSamplers[activeTone] {
                 sampler.startNote(UInt8(midiNote), withVelocity: currentVelocity, onChannel: 0)
             }
@@ -454,34 +466,34 @@ class AudioEngine: ObservableObject {
         
         guard let buffer = sampleBuffers[sampleName] else {
             // Fallback to MIDI sampler if sample not found
-            print("[AudioEngine] Sample not found: \(sampleName), falling back to MIDI")
+            log("[AudioEngine] Sample not found: \(sampleName), falling back to MIDI")
             if let sampler = toneSamplers[activeTone] {
                 sampler.startNote(UInt8(midiNote), withVelocity: currentVelocity, onChannel: 0)
             }
             return
         }
         
-        print("[AudioEngine] Playing sample: \(sampleName) for MIDI note: \(midiNote)")
+        log("[AudioEngine] Playing sample: \(sampleName) for MIDI note: \(midiNote)")
         
         // 确保音频引擎已启动
         if !audioEngine.isRunning {
             do {
                 try audioEngine.start()
-                print("[AudioEngine] Audio engine started successfully")
+                log("[AudioEngine] Audio engine started successfully")
             } catch {
-                print("[AudioEngine] Failed to start engine: \(error)")
+                log("[AudioEngine] Failed to start engine: \(error)")
                 return
             }
         }
         
         playerNode.volume = volume  // 应用音量
-        print("[AudioEngine] Playing sample: \(sampleName), volume: \(volume)")
+        log("[AudioEngine] Playing sample: \(sampleName), volume: \(volume)")
         
         playerNode.scheduleBuffer(buffer, at: nil, options: [], completionHandler: nil)
         
         if !playerNode.isPlaying {
             playerNode.play()
-            print("[AudioEngine] Player node started playing")
+            log("[AudioEngine] Player node started playing")
         }
         
         isPlaying = true
