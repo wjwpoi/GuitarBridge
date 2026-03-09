@@ -38,7 +38,19 @@ struct ContentView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     optionsSection
-                    fretboardSection
+                    FretboardSectionView(
+                        trainingEngine: trainingEngine,
+                        audioEngine: audioEngine,
+                        selectedTuning: $selectedTuning,
+                        selectedScale: $selectedScale,
+                        selectedKey: $selectedKey,
+                        showDegrees: $showDegrees,
+                        showScale: $showScale,
+                        showNoteNames: $showNoteNames,
+                        showFretNumbers: $showFretNumbers,
+                        theme: currentTheme,
+                        onFretTapped: handleFretTap
+                    )
                     statusSection
                 }
                 .padding(.horizontal)
