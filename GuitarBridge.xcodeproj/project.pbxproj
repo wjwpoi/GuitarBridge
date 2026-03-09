@@ -54,6 +54,7 @@
 		91D2CFCEC0F301759B16E3CE /* TrainingOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF8FEF3B36FD51BA1994FDDC /* TrainingOptionsView.swift */; };
 		96A748887D83890DB94455F3 /* tele chorus hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = 7EC3849C46DEA312A700CEA1 /* tele chorus hi.wav */; };
 		9E4E8CFDE452E68B01472E13 /* Drive hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0519EF37CD606CDF58577311 /* Drive hi.wav */; };
+		A841D407F17206A45AE066D5 /* PerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0F114E0775CAAA8AA2F79B4 /* PerformanceMonitor.swift */; };
 		AD012973871EA5144EE0CBAB /* tele white oct.wav in Resources */ = {isa = PBXBuildFile; fileRef = 717FB91B6BF3C73FA4F1387F /* tele white oct.wav */; };
 		AE57A8A45E2C57EF202E96C0 /* MetronomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5721E16D7B9C80E92E3A0AA /* MetronomeView.swift */; };
 		B691E7739FADA4F925FDAE15 /* PracticeHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E56669BCEFA1D855B5E1072A /* PracticeHistoryView.swift */; };
@@ -180,6 +181,7 @@
 		E56669BCEFA1D855B5E1072A /* PracticeHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeHistoryView.swift; sourceTree = "<group>"; };
 		E8081D5647BE6318D5AE8674 /* TunerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunerView.swift; sourceTree = "<group>"; };
 		ED2C3BF4AA027002E25D3DD2 /* CompletionAnimationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletionAnimationView.swift; sourceTree = "<group>"; };
+		F0F114E0775CAAA8AA2F79B4 /* PerformanceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceMonitor.swift; sourceTree = "<group>"; };
 		F2B7480A1583CB4F320855DD /* Flux hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Flux hi.wav"; sourceTree = "<group>"; };
 		FF8FEF3B36FD51BA1994FDDC /* TrainingOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingOptionsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -203,6 +205,7 @@
 				386C758329D28111D53CE1D7 /* Metronome.swift */,
 				C5721E16D7B9C80E92E3A0AA /* MetronomeView.swift */,
 				64F0926254EE833AB8610492 /* OnboardingView.swift */,
+				F0F114E0775CAAA8AA2F79B4 /* PerformanceMonitor.swift */,
 				E56669BCEFA1D855B5E1072A /* PracticeHistoryView.swift */,
 				2D2A8BD0DFC2768F1D564C30 /* PracticeShareView.swift */,
 				4A96A6182DEADDBC8D23FCCD /* ProManager.swift */,
@@ -495,6 +498,7 @@
 				1D6F2B5B61B818BEDE370F4D /* Metronome.swift in Sources */,
 				AE57A8A45E2C57EF202E96C0 /* MetronomeView.swift in Sources */,
 				E72F0B291FE26364DFAD7505 /* OnboardingView.swift in Sources */,
+				A841D407F17206A45AE066D5 /* PerformanceMonitor.swift in Sources */,
 				B691E7739FADA4F925FDAE15 /* PracticeHistoryView.swift in Sources */,
 				233872AF8F0E50950C2952A1 /* PracticeRecord.swift in Sources */,
 				5048D1C0C4C70E1C211B7E32 /* PracticeShareView.swift in Sources */,
