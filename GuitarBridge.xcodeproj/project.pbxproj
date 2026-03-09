@@ -20,6 +20,7 @@
 		1D6F2B5B61B818BEDE370F4D /* Metronome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 386C758329D28111D53CE1D7 /* Metronome.swift */; };
 		1EC8373243E3E6472E7C81B6 /* tele filter oct.wav in Resources */ = {isa = PBXBuildFile; fileRef = 86C67AFA501978794F72AD31 /* tele filter oct.wav */; };
 		20A35BC0424FCFA3C3D1FA08 /* Cloud.wav in Resources */ = {isa = PBXBuildFile; fileRef = BF26CC88442CE7AAD955001D /* Cloud.wav */; };
+		22A13C21C08884075636478F /* CloudStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B7FEF1EA3473A573665CF86 /* CloudStore.swift */; };
 		231F45747A225A431239A4D5 /* Fall.wav in Resources */ = {isa = PBXBuildFile; fileRef = A3BAA08A4B17905CB4ACED1A /* Fall.wav */; };
 		233872AF8F0E50950C2952A1 /* PracticeRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DE2BA251DC6749C146E6F21 /* PracticeRecord.swift */; };
 		238CD58560A93BD25AFE50DA /* CompletionAnimationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED2C3BF4AA027002E25D3DD2 /* CompletionAnimationView.swift */; };
@@ -111,6 +112,7 @@
 		121E30D55669C0ABFDAF3523 /* AC finger mid.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "AC finger mid.wav"; sourceTree = "<group>"; };
 		12ACDC09A7FFBB32903A11E7 /* tele chorus oct hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele chorus oct hi.wav"; sourceTree = "<group>"; };
 		1745C8CB1A5897DA41392E5A /* StatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsView.swift; sourceTree = "<group>"; };
+		1B7FEF1EA3473A573665CF86 /* CloudStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudStore.swift; sourceTree = "<group>"; };
 		1D11E975EC323A931C053F63 /* GuitarMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuitarMath.swift; sourceTree = "<group>"; };
 		1DE2BA251DC6749C146E6F21 /* PracticeRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeRecord.swift; sourceTree = "<group>"; };
 		24583B4E531F418706DEF4A4 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -194,6 +196,7 @@
 			children = (
 				2B690ABD0DA88E4B94CEE927 /* AchievementManager.swift */,
 				BB11D5ACE2240019A1C2630C /* AudioEngine.swift */,
+				1B7FEF1EA3473A573665CF86 /* CloudStore.swift */,
 				ED2C3BF4AA027002E25D3DD2 /* CompletionAnimationView.swift */,
 				47DA692853689CB41F318350 /* Constants.swift */,
 				24583B4E531F418706DEF4A4 /* ContentView.swift */,
@@ -488,6 +491,7 @@
 			files = (
 				DEB03EBB8A85B13526EDF593 /* AchievementManager.swift in Sources */,
 				C1FA8AD6A471EEE5C260C86F /* AudioEngine.swift in Sources */,
+				22A13C21C08884075636478F /* CloudStore.swift in Sources */,
 				238CD58560A93BD25AFE50DA /* CompletionAnimationView.swift in Sources */,
 				DA0EBF0923DB1F7868FAC182 /* Constants.swift in Sources */,
 				F197FE8EB1140038A18328AC /* ContentView.swift in Sources */,
