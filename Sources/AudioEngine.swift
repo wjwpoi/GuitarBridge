@@ -114,6 +114,7 @@ class AudioEngine: ObservableObject {
     private func loadGuitarSamples() {
         guard let resourcesURL = Bundle.main.resourceURL else {
             print("[AudioEngine] Could not get resource URL")
+            loadSamplesFromBundle()
             return
         }
         
@@ -121,29 +122,38 @@ class AudioEngine: ObservableObject {
         
         do {
             let fileManager = FileManager.default
-            guard fileManager.fileExists(atPath: sampleDirURL.path) else {
-                print("[AudioEngine] Sample directory not found: \(sampleDirURL.path)")
-                loadSamplesFromBundle()
-                return
-            }
             
-            let subdirs = try fileManager.contentsOfDirectory(atPath: sampleDirURL.path)
-            
-            for subdir in subdirs {
-                let subdirPath = sampleDirURL.appendingPathComponent(subdir)
-                var isDirectory: ObjCBool = false
+            // 方法1: 从 sampleDirectory 子目录加载
+            if fileManager.fileExists(atPath: sampleDirURL.path) {
+                let subdirs = try fileManager.contentsOfDirectory(atPath: sampleDirURL.path)
                 
-                if fileManager.fileExists(atPath: subdirPath.path, isDirectory: &isDirectory), isDirectory.boolValue {
-                    let files = try fileManager.contentsOfDirectory(atPath: subdirPath.path)
+                for subdir in subdirs {
+                    let subdirPath = sampleDirURL.appendingPathComponent(subdir)
+                    var isDirectory: ObjCBool = false
                     
-                    for file in files where file.lowercased().hasSuffix(".wav") {
-                        let filePath = subdirPath.appendingPathComponent(file)
-                        loadWavFile(url: filePath, name: "\(subdir)/\(file)")
+                    if fileManager.fileExists(atPath: subdirPath.path, isDirectory: &isDirectory), isDirectory.boolValue {
+                        let files = try fileManager.contentsOfDirectory(atPath: subdirPath.path)
+                        
+                        for file in files where file.lowercased().hasSuffix(".wav") {
+                            let filePath = subdirPath.appendingPathComponent(file)
+                            loadWavFile(url: filePath, name: "\(subdir)/\(file)")
+                        }
                     }
+                }
+                
+                if !sampleBuffers.isEmpty {
+                    print("[AudioEngine] Loaded \(sampleBuffers.count) guitar samples from subdirectories")
+                    return
                 }
             }
             
-            print("[AudioEngine] Loaded \(sampleBuffers.count) guitar samples")
+            // 方法2: 从根目录扫描 (平铺结构)
+            let rootFiles = try fileManager.contentsOfDirectory(at: resourcesURL, includingPropertiesForKeys: nil)
+            for file in rootFiles where file.pathExtension.lowercased() == "wav" {
+                loadWavFile(url: file, name: file.lastPathComponent)
+            }
+            
+            print("[AudioEngine] Loaded \(sampleBuffers.count) guitar samples from root")
         } catch {
             print("[AudioEngine] Error loading samples: \(error)")
             loadSamplesFromBundle()
@@ -153,18 +163,42 @@ class AudioEngine: ObservableObject {
     private func loadSamplesFromBundle() {
         guard let resourcesURL = Bundle.main.resourceURL else { return }
         
+        // 采样文件可能被平铺在根目录，也可能在子目录中
+        // 先尝试从 sampleDirectory 子目录加载
         let sampleDirURL = resourcesURL.appendingPathComponent(sampleDirectory)
         
-        if let enumerator = FileManager.default.enumerator(at: sampleDirURL, includingPropertiesForKeys: nil) {
-            for case let fileURL as URL in enumerator {
-                if fileURL.pathExtension.lowercased() == "wav" {
-                    let relativePath = fileURL.path.replacingOccurrences(of: sampleDirURL.path + "/", with: "")
-                    loadWavFile(url: fileURL, name: relativePath)
+        var loaded = false
+        
+        // 方法1: 从子目录加载 (原结构)
+        if FileManager.default.fileExists(atPath: sampleDirURL.path) {
+            if let enumerator = FileManager.default.enumerator(at: sampleDirURL, includingPropertiesForKeys: nil) {
+                for case let fileURL as URL in enumerator {
+                    if fileURL.pathExtension.lowercased() == "wav" {
+                        let relativePath = fileURL.path.replacingOccurrences(of: sampleDirURL.path + "/", with: "")
+                        loadWavFile(url: fileURL, name: relativePath)
+                    }
                 }
+            }
+            if !sampleBuffers.isEmpty {
+                loaded = true
+                print("[AudioEngine] Loaded \(sampleBuffers.count) samples from subdirectories")
             }
         }
         
-        print("[AudioEngine] Bundle scan loaded \(sampleBuffers.count) samples")
+        // 方法2: 如果子目录没加载到，从根目录扫描 (平铺结构)
+        if !loaded {
+            if let enumerator = FileManager.default.enumerator(at: resourcesURL, includingPropertiesForKeys: nil) {
+                for case let fileURL as URL in enumerator {
+                    if fileURL.pathExtension.lowercased() == "wav" {
+                        // 跳过已经在子目录中加载的
+                        if !fileURL.path.contains("/") {
+                            loadWavFile(url: fileURL, name: fileURL.lastPathComponent)
+                        }
+                    }
+                }
+            }
+            print("[AudioEngine] Bundle scan loaded \(sampleBuffers.count) samples from root")
+        }
     }
     
     private func loadWavFile(url: URL, name: String) {
@@ -371,14 +405,8 @@ class AudioEngine: ObservableObject {
             }
         }
 
-        #if targetEnvironment(simulator)
-        // 模拟器环境：使用系统音效
-        AudioServicesPlaySystemSound(1104)
-        print("[AudioEngine] SIM: \(midiNote)")
-        #else
-        // 真机环境：优先使用吉他采样
+        // 优先尝试使用吉他采样
         playGuitarSample(midiNote: midiNote)
-        #endif
     }
     
     // MARK: - 使用当前激活的 Sampler 播放 MIDI

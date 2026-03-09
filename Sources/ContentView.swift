@@ -96,9 +96,9 @@ struct ContentView: View {
     }
     
     private var optionsSection: some View {
-        VStack(spacing: 14) {
-            // 调性、音阶、调弦放同一行
-            HStack {
+        VStack(spacing: 12) {
+            // 第一行：调性、音阶
+            HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("调性")
                         .font(.caption)
@@ -132,10 +132,12 @@ struct ContentView: View {
                     }
                     .pickerStyle(.menu)
                 }
+                
+                Spacer()
             }
             
-            // 难度单独一行
-            VStack(alignment: .leading, spacing: 2) {
+            // 第二行：难度（单独一行）
+            VStack(alignment: .leading, spacing: 4) {
                 Text("难度")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -146,33 +148,35 @@ struct ContentView: View {
                 .tint(.blue)
             }
             
-            // 音色单独一行
-            VStack(alignment: .leading, spacing: 2) {
-                Text("音色")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Picker("音色", selection: $selectedToneMode) {
-                    ForEach(toneModes) { Text($0.rawValue) }
+            // 第三行：显示选项
+            HStack(spacing: 16) {
+                Toggle(isOn: $showDegrees) {
+                    Label("级数", systemImage: "number")
                 }
-                .pickerStyle(.segmented)
+                .font(.subheadline)
+                .tint(showDegrees ? .blue : .gray)
+                
+                Button {
+                    showScale.toggle()
+                } label: {
+                    Label(showScale ? "隐藏" : "显示", systemImage: showScale ? "eye.slash.fill" : "eye.fill")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .tint(showScale ? .orange : .blue)
+                
+                Spacer()
+                
+                // 音色设置按钮 - 跳转到设置页面
+                Button {
+                    showSettings = true
+                } label: {
+                    Label("音色", systemImage: "speaker.wave.3.fill")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
                 .tint(.orange)
             }
-            
-            // 显示级数 Toggle - 单独一行
-            Toggle(isOn: $showDegrees) {
-                Label("显示级数", systemImage: "number")
-            }
-            .font(.subheadline)
-            .tint(showDegrees ? .blue : .gray)
-            
-            // 显示音阶 Button - 单独一行
-            Button {
-                showScale.toggle()
-            } label: {
-                Label(showScale ? "隐藏音阶" : "显示音阶", systemImage: showScale ? "eye.slash.fill" : "eye.fill")
-            }
-            .buttonStyle(.bordered)
-            .tint(showScale ? .orange : .blue)
         }
         .padding(12)
         .background(.regularMaterial)

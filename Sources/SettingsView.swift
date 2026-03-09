@@ -13,6 +13,7 @@ struct SettingsView: View {
     @State private var hapticEnabled = true
     @State private var volume: Double = 0.8
     @State private var crossfadeDurationBinding: Double = 0.15
+    @State private var selectedToneMode: ToneMode = .clean
     @State private var dailyGoal = 20
     @State private var showReminderSettings = false
     @State private var isPro = ProManager.isPro
@@ -59,9 +60,22 @@ struct SettingsView: View {
                                 audioEngine.volume = floatValue
                             }
                     }
+                }
+                
+                // Tone Settings
+                Section("音色") {
+                    Picker("音色模式", selection: $selectedToneMode) {
+                        ForEach(ToneMode.allCases) { mode in
+                            Text(mode.rawValue).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: selectedToneMode) { _, newValue in
+                        audioEngine.setToneMode(newValue.rawValue)
+                    }
                     
                     VStack(alignment: .leading) {
-                        Text("音色切换渐变: \(Int(audioEngine.crossfadeDuration * 1000))ms")
+                        Text("切换渐变: \(Int(audioEngine.crossfadeDuration * 1000))ms")
                         Slider(value: $crossfadeDurationBinding, in: 0.05...0.3, step: 0.05)
                             .onChange(of: crossfadeDurationBinding) { _, newValue in
                                 audioEngine.crossfadeDuration = newValue
@@ -174,6 +188,7 @@ struct SettingsView: View {
         dailyGoal = userPrefs.dailyGoal
         volume = Double(UserDefaults.standard.object(forKey: "audioVolume") as? Float ?? 0.8)
         crossfadeDurationBinding = UserDefaults.standard.object(forKey: "crossfadeDuration") as? Double ?? 0.15
+        selectedToneMode = ToneMode(rawValue: UserDefaults.standard.string(forKey: "toneMode") ?? "clean") ?? .clean
     }
     
     private func saveChanges() {

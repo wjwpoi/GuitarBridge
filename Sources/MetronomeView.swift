@@ -163,6 +163,11 @@ class MetronomeEngine: ObservableObject {
     
     private var timer: Timer?
     private var tapTimes: [Date] = []
+    private var audioEngine: AudioEngine
+    
+    init() {
+        audioEngine = AudioEngine()
+    }
     
     func start(bpm: Int) {
         stop()
@@ -208,9 +213,9 @@ class MetronomeEngine: ObservableObject {
     
     private func playClick(beat: Int) {
         let isDownbeat = beat == 0
-        let frequency: Double = isDownbeat ? 1000.0 : 800.0
         
-        AudioServicesPlaySystemSound(1057) // Metronome tick
+        // Use AudioEngine to play guitar sample instead of system sound
+        audioEngine.play(midiNote: 60)
         
         // Haptic feedback
         if isDownbeat {
