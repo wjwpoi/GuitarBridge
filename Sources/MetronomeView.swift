@@ -165,8 +165,9 @@ class MetronomeEngine: ObservableObject {
     private var tapTimes: [Date] = []
     private var audioEngine: AudioEngine
     
-    init() {
-        audioEngine = AudioEngine()
+    // 支持 dependency injection，传入 nil 则创建独立实例
+    init(audioEngine: AudioEngine? = nil) {
+        self.audioEngine = audioEngine ?? AudioEngine()
     }
     
     func start(bpm: Int) {
