@@ -7,14 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00BE11F84235934703635B9A /* ScaleChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C315A455B425AE3486644006 /* ScaleChartView.swift */; };
 		070A0ADE3DBA29446FAE6489 /* FretboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A3FEA09521BCFD8289A6CCF /* FretboardView.swift */; };
 		087AF680A0A9CA1C13138328 /* Elec Rotate.wav in Resources */ = {isa = PBXBuildFile; fileRef = 71013F361615511C82413378 /* Elec Rotate.wav */; };
 		09FB2D0A05D3FCAAC3F66147 /* ElecFlux low.wav in Resources */ = {isa = PBXBuildFile; fileRef = 546C7CFD1ADCCD7658289098 /* ElecFlux low.wav */; };
 		0EC9092D0EA43C5F3478B8DA /* GuitarBridgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B588A89BBBEF1D51FD46FF7 /* GuitarBridgeApp.swift */; };
 		168B5597B815EAA104260DE5 /* AC finger hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = 412F9920F238E9945068826C /* AC finger hi.wav */; };
 		173ACC5DB22FF4DEF379D18B /* tele filter mid.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9E58B2B5006B2E574987A481 /* tele filter mid.wav */; };
+		191DD528CF2BE0BCA1EC0FE5 /* CustomPracticeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C03A6F9F244BD558D58907C /* CustomPracticeManager.swift */; };
 		19E60805557FC61E2E43FE24 /* tele chorus oct.wav in Resources */ = {isa = PBXBuildFile; fileRef = 8818BE4199589E9FBC1DB6A1 /* tele chorus oct.wav */; };
 		1CE154A2A996E97A3C1795FA /* tele clean oct hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = 6DAA26CFFE64FD817740A6ED /* tele clean oct hi.wav */; };
+		1D6F2B5B61B818BEDE370F4D /* Metronome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 386C758329D28111D53CE1D7 /* Metronome.swift */; };
 		1EC8373243E3E6472E7C81B6 /* tele filter oct.wav in Resources */ = {isa = PBXBuildFile; fileRef = 86C67AFA501978794F72AD31 /* tele filter oct.wav */; };
 		20A35BC0424FCFA3C3D1FA08 /* Cloud.wav in Resources */ = {isa = PBXBuildFile; fileRef = BF26CC88442CE7AAD955001D /* Cloud.wav */; };
 		231F45747A225A431239A4D5 /* Fall.wav in Resources */ = {isa = PBXBuildFile; fileRef = A3BAA08A4B17905CB4ACED1A /* Fall.wav */; };
@@ -28,7 +31,9 @@
 		45C9D17C2457CE5DD3D2C786 /* tele white hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = B24184ECEC2A50F47FD1AB16 /* tele white hi.wav */; };
 		49E51D28607F0814A6F572C3 /* Flux hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = F2B7480A1583CB4F320855DD /* Flux hi.wav */; };
 		4B2DB3F9FA418FD80E06E594 /* AC pick mid.wav in Resources */ = {isa = PBXBuildFile; fileRef = 02234A306DD12F534168831D /* AC pick mid.wav */; };
+		4B5EBCFDB43BC4F78D4F6282 /* RecordingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83AF531EAD8F6F15F82898F9 /* RecordingManager.swift */; };
 		4B5FCDE4339DB77C58148988 /* AudioEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9964A17470EA289B5F2BA3B1 /* AudioEngineTests.swift */; };
+		5048D1C0C4C70E1C211B7E32 /* PracticeShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D2A8BD0DFC2768F1D564C30 /* PracticeShareView.swift */; };
 		52643D6C3634419518564A23 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742FF509F2FEFF95A83A7A94 /* Theme.swift */; };
 		56668AD0F8E22630C57D70D7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 6F3F0FA5AE1220DF09E0327E /* PrivacyInfo.xcprivacy */; };
 		648D7B2875F3E84F7AD8C6C5 /* StreakManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3E21D5626C0DC1E9D90F485 /* StreakManager.swift */; };
@@ -44,10 +49,14 @@
 		87A3E87EFC7253F104D4137A /* tele filter oct hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = 6597299E30A3CB813D1FE9FF /* tele filter oct hi.wav */; };
 		89EBFAF71F209D43B0F61492 /* tele chorus mid.wav in Resources */ = {isa = PBXBuildFile; fileRef = 819DA930293E6365C733BBA7 /* tele chorus mid.wav */; };
 		8AFCCBAEFD0701CCE70D6A11 /* tele white low.wav in Resources */ = {isa = PBXBuildFile; fileRef = 525F2DCE9D396DCAEFE817C6 /* tele white low.wav */; };
+		8C242781B80DAA0DC9B044F1 /* JournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C244E46D22779A774BF6A03 /* JournalView.swift */; };
 		91C67A0FFB440FDD1C0B931B /* tele clean mid.wav in Resources */ = {isa = PBXBuildFile; fileRef = BEB8A2AAD4DC1700218C091D /* tele clean mid.wav */; };
 		96A748887D83890DB94455F3 /* tele chorus hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = 7EC3849C46DEA312A700CEA1 /* tele chorus hi.wav */; };
 		9E4E8CFDE452E68B01472E13 /* Drive hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0519EF37CD606CDF58577311 /* Drive hi.wav */; };
 		AD012973871EA5144EE0CBAB /* tele white oct.wav in Resources */ = {isa = PBXBuildFile; fileRef = 717FB91B6BF3C73FA4F1387F /* tele white oct.wav */; };
+		AE57A8A45E2C57EF202E96C0 /* MetronomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5721E16D7B9C80E92E3A0AA /* MetronomeView.swift */; };
+		B691E7739FADA4F925FDAE15 /* PracticeHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E56669BCEFA1D855B5E1072A /* PracticeHistoryView.swift */; };
+		B81FD1E9B53C8E82D74C43B9 /* UIComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5380199E10153B76EF8C9580 /* UIComponents.swift */; };
 		B93018757D8509AFC39D5EF5 /* TuningManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8568359C9B62D09796874B1B /* TuningManagerTests.swift */; };
 		BEA10CC0DF3269685B3F2701 /* tele clean low.wav in Resources */ = {isa = PBXBuildFile; fileRef = 549AE50FC50AB1E04BB74B36 /* tele clean low.wav */; };
 		BF4B279BEFD7F3027823A307 /* AC pick low.wav in Resources */ = {isa = PBXBuildFile; fileRef = 3A9C0C657485A7C6B68A42F7 /* AC pick low.wav */; };
@@ -60,7 +69,10 @@
 		D92B5941B6737B3171286721 /* tele clean oct.wav in Resources */ = {isa = PBXBuildFile; fileRef = D889A1B506B0527284C8AF71 /* tele clean oct.wav */; };
 		D9EED256A78FCD96EE6AD83F /* ProManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A96A6182DEADDBC8D23FCCD /* ProManager.swift */; };
 		DCA758AB669C6D9CB9A76E44 /* Phaser.wav in Resources */ = {isa = PBXBuildFile; fileRef = B2E9B2F86FFE784E391EF227 /* Phaser.wav */; };
+		DEB03EBB8A85B13526EDF593 /* AchievementManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B690ABD0DA88E4B94CEE927 /* AchievementManager.swift */; };
+		DF2186242E47342BAD59E538 /* TunerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8081D5647BE6318D5AE8674 /* TunerView.swift */; };
 		E4861A05A2043A534C11E221 /* tele white oct hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = CE38C936874DA4F5F123AF8D /* tele white oct hi.wav */; };
+		E71A5297199D155F0950F188 /* DailyGoalManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3DC525092BA37508B7026D8 /* DailyGoalManager.swift */; };
 		E72F0B291FE26364DFAD7505 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64F0926254EE833AB8610492 /* OnboardingView.swift */; };
 		E766DB814073307774F8A0D2 /* ElecFlux hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = DA8505C2367CD19351A4B51F /* ElecFlux hi.wav */; };
 		EA82E24E401B04A8088E6E90 /* tele clean hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = 4190CFC5754E42A103A102F1 /* tele clean hi.wav */; };
@@ -88,6 +100,8 @@
 		02234A306DD12F534168831D /* AC pick mid.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "AC pick mid.wav"; sourceTree = "<group>"; };
 		03F8EED84D342410BEFB590E /* AC oct hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "AC oct hi.wav"; sourceTree = "<group>"; };
 		0519EF37CD606CDF58577311 /* Drive hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Drive hi.wav"; sourceTree = "<group>"; };
+		0C03A6F9F244BD558D58907C /* CustomPracticeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomPracticeManager.swift; sourceTree = "<group>"; };
+		0C244E46D22779A774BF6A03 /* JournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalView.swift; sourceTree = "<group>"; };
 		10FE8FE74750AB2C2B1C59DE /* tele filter low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele filter low.wav"; sourceTree = "<group>"; };
 		121E30D55669C0ABFDAF3523 /* AC finger mid.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "AC finger mid.wav"; sourceTree = "<group>"; };
 		12ACDC09A7FFBB32903A11E7 /* tele chorus oct hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele chorus oct hi.wav"; sourceTree = "<group>"; };
@@ -95,6 +109,9 @@
 		1D11E975EC323A931C053F63 /* GuitarMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuitarMath.swift; sourceTree = "<group>"; };
 		1DE2BA251DC6749C146E6F21 /* PracticeRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeRecord.swift; sourceTree = "<group>"; };
 		24583B4E531F418706DEF4A4 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		2B690ABD0DA88E4B94CEE927 /* AchievementManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementManager.swift; sourceTree = "<group>"; };
+		2D2A8BD0DFC2768F1D564C30 /* PracticeShareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeShareView.swift; sourceTree = "<group>"; };
+		386C758329D28111D53CE1D7 /* Metronome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Metronome.swift; sourceTree = "<group>"; };
 		3A3FEA09521BCFD8289A6CCF /* FretboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FretboardView.swift; sourceTree = "<group>"; };
 		3A9C0C657485A7C6B68A42F7 /* AC pick low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "AC pick low.wav"; sourceTree = "<group>"; };
 		412F9920F238E9945068826C /* AC finger hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "AC finger hi.wav"; sourceTree = "<group>"; };
@@ -104,6 +121,7 @@
 		4A96A6182DEADDBC8D23FCCD /* ProManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProManager.swift; sourceTree = "<group>"; };
 		4B80CA3D9B28A7ACA762825A /* Aether.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Aether.wav; sourceTree = "<group>"; };
 		525F2DCE9D396DCAEFE817C6 /* tele white low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele white low.wav"; sourceTree = "<group>"; };
+		5380199E10153B76EF8C9580 /* UIComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIComponents.swift; sourceTree = "<group>"; };
 		546C7CFD1ADCCD7658289098 /* ElecFlux low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "ElecFlux low.wav"; sourceTree = "<group>"; };
 		549AE50FC50AB1E04BB74B36 /* tele clean low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele clean low.wav"; sourceTree = "<group>"; };
 		5AC904B01E30A9755F3588B8 /* tele chorus low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele chorus low.wav"; sourceTree = "<group>"; };
@@ -123,6 +141,7 @@
 		7E0A85289ED5A7757D6734A1 /* Flux low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Flux low.wav"; sourceTree = "<group>"; };
 		7EC3849C46DEA312A700CEA1 /* tele chorus hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele chorus hi.wav"; sourceTree = "<group>"; };
 		819DA930293E6365C733BBA7 /* tele chorus mid.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele chorus mid.wav"; sourceTree = "<group>"; };
+		83AF531EAD8F6F15F82898F9 /* RecordingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingManager.swift; sourceTree = "<group>"; };
 		8568359C9B62D09796874B1B /* TuningManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningManagerTests.swift; sourceTree = "<group>"; };
 		86C67AFA501978794F72AD31 /* tele filter oct.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele filter oct.wav"; sourceTree = "<group>"; };
 		8818BE4199589E9FBC1DB6A1 /* tele chorus oct.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele chorus oct.wav"; sourceTree = "<group>"; };
@@ -142,7 +161,10 @@
 		BD5AF02EF082FFC3A8B043FD /* TrainingEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingEngineTests.swift; sourceTree = "<group>"; };
 		BEB8A2AAD4DC1700218C091D /* tele clean mid.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele clean mid.wav"; sourceTree = "<group>"; };
 		BF26CC88442CE7AAD955001D /* Cloud.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Cloud.wav; sourceTree = "<group>"; };
+		C315A455B425AE3486644006 /* ScaleChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScaleChartView.swift; sourceTree = "<group>"; };
+		C5721E16D7B9C80E92E3A0AA /* MetronomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetronomeView.swift; sourceTree = "<group>"; };
 		CE38C936874DA4F5F123AF8D /* tele white oct hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele white oct hi.wav"; sourceTree = "<group>"; };
+		D3DC525092BA37508B7026D8 /* DailyGoalManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyGoalManager.swift; sourceTree = "<group>"; };
 		D3E21D5626C0DC1E9D90F485 /* StreakManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakManager.swift; sourceTree = "<group>"; };
 		D57063E2D5BA61E7F5FBDFA7 /* UserPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPreferences.swift; sourceTree = "<group>"; };
 		D790B5AE42D1BD4EA5D00990 /* GuitarBridgeTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = GuitarBridgeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -150,6 +172,8 @@
 		D968B98AC7D399357EA4AFC7 /* GuitarMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuitarMathTests.swift; sourceTree = "<group>"; };
 		DA8505C2367CD19351A4B51F /* ElecFlux hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "ElecFlux hi.wav"; sourceTree = "<group>"; };
 		E4A04040FBEED3C943C879EA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E56669BCEFA1D855B5E1072A /* PracticeHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeHistoryView.swift; sourceTree = "<group>"; };
+		E8081D5647BE6318D5AE8674 /* TunerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunerView.swift; sourceTree = "<group>"; };
 		ED2C3BF4AA027002E25D3DD2 /* CompletionAnimationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletionAnimationView.swift; sourceTree = "<group>"; };
 		F2B7480A1583CB4F320855DD /* Flux hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Flux hi.wav"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -158,20 +182,32 @@
 		3F24AD3079E95444BA564BBE /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				2B690ABD0DA88E4B94CEE927 /* AchievementManager.swift */,
 				BB11D5ACE2240019A1C2630C /* AudioEngine.swift */,
 				ED2C3BF4AA027002E25D3DD2 /* CompletionAnimationView.swift */,
 				24583B4E531F418706DEF4A4 /* ContentView.swift */,
+				0C03A6F9F244BD558D58907C /* CustomPracticeManager.swift */,
+				D3DC525092BA37508B7026D8 /* DailyGoalManager.swift */,
 				3A3FEA09521BCFD8289A6CCF /* FretboardView.swift */,
 				7B588A89BBBEF1D51FD46FF7 /* GuitarBridgeApp.swift */,
 				1D11E975EC323A931C053F63 /* GuitarMath.swift */,
 				492DF5EC3292659D1A893432 /* HapticManager.swift */,
+				0C244E46D22779A774BF6A03 /* JournalView.swift */,
+				386C758329D28111D53CE1D7 /* Metronome.swift */,
+				C5721E16D7B9C80E92E3A0AA /* MetronomeView.swift */,
 				64F0926254EE833AB8610492 /* OnboardingView.swift */,
+				E56669BCEFA1D855B5E1072A /* PracticeHistoryView.swift */,
+				2D2A8BD0DFC2768F1D564C30 /* PracticeShareView.swift */,
 				4A96A6182DEADDBC8D23FCCD /* ProManager.swift */,
+				83AF531EAD8F6F15F82898F9 /* RecordingManager.swift */,
+				C315A455B425AE3486644006 /* ScaleChartView.swift */,
 				A124889B5F6FEBD0C1F47EA3 /* SettingsView.swift */,
 				1745C8CB1A5897DA41392E5A /* StatsView.swift */,
 				D3E21D5626C0DC1E9D90F485 /* StreakManager.swift */,
 				742FF509F2FEFF95A83A7A94 /* Theme.swift */,
 				5BB583E6395AAF64A352AB08 /* TrainingEngine.swift */,
+				E8081D5647BE6318D5AE8674 /* TunerView.swift */,
+				5380199E10153B76EF8C9580 /* UIComponents.swift */,
 				662F800B2041131CEC592ADE /* Models */,
 			);
 			path = Sources;
@@ -435,22 +471,34 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DEB03EBB8A85B13526EDF593 /* AchievementManager.swift in Sources */,
 				C1FA8AD6A471EEE5C260C86F /* AudioEngine.swift in Sources */,
 				238CD58560A93BD25AFE50DA /* CompletionAnimationView.swift in Sources */,
 				F197FE8EB1140038A18328AC /* ContentView.swift in Sources */,
+				191DD528CF2BE0BCA1EC0FE5 /* CustomPracticeManager.swift in Sources */,
+				E71A5297199D155F0950F188 /* DailyGoalManager.swift in Sources */,
 				070A0ADE3DBA29446FAE6489 /* FretboardView.swift in Sources */,
 				0EC9092D0EA43C5F3478B8DA /* GuitarBridgeApp.swift in Sources */,
 				C762C6FA834553350C98EFF5 /* GuitarMath.swift in Sources */,
 				6D5C298762385E9A5D61D29D /* HapticManager.swift in Sources */,
+				8C242781B80DAA0DC9B044F1 /* JournalView.swift in Sources */,
+				1D6F2B5B61B818BEDE370F4D /* Metronome.swift in Sources */,
+				AE57A8A45E2C57EF202E96C0 /* MetronomeView.swift in Sources */,
 				E72F0B291FE26364DFAD7505 /* OnboardingView.swift in Sources */,
+				B691E7739FADA4F925FDAE15 /* PracticeHistoryView.swift in Sources */,
 				233872AF8F0E50950C2952A1 /* PracticeRecord.swift in Sources */,
+				5048D1C0C4C70E1C211B7E32 /* PracticeShareView.swift in Sources */,
 				2A749B434F23DF2AD90ABB5A /* PracticeStreak.swift in Sources */,
 				D9EED256A78FCD96EE6AD83F /* ProManager.swift in Sources */,
+				4B5EBCFDB43BC4F78D4F6282 /* RecordingManager.swift in Sources */,
+				00BE11F84235934703635B9A /* ScaleChartView.swift in Sources */,
 				684FD3679926CF97F6141E1D /* SettingsView.swift in Sources */,
 				F3353510D6A1A308C61D0FCA /* StatsView.swift in Sources */,
 				648D7B2875F3E84F7AD8C6C5 /* StreakManager.swift in Sources */,
 				52643D6C3634419518564A23 /* Theme.swift in Sources */,
 				674176F311CA20FA4F0B3892 /* TrainingEngine.swift in Sources */,
+				DF2186242E47342BAD59E538 /* TunerView.swift in Sources */,
+				B81FD1E9B53C8E82D74C43B9 /* UIComponents.swift in Sources */,
 				EFDCD4040B64087100B80843 /* UserPreferences.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

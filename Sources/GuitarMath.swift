@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - Tuning Enum
-enum Tuning: String, CaseIterable, Identifiable {
+enum Tuning: String, CaseIterable, Identifiable, Codable {
     case standard = "Standard (EADGBE)"
     case dropD = "Drop D (DADGBE)"
     case dadgad = "DADGAD"

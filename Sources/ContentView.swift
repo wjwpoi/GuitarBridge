@@ -237,69 +237,44 @@ struct ContentView: View {
         HStack(spacing: 8) {
             switch trainingEngine.state {
             case .playingAnchor:
-                HStack(spacing: 4) {
-                    Image(systemName: "music.note")
-                        .foregroundStyle(.orange)
-                    Text("正在播放：锚点音")
-                        .font(.subheadline)
-                        .foregroundStyle(.orange)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(.orange.opacity(0.15))
-                .cornerRadius(8)
+                StatusBadge(
+                    icon: "music.note",
+                    iconColor: .orange,
+                    text: "正在播放：锚点音",
+                    textColor: .orange
+                )
                 
             case .playingTarget:
-                HStack(spacing: 4) {
-                    Image(systemName: "music.note.list")
-                        .foregroundStyle(.blue)
-                    Text("正在播放：目标音")
-                        .font(.subheadline)
-                        .foregroundStyle(.blue)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(.blue.opacity(0.15))
-                .cornerRadius(8)
+                StatusBadge(
+                    icon: "music.note.list",
+                    iconColor: .blue,
+                    text: "正在播放：目标音",
+                    textColor: .blue
+                )
                 
             case .awaitingAnswer:
-                HStack(spacing: 4) {
-                    Image(systemName: "hand.point.up.fill")
-                        .foregroundStyle(.green)
-                    Text("请选择答案")
-                        .font(.subheadline)
-                        .foregroundStyle(.green)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(.green.opacity(0.15))
-                .cornerRadius(8)
+                StatusBadge(
+                    icon: "hand.point.up.fill",
+                    iconColor: .green,
+                    text: "请选择答案",
+                    textColor: .green
+                )
                 
             case .showingResult(let correct):
                 if correct {
-                    HStack(spacing: 4) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                        Text("正确!")
-                            .font(.subheadline)
-                            .foregroundStyle(.green)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(.green.opacity(0.15))
-                    .cornerRadius(8)
+                    StatusBadge(
+                        icon: "checkmark.circle.fill",
+                        iconColor: .green,
+                        text: "正确!",
+                        textColor: .green
+                    )
                 } else {
-                    HStack(spacing: 4) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.red)
-                        Text("错误，请重试")
-                            .font(.subheadline)
-                            .foregroundStyle(.red)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(.red.opacity(0.15))
-                    .cornerRadius(8)
+                    StatusBadge(
+                        icon: "xmark.circle.fill",
+                        iconColor: .red,
+                        text: "错误，请重试",
+                        textColor: .red
+                    )
                 }
                 
             default:
