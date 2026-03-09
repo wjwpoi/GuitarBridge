@@ -67,6 +67,7 @@
 		C4C6CCA1290AB5F6ACFFA80C /* Flux low.wav in Resources */ = {isa = PBXBuildFile; fileRef = 7E0A85289ED5A7757D6734A1 /* Flux low.wav */; };
 		C762C6FA834553350C98EFF5 /* GuitarMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D11E975EC323A931C053F63 /* GuitarMath.swift */; };
 		CCFCF4C21FE7BFE6EAF5C7CF /* TrainingStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E584B21965AC7C6C3C7ED81 /* TrainingStatusView.swift */; };
+		CF1E6932DB566F78DEB5242F /* FretboardSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DACC7DA2933E88E6909BFD0 /* FretboardSectionView.swift */; };
 		CF66646C5773850D89F750CC /* TrainingEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD5AF02EF082FFC3A8B043FD /* TrainingEngineTests.swift */; };
 		D79B13A52CBD65CDD01149A3 /* Aether.wav in Resources */ = {isa = PBXBuildFile; fileRef = 4B80CA3D9B28A7ACA762825A /* Aether.wav */; };
 		D7AB61C7D4575D90B6001930 /* AC oct hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = 03F8EED84D342410BEFB590E /* AC oct hi.wav */; };
@@ -159,6 +160,7 @@
 		8AF66BBF043B7D2122C5314A /* Rotate.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Rotate.wav; sourceTree = "<group>"; };
 		9964A17470EA289B5F2BA3B1 /* AudioEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngineTests.swift; sourceTree = "<group>"; };
 		9A377829F01F6FDA42CDB202 /* GuitarBridge.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GuitarBridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9DACC7DA2933E88E6909BFD0 /* FretboardSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FretboardSectionView.swift; sourceTree = "<group>"; };
 		9E58B2B5006B2E574987A481 /* tele filter mid.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele filter mid.wav"; sourceTree = "<group>"; };
 		A124889B5F6FEBD0C1F47EA3 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A3BAA08A4B17905CB4ACED1A /* Fall.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fall.wav; sourceTree = "<group>"; };
@@ -203,6 +205,7 @@
 				0C03A6F9F244BD558D58907C /* CustomPracticeManager.swift */,
 				D3DC525092BA37508B7026D8 /* DailyGoalManager.swift */,
 				2FE5CDE83D82939624ECFC59 /* FretboardConfiguration.swift */,
+				9DACC7DA2933E88E6909BFD0 /* FretboardSectionView.swift */,
 				3A3FEA09521BCFD8289A6CCF /* FretboardView.swift */,
 				7B588A89BBBEF1D51FD46FF7 /* GuitarBridgeApp.swift */,
 				1D11E975EC323A931C053F63 /* GuitarMath.swift */,
@@ -498,6 +501,7 @@
 				191DD528CF2BE0BCA1EC0FE5 /* CustomPracticeManager.swift in Sources */,
 				E71A5297199D155F0950F188 /* DailyGoalManager.swift in Sources */,
 				FD4DE8BE984739AB5B4AA7C0 /* FretboardConfiguration.swift in Sources */,
+				CF1E6932DB566F78DEB5242F /* FretboardSectionView.swift in Sources */,
 				070A0ADE3DBA29446FAE6489 /* FretboardView.swift in Sources */,
 				0EC9092D0EA43C5F3478B8DA /* GuitarBridgeApp.swift in Sources */,
 				C762C6FA834553350C98EFF5 /* GuitarMath.swift in Sources */,
