@@ -42,8 +42,8 @@ struct ContentView: View {
                     statusSection
                 }
                 .padding(.horizontal)
-                .padding(.top, 8)
-                .padding(.bottom, 20)  // 增加底部间距
+                .padding(.top, 20)
+                .padding(.bottom, 40)  // 增加底部间距
             }
             .background(LinearGradient(colors: [.blue.opacity(0.1), .purple.opacity(0.1)], startPoint: .top, endPoint: .bottom))
             .toolbar {
@@ -97,7 +97,7 @@ struct ContentView: View {
     
     private var optionsSection: some View {
         VStack(spacing: 12) {
-            // 第一行：调性、音阶
+            // 第一行：调性、音阶、调弦 - 居中排列
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("调性")
@@ -132,23 +132,10 @@ struct ContentView: View {
                     }
                     .pickerStyle(.menu)
                 }
-                
-                Spacer()
             }
+            .frame(maxWidth: .infinity)
             
-            // 第二行：难度（单独一行）
-            VStack(alignment: .leading, spacing: 4) {
-                Text("难度")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Picker("难度", selection: $difficulty) {
-                    ForEach(difficulties) { Text($0.rawValue) }
-                }
-                .pickerStyle(.segmented)
-                .tint(.blue)
-            }
-            
-            // 第三行：显示选项
+            // 显示选项 - 居中
             HStack(spacing: 16) {
                 Toggle(isOn: $showDegrees) {
                     Label("级数", systemImage: "number")
@@ -370,6 +357,12 @@ struct ContentView: View {
     }
     
     private func handleFretTap(_ position: FretPosition) {
+        // 无论是否在训练中，点击都播放声音
+        let midiNote = GuitarMath.midiNote(for: position.string, fret: position.fret, tuning: selectedTuning)
+        audioEngine.play(midiNote: midiNote)
+        HapticManager.impact(.light)
+        
+        // 只有在训练状态才提交答案
         guard trainingEngine.state == .awaitingAnswer else { return }
         HapticManager.impact(.medium)
         trainingEngine.submitAnswer(position)

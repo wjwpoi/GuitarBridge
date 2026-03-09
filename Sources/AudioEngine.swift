@@ -408,17 +408,29 @@ class AudioEngine: ObservableObject {
     func play(midiNote: Int) {
         guard midiNote >= 20 && midiNote <= 127 else { return }
 
+        // 确保音频引擎始终处于运行状态
+        ensureEngineRunning()
+        
+        // 优先尝试使用吉他采样
+        playGuitarSample(midiNote: midiNote)
+    }
+    
+    /// 确保音频引擎正在运行
+    private func ensureEngineRunning() {
         if !audioEngine.isRunning {
             do {
                 try audioEngine.start()
             } catch {
                 log("[AudioEngine] Failed to start engine: \(error)")
-                return
+                // 如果启动失败，尝试重新设置音频会话
+                setupAudioSession()
+                do {
+                    try audioEngine.start()
+                } catch {
+                    log("[AudioEngine] Failed to restart engine: \(error)")
+                }
             }
         }
-
-        // 优先尝试使用吉他采样
-        playGuitarSample(midiNote: midiNote)
     }
     
     // MARK: - 使用当前激活的 Sampler 播放 MIDI

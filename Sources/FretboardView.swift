@@ -21,7 +21,7 @@ struct FretboardView: View {
                 HStack(spacing: 0) {
                     Text("").frame(width: 30)
                     ForEach(0..<23, id: \.self) { fret in
-                        Text(fret > 0 ? "\(fret)" : "").font(.caption2).frame(maxWidth: .infinity).foregroundColor(.secondary)
+                        Text(fret > 0 ? "\(fret)" : "").font(.caption).frame(maxWidth: .infinity).foregroundColor(.secondary)
                     }
                 }
                 
@@ -63,7 +63,8 @@ struct FretboardView: View {
         if showDegrees {
             // 显示级数模式：只显示罗马数字
             displayText = scaleDegreeLabel(for: midi)
-            textColor = .white
+            // 级数使用更深的颜色确保可见
+            textColor = isInScale ? .blue : .orange
         } else if showNoteNames {
             // 显示音名
             displayText = note
