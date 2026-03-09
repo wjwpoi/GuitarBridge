@@ -195,7 +195,9 @@ struct SettingsView: View {
         do {
             try modelContext.save()
         } catch {
+            #if DEBUG
             print("[SettingsView] Failed to save: \(error)")
+            #endif
         }
     }
 }
@@ -250,7 +252,9 @@ struct ReminderSettingsView: View {
     private func requestNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             if let error = error {
+                #if DEBUG
                 print("[ReminderSettings] Permission error: \(error)")
+                #endif
             }
         }
     }
@@ -276,7 +280,9 @@ struct ReminderSettingsView: View {
         
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
+                #if DEBUG
                 print("[ReminderSettings] Failed to schedule: \(error)")
+                #endif
             }
         }
     }

@@ -177,7 +177,9 @@ struct StatsView: View {
         do {
             try modelContext.save()
         } catch {
+            #if DEBUG
             print("[StatsView] Failed to clear records: \(error)")
+            #endif
         }
     }
 }

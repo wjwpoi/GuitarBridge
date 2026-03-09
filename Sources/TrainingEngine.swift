@@ -215,7 +215,9 @@ class TrainingEngine: ObservableObject {
     func startQuestion() {
         guard completedQuestions < questionsPerSession else {
             state = .completed
+            #if DEBUG
             print("[Training] Session completed: \(correctCount)/\(questionsPerSession)")
+            #endif
             saveToUserDefaults()
             return
         }

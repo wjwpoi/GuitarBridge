@@ -37,7 +37,9 @@ class StreakManager: ObservableObject {
                 self.streak = newStreak
             }
         } catch {
+            #if DEBUG
             print("Failed to load streak: \(error)")
+            #endif
         }
     }
     
@@ -53,7 +55,9 @@ class StreakManager: ObservableObject {
             self.totalPracticeDays = streak.totalPracticeDays
             self.isStreakActive = streak.isStreakActive
         } catch {
+            #if DEBUG
             print("Failed to save streak: \(error)")
+            #endif
         }
     }
 }
