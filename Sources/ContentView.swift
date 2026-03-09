@@ -10,7 +10,6 @@ struct ContentView: View {
     @State private var difficulty: Difficulty = .easy
     @State private var selectedScale: ScaleType = .major
     @State private var selectedTuning: Tuning = .standard
-    @State private var selectedToneMode: ToneMode = .clean
     @State private var showSettings = false
     @State private var showDegrees = false
     @State private var showScale = false
@@ -24,10 +23,14 @@ struct ContentView: View {
     private let difficulties = Difficulty.allCases
     private let scales = ScaleType.allCases
     private let tunings = Tuning.allCases
-    private let toneModes = ToneMode.allCases
+    
+    // 从 AudioEngine 当前模式获取 ToneMode
+    private var currentToneMode: ToneMode {
+        ToneMode(rawValue: audioEngine.currentMode.capitalized) ?? .clean
+    }
     
     private var currentTheme: Theme {
-        Theme.theme(for: selectedToneMode)
+        Theme.theme(for: currentToneMode)
     }
     
     var body: some View {
@@ -79,9 +82,6 @@ struct ContentView: View {
             }
             .onChange(of: selectedTuning) { _, newValue in
                 trainingEngine.configure(audioEngine: audioEngine, tuning: newValue)
-            }
-            .onChange(of: selectedToneMode) { _, newValue in
-                audioEngine.setToneMode(newValue.rawValue)
             }
             .onChange(of: selectedKey) { _, newValue in
                 trainingEngine.currentKey = newValue
