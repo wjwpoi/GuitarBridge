@@ -88,6 +88,7 @@
 		F197FE8EB1140038A18328AC /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24583B4E531F418706DEF4A4 /* ContentView.swift */; };
 		F3353510D6A1A308C61D0FCA /* StatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1745C8CB1A5897DA41392E5A /* StatsView.swift */; };
 		F4524A6C42500247C8C92824 /* Drive low.wav in Resources */ = {isa = PBXBuildFile; fileRef = 8AC2F71DD91A3A0B1F7A760D /* Drive low.wav */; };
+		FD4DE8BE984739AB5B4AA7C0 /* FretboardConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE5CDE83D82939624ECFC59 /* FretboardConfiguration.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -115,6 +116,7 @@
 		24583B4E531F418706DEF4A4 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		2B690ABD0DA88E4B94CEE927 /* AchievementManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementManager.swift; sourceTree = "<group>"; };
 		2D2A8BD0DFC2768F1D564C30 /* PracticeShareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeShareView.swift; sourceTree = "<group>"; };
+		2FE5CDE83D82939624ECFC59 /* FretboardConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FretboardConfiguration.swift; sourceTree = "<group>"; };
 		386C758329D28111D53CE1D7 /* Metronome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Metronome.swift; sourceTree = "<group>"; };
 		3A3FEA09521BCFD8289A6CCF /* FretboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FretboardView.swift; sourceTree = "<group>"; };
 		3A9C0C657485A7C6B68A42F7 /* AC pick low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "AC pick low.wav"; sourceTree = "<group>"; };
@@ -197,6 +199,7 @@
 				24583B4E531F418706DEF4A4 /* ContentView.swift */,
 				0C03A6F9F244BD558D58907C /* CustomPracticeManager.swift */,
 				D3DC525092BA37508B7026D8 /* DailyGoalManager.swift */,
+				2FE5CDE83D82939624ECFC59 /* FretboardConfiguration.swift */,
 				3A3FEA09521BCFD8289A6CCF /* FretboardView.swift */,
 				7B588A89BBBEF1D51FD46FF7 /* GuitarBridgeApp.swift */,
 				1D11E975EC323A931C053F63 /* GuitarMath.swift */,
@@ -490,6 +493,7 @@
 				F197FE8EB1140038A18328AC /* ContentView.swift in Sources */,
 				191DD528CF2BE0BCA1EC0FE5 /* CustomPracticeManager.swift in Sources */,
 				E71A5297199D155F0950F188 /* DailyGoalManager.swift in Sources */,
+				FD4DE8BE984739AB5B4AA7C0 /* FretboardConfiguration.swift in Sources */,
 				070A0ADE3DBA29446FAE6489 /* FretboardView.swift in Sources */,
 				0EC9092D0EA43C5F3478B8DA /* GuitarBridgeApp.swift in Sources */,
 				C762C6FA834553350C98EFF5 /* GuitarMath.swift in Sources */,
