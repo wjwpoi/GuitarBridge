@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var crossfadeDurationBinding: Double = 0.15
     @State private var selectedToneMode: ToneMode = .clean
     @State private var dailyGoal = 20
+    @State private var customQuestionCount = 0
     @State private var showReminderSettings = false
     @State private var isPro = ProManager.isPro
     @State private var viewMode: ViewMode = .normal
@@ -93,6 +94,16 @@ struct SettingsView: View {
                             userPrefs.dailyGoal = newValue
                             saveChanges()
                         }
+                    
+                    Picker("每次训练问题数", selection: $customQuestionCount) {
+                        Text("跟随难度").tag(0)
+                        ForEach([5, 10, 15, 20, 30], id: \.self) { count in
+                            Text("\(count) 题").tag(count)
+                        }
+                    }
+                    .onChange(of: customQuestionCount) { _, newValue in
+                        UserDefaults.standard.set(newValue, forKey: "customQuestionCount")
+                    }
                 }
                 
                 // Pro Features
@@ -189,6 +200,7 @@ struct SettingsView: View {
         volume = Double(UserDefaults.standard.object(forKey: "audioVolume") as? Float ?? 0.8)
         crossfadeDurationBinding = UserDefaults.standard.object(forKey: "crossfadeDuration") as? Double ?? 0.15
         selectedToneMode = ToneMode(rawValue: UserDefaults.standard.string(forKey: "toneMode") ?? "clean") ?? .clean
+        customQuestionCount = UserDefaults.standard.object(forKey: "customQuestionCount") as? Int ?? 0
     }
     
     private func saveChanges() {

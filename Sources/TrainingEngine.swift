@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 enum Interval: String, CaseIterable, Identifiable, Codable {
     case unison = "同音"
@@ -155,7 +156,15 @@ class TrainingEngine: ObservableObject {
     private var audioEngine: AudioEngine?
     private var currentTuning: Tuning = .standard
     
+    /// 用户可配置的问题数量（优先使用，否则使用难度默认值）
+    @AppStorage("customQuestionCount") var customQuestionCount: Int = 0
+    
     var questionsPerSession: Int {
+        // 优先使用用户自定义数量
+        if customQuestionCount > 0 {
+            return customQuestionCount
+        }
+        // 否则使用难度默认值
         switch difficulty {
         case .easy: return 5
         case .medium: return 10
