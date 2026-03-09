@@ -48,7 +48,7 @@ struct CustomPracticeConfig: Identifiable, Codable {
     
     static let chordMaster = CustomPracticeConfig(
         name: "和弦大师",
-        modes: [.chords, .chordProgression],
+        modes: [.chords],
         questionCount: 20,
         timeLimit: nil,
         tuning: .standard,
