@@ -92,7 +92,7 @@ struct PracticeHistoryView: View {
                         }
                         .padding()
                         .background(Color(Color.gray.opacity(0.2)))
-                        .cornerRadius(12)
+                        .cornerRadius(UIConstants.cornerRadiusMedium)
                         
                         // Records list
                         VStack(alignment: .leading, spacing: 8) {
