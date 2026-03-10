@@ -23,6 +23,11 @@ enum PracticeConstants {
     enum Audio {
         static let defaultVolume: Float = 0.8
         static let crossfadeDuration: Double = 0.15
+        static let samplePlaybackDuration: UInt64 = 1_500_000_000  // 1.5秒采样播放
+        static let noteHoldDuration: UInt64 = 1_500_000_000  // 1.5秒音符保持
+        static let anchorNoteDelay: UInt64 = 800_000_000  // 800ms锚点音间隔
+        static let correctAnswerDelay: UInt64 = 1_500_000_000  // 1.5秒正确答案停留
+        static let wrongAnswerDelay: UInt64 = 1_500_000_000  // 1.5秒错误答案停留
     }
     
     /// UI 相关

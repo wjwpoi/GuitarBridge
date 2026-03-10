@@ -373,7 +373,7 @@ class TrainingEngine: ObservableObject {
             
             // 正确答案停留 1.5 秒后进入下一题
             Task { @MainActor in
-                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                try? await Task.sleep(nanoseconds: PracticeConstants.Audio.correctAnswerDelay)
                 self.nextQuestion()
             }
         } else {
@@ -387,7 +387,7 @@ class TrainingEngine: ObservableObject {
             
             // 点错后重置状态，等待用户重选
             Task { @MainActor in
-                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                try? await Task.sleep(nanoseconds: PracticeConstants.Audio.wrongAnswerDelay)
                 self.userAnswer = nil
                 self.lastAnswerCorrect = nil
                 self.state = .awaitingAnswer

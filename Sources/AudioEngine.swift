@@ -461,7 +461,7 @@ class AudioEngine: ObservableObject {
         
         // 1.5秒后自动停止音符（固定时长）
         Task {
-            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            try? await Task.sleep(nanoseconds: PracticeConstants.Audio.noteHoldDuration)
             sampler.stopNote(UInt8(midiNote), onChannel: 0)
             lastPlayedNote = nil
         }
@@ -546,7 +546,7 @@ class AudioEngine: ObservableObject {
         
         // 采样播放完成后自动停止（使用固定1.5秒，避免受rate影响）
         Task {
-            try? await Task.sleep(nanoseconds: 1_500_000_000)  // 1.5秒固定时长
+            try? await Task.sleep(nanoseconds: PracticeConstants.Audio.samplePlaybackDuration)
             playerNode.stop()
             isPlaying = false
         }
