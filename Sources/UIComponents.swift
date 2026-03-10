@@ -75,9 +75,9 @@ struct StatusBadge: View {
                 .font(.subheadline)
                 .foregroundStyle(textColor)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
+        .padding(.horizontal, UIConstants.paddingLarge)
+        .padding(.vertical, UIConstants.paddingSmall)
         .background(textColor.opacity(0.15))
-        .cornerRadius(8)
+        .cornerRadius(UIConstants.cornerRadiusMedium)
     }
 }
