@@ -196,11 +196,13 @@ class TrainingEngine: ObservableObject {
         
         audioEngine?.play(midiNote: anchor.midiNote)
         Task { @MainActor in
-            for _ in 0..<3 {
-                try? await Task.sleep(nanoseconds: 500_000_000)
+            // 播放2次锚点音，每次间隔800ms（增加间隔便于听清）
+            for _ in 0..<2 {
+                try? await Task.sleep(nanoseconds: 800_000_000)
                 self.audioEngine?.play(midiNote: anchor.midiNote)
             }
-            try? await Task.sleep(nanoseconds: 300_000_000)
+            // 锚点和目标音之间间隔800ms
+            try? await Task.sleep(nanoseconds: 800_000_000)
             self.playTargetNote()
         }
     }
