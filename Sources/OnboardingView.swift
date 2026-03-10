@@ -64,7 +64,7 @@ struct OnboardingView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.orange)
-                        .cornerRadius(12)
+                        .cornerRadius(UIConstants.cornerRadiusMedium)
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 40)
