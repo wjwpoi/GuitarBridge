@@ -145,6 +145,21 @@ struct Theme {
     )
 }
 
+// MARK: - UI Constants
+enum UIConstants {
+    // Padding
+    static let paddingSmall: CGFloat = 4
+    static let paddingMedium: CGFloat = 8
+    static let paddingLarge: CGFloat = 12
+    static let paddingXLarge: CGFloat = 16
+    static let paddingXXLarge: CGFloat = 32
+    
+    // Corner Radius
+    static let cornerRadiusSmall: CGFloat = 6
+    static let cornerRadiusMedium: CGFloat = 12
+    static let cornerRadiusLarge: CGFloat = 16
+}
+
 // MARK: - Color Extension
 extension Color {
     init(hex: String) {

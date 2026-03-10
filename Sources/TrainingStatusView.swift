@@ -66,9 +66,9 @@ struct TrainingStatusView: View {
                         .font(.caption)
                     Spacer()
                 }
-                .padding(6)
+                .padding(UIConstants.paddingSmall)
                 .background(.yellow.opacity(0.2))
-                .cornerRadius(6)
+                .cornerRadius(UIConstants.cornerRadiusSmall)
             }
             
             // 开始/停止按钮
@@ -84,9 +84,9 @@ struct TrainingStatusView: View {
             .animation(.easeInOut(duration: 0.2), value: trainingEngine.state)
             .tint(trainingEngine.state == .idle ? .green : .red)
         }
-        .padding(12)
+        .padding(UIConstants.paddingLarge)
         .background {
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: UIConstants.cornerRadiusMedium)
                 .fill(.white)
                 .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 2)
         }

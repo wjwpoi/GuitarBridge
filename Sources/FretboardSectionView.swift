@@ -88,10 +88,10 @@ struct FretboardSectionView: View {
                 .font(.subheadline)
                 .foregroundStyle(color)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
+        .padding(.horizontal, UIConstants.paddingLarge)
+        .padding(.vertical, UIConstants.paddingSmall)
         .background(color.opacity(0.15))
-        .cornerRadius(8)
+        .cornerRadius(UIConstants.cornerRadiusMedium)
     }
     
     // MARK: - Replay Buttons
