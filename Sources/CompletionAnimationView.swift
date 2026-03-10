@@ -74,7 +74,7 @@ struct CompletionAnimationView: View {
                     }
                     .padding()
                     .background(.regularMaterial)
-                    .cornerRadius(12)
+                    .cornerRadius(UIConstants.cornerRadiusMedium)
                     
                     Button {
                         HapticManager.impact(.medium)
