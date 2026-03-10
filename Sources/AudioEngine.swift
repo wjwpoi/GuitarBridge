@@ -17,22 +17,16 @@ private func log(_ message: String) {
 
 // MARK: - Tone Mode Definition
 enum GuitarToneMode: String, CaseIterable {
-    case clean = "clean"
-    case distortion = "distortion"
-    case telecaster = "telecaster"
-    case nylon = "nylon"
+    case clean = "clean"  // 只使用清音
     
     var program: UInt8 {
         switch self {
-        case .clean: return 0      // Acoustic Grand Piano
-        case .distortion: return 30 // Overdriven Guitar
-        case .telecaster: return 24 // Acoustic Guitar (nylon)
-        case .nylon: return 24      // Acoustic Guitar (nylon)
+        case .clean: return 24  // Acoustic Guitar (nylon)
         }
     }
     
     static func from(_ string: String) -> GuitarToneMode {
-        return GuitarToneMode(rawValue: string.lowercased()) ?? .clean
+        return GuitarToneMode.clean  // 始终返回清音
     }
 }
 
@@ -408,6 +402,8 @@ class AudioEngine: ObservableObject {
     
     func play(midiNote: Int) {
         guard midiNote >= 20 && midiNote <= 127 else { return }
+        
+        log("[AudioEngine] play called: midiNote=\(midiNote), state=\(audioEngine.isRunning)")
 
         // 确保音频引擎始终处于运行状态
         ensureEngineRunning()
