@@ -13,9 +13,9 @@ struct CardView<Content: View>: View {
     
     var body: some View {
         content
-            .padding(12)
+            .padding(UIConstants.paddingLarge)
             .background(.regularMaterial)
-            .cornerRadius(12)
+            .cornerRadius(UIConstants.cornerRadiusMedium)
     }
 }
 
