@@ -379,7 +379,7 @@ class TrainingEngine: ObservableObject {
         } else {
             // 选错答案时增加 error 震动
             HapticManager.notification(.error)
-            // 点错后计入错误，重播目标音让用户重选
+            // 点错后计入错误
             currentStreak = 0
             totalAttempts += 1
             lastAnswerCorrect = false
