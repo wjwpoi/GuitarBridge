@@ -472,9 +472,13 @@ class AudioEngine: ObservableObject {
             return
         }
         
-        let noteRange = midiNote - 24
-        let sampleIndex = noteRange % sampleNames.count
+        // 根据实际 MIDI 音高选择采样，确保不同八度有不同音色
+        let baseMidi = 24  // 采样起始音高
+        let noteIndex = max(0, midiNote - baseMidi)  // 计算相对于起始音高的偏移
+        let sampleIndex = noteIndex % sampleNames.count  // 循环使用可用采样
         let sampleName = sampleNames[sampleIndex]
+        
+        log("[AudioEngine] MIDI note: \(midiNote), noteIndex: \(noteIndex), sampleIndex: \(sampleIndex), sampleName: \(sampleName)")
         
         guard let buffer = sampleBuffers[sampleName] else {
             // Fallback to MIDI sampler if sample not found
@@ -486,6 +490,16 @@ class AudioEngine: ObservableObject {
         }
         
         log("[AudioEngine] Playing sample: \(sampleName) for MIDI note: \(midiNote)")
+        
+        // 计算采样变调率 - 假设采样是基础音高（如C3=48）
+        let baseNote = 48  // 假设采样录制于 C3
+        let noteDelta = Double(midiNote - baseNote)
+        let playbackRate = pow(2.0, noteDelta / 12.0)  // 每半音对应 2^(1/12)
+        
+        log("[AudioEngine] Sample playback rate: \(playbackRate) for note delta: \(noteDelta)")
+        
+        // 设置播放速率以实现变调
+        playerNode.rate = Float(playbackRate)
         
         // 确保音频引擎已启动
         if !audioEngine.isRunning {
