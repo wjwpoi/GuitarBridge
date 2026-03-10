@@ -177,9 +177,9 @@ struct ContentView: View {
                 .tint(.orange)
             }
         }
-        .padding(12)
+        .padding(UIConstants.paddingLarge)
         .background(.regularMaterial)
-        .cornerRadius(12)
+        .cornerRadius(UIConstants.cornerRadiusMedium)
     }
     
     private var fretboardSection: some View {
@@ -333,9 +333,9 @@ struct ContentView: View {
                         .font(.caption)
                     Spacer()
                 }
-                .padding(6)
+                .padding(UIConstants.paddingSmall)
                 .background(.yellow.opacity(0.2))
-                .cornerRadius(6)
+                .cornerRadius(UIConstants.cornerRadiusSmall)
             }
             
             Button {
@@ -360,9 +360,9 @@ struct ContentView: View {
             .animation(.easeInOut(duration: 0.2), value: trainingEngine.state)
             .tint(trainingEngine.state == .idle ? .green : .red)
         }
-        .padding(12)
+        .padding(UIConstants.paddingLarge)
         .background {
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: UIConstants.cornerRadiusMedium)
                 .fill(.white)
                 .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 2)
         }
