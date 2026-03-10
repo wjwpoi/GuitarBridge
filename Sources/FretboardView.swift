@@ -107,23 +107,37 @@ struct FretboardView: View {
         let semitones = (noteIndex - keyIndex + 12) % 12
         let degrees = currentScale.intervals
         
-        // 判断是否为升降音（黑键：1,3,6,8,10）
-        let isSharp = [1, 3, 6, 8, 10].contains(noteIndex)
+        // 找到最接近的音阶度数
+        var closestDegreeIndex = 0
+        var minDiff = 12
         
-        // Find which degree this note is in the scale
-        if let index = degrees.firstIndex(of: semitones) {
-            let degreeNames = ["I", "II", "III", "IV", "V", "VI", "VII"]
-            let degree = index < degreeNames.count ? degreeNames[index] : nil
-            // 添加升降标记
-            if let deg = degree {
-                return isSharp ? "\(deg)#" : deg
+        for (index, degree) in degrees.enumerated() {
+            let diff = abs(semitones - degree)
+            if diff < minDiff {
+                minDiff = diff
+                closestDegreeIndex = index
             }
-            return nil
         }
         
-        // 不在音阶内时显示音名，确保始终有内容显示
-        let noteName = GuitarMath.noteNames[noteIndex]
-        return isSharp ? "\(noteName)#" : noteName
+        let degreeNames = ["I", "II", "III", "IV", "V", "VI", "VII"]
+        guard closestDegreeIndex < degreeNames.count else { return nil }
+        
+        let baseDegree = degreeNames[closestDegreeIndex]
+        let closestSemitone = degrees[closestDegreeIndex]
+        
+        // 判断升降
+        let diff = semitones - closestSemitone
+        if diff == 0 {
+            return baseDegree  // 天然音
+        } else if diff == 1 {
+            return "\(baseDegree)#"  // 升半音
+        } else if diff == -1 {
+            return "\(baseDegree)b"  // 降半音
+        } else if diff > 1 {
+            return "\(baseDegree)#\(diff)"  // 升多个半音
+        } else {
+            return "\(baseDegree)b\(abs(diff))"  // 降多个半音
+        }
     }
     
     private func backgroundColor(for showCorrect: Bool, showIncorrect: Bool, isInScale: Bool) -> Color {
