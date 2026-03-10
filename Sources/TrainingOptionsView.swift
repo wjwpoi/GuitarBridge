@@ -107,8 +107,8 @@ struct TrainingOptionsView: View {
                 .tint(.orange)
             }
         }
-        .padding(12)
+        .padding(UIConstants.paddingLarge)
         .background(.regularMaterial)
-        .cornerRadius(12)
+        .cornerRadius(UIConstants.cornerRadiusMedium)
     }
 }
