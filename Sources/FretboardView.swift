@@ -30,7 +30,7 @@ struct FretboardView: View {
                     fretRow(stringNum: stringNum)
                 }
             }
-            .padding(8)
+            .padding(UIConstants.paddingMedium)
         }
     }
     
