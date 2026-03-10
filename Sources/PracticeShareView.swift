@@ -126,7 +126,7 @@ struct PracticeShareView: View {
                                 .padding()
                                 .background(Color.cyan)
                                 .foregroundColor(.white)
-                                .cornerRadius(12)
+                                .cornerRadius(UIConstants.cornerRadiusMedium)
                         }
                         
                         Button {
@@ -137,7 +137,7 @@ struct PracticeShareView: View {
                                 .padding()
                                 .background(Color.orange)
                                 .foregroundColor(.white)
-                                .cornerRadius(12)
+                                .cornerRadius(UIConstants.cornerRadiusMedium)
                         }
                     }
                     .padding(.horizontal)
