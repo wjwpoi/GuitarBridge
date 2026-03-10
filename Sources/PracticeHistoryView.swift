@@ -68,7 +68,7 @@ struct PracticeHistoryView: View {
                         }
                         .padding()
                         .background(Color(Color.gray.opacity(0.2)))
-                        .cornerRadius(12)
+                        .cornerRadius(UIConstants.cornerRadiusMedium)
                         
                         // Practice time chart
                         VStack(alignment: .leading, spacing: 8) {
@@ -80,7 +80,7 @@ struct PracticeHistoryView: View {
                         }
                         .padding()
                         .background(Color(Color.gray.opacity(0.2)))
-                        .cornerRadius(12)
+                        .cornerRadius(UIConstants.cornerRadiusMedium)
                         
                         // Mode distribution
                         VStack(alignment: .leading, spacing: 8) {
