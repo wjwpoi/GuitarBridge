@@ -54,7 +54,7 @@ struct ContentView: View {
                     statusSection
                 }
                 .padding(.horizontal)
-                .padding(.top, 20)
+                .padding(.top, 40)
                 .padding(.bottom, 40)  // 增加底部间距
             }
             .background(LinearGradient(colors: [.blue.opacity(0.1), .purple.opacity(0.1)], startPoint: .top, endPoint: .bottom))
