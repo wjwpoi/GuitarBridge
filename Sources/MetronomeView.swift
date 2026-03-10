@@ -57,7 +57,7 @@ struct MetronomeView: View {
                                     .frame(width: 70, height: 50)
                                     .background(selectedTimeSignature == sig ? Color.cyan : Color.gray.opacity(0.2))
                                     .foregroundColor(selectedTimeSignature == sig ? .white : .primary)
-                                    .cornerRadius(12)
+                                    .cornerRadius(UIConstants.cornerRadiusMedium)
                             }
                         }
                     }
