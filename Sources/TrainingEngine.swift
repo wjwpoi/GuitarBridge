@@ -385,13 +385,9 @@ class TrainingEngine: ObservableObject {
             lastAnswerCorrect = false
             state = .showingResult(correct: false)
             
-            // 点错后重播目标音
+            // 点错后重置状态，等待用户重选
             Task { @MainActor in
                 try? await Task.sleep(nanoseconds: 500_000_000)
-                self.replayTargetNote()
-                
-                // 等待用户重选，不自动进入下一题
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
                 self.userAnswer = nil
                 self.lastAnswerCorrect = nil
                 self.state = .awaitingAnswer
