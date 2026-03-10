@@ -22,7 +22,7 @@ struct FretboardSectionView: View {
     
     // MARK: - Body
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 12) {
             // 状态指示器
             if trainingEngine.state != .idle {
                 statusIndicator
@@ -96,7 +96,7 @@ struct FretboardSectionView: View {
     
     // MARK: - Replay Buttons
     private var replayButtons: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 16) {
             Button {
                 HapticManager.impact(.light)
                 trainingEngine.replayAnchorNote()
