@@ -63,30 +63,6 @@ struct SettingsView: View {
                     }
                 }
                 
-                // Tone Settings
-                Section("音色") {
-                    Picker("音色模式", selection: $selectedToneMode) {
-                        ForEach(ToneMode.allCases) { mode in
-                            Text(mode.rawValue).tag(mode)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .onChange(of: selectedToneMode) { _, newValue in
-                        audioEngine.setToneMode(newValue.rawValue)
-                    }
-                    
-                    VStack(alignment: .leading) {
-                        Text("切换渐变: \(Int(audioEngine.crossfadeDuration * 1000))ms")
-                        Slider(value: $crossfadeDurationBinding, in: 0.05...0.3, step: 0.05)
-                            .onChange(of: crossfadeDurationBinding) { _, newValue in
-                                audioEngine.crossfadeDuration = newValue
-                            }
-                        Text("范围: 50ms - 300ms")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
-                }
-                
                 // Practice Goals
                 Section("练习目标") {
                     Stepper("每日目标: \(dailyGoal) 题", value: $dailyGoal, in: 5...100, step: 5)
