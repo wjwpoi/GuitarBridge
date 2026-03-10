@@ -201,7 +201,7 @@ struct TunerView: View {
                     .padding()
                     .background(tuner.isListening ? Color.red : Color.cyan)
                     .foregroundColor(.white)
-                    .cornerRadius(12)
+                    .cornerRadius(UIConstants.cornerRadiusMedium)
                 }
                 .padding(.horizontal)
             }
