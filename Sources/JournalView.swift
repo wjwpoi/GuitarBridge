@@ -288,7 +288,7 @@ struct NewJournalEntryView: View {
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
                                 .background(Color.cyan.opacity(0.2))
-                                .cornerRadius(12)
+                                .cornerRadius(UIConstants.cornerRadiusMedium)
                             }
                         }
                     }
