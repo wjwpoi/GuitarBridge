@@ -9,29 +9,15 @@
 /* Begin PBXBuildFile section */
 		00BE11F84235934703635B9A /* ScaleChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C315A455B425AE3486644006 /* ScaleChartView.swift */; };
 		070A0ADE3DBA29446FAE6489 /* FretboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A3FEA09521BCFD8289A6CCF /* FretboardView.swift */; };
-		087AF680A0A9CA1C13138328 /* Elec Rotate.wav in Resources */ = {isa = PBXBuildFile; fileRef = 71013F361615511C82413378 /* Elec Rotate.wav */; };
-		09FB2D0A05D3FCAAC3F66147 /* ElecFlux low.wav in Resources */ = {isa = PBXBuildFile; fileRef = 546C7CFD1ADCCD7658289098 /* ElecFlux low.wav */; };
 		0EC9092D0EA43C5F3478B8DA /* GuitarBridgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B588A89BBBEF1D51FD46FF7 /* GuitarBridgeApp.swift */; };
-		168B5597B815EAA104260DE5 /* AC finger hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = 412F9920F238E9945068826C /* AC finger hi.wav */; };
-		173ACC5DB22FF4DEF379D18B /* tele filter mid.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9E58B2B5006B2E574987A481 /* tele filter mid.wav */; };
 		191DD528CF2BE0BCA1EC0FE5 /* CustomPracticeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C03A6F9F244BD558D58907C /* CustomPracticeManager.swift */; };
-		19E60805557FC61E2E43FE24 /* tele chorus oct.wav in Resources */ = {isa = PBXBuildFile; fileRef = 8818BE4199589E9FBC1DB6A1 /* tele chorus oct.wav */; };
 		1CE154A2A996E97A3C1795FA /* tele clean oct hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = 6DAA26CFFE64FD817740A6ED /* tele clean oct hi.wav */; };
 		1D6F2B5B61B818BEDE370F4D /* Metronome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 386C758329D28111D53CE1D7 /* Metronome.swift */; };
-		1EC8373243E3E6472E7C81B6 /* tele filter oct.wav in Resources */ = {isa = PBXBuildFile; fileRef = 86C67AFA501978794F72AD31 /* tele filter oct.wav */; };
-		20A35BC0424FCFA3C3D1FA08 /* Cloud.wav in Resources */ = {isa = PBXBuildFile; fileRef = BF26CC88442CE7AAD955001D /* Cloud.wav */; };
-		22A13C21C08884075636478F /* CloudStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B7FEF1EA3473A573665CF86 /* CloudStore.swift */; };
-		231F45747A225A431239A4D5 /* Fall.wav in Resources */ = {isa = PBXBuildFile; fileRef = A3BAA08A4B17905CB4ACED1A /* Fall.wav */; };
 		233872AF8F0E50950C2952A1 /* PracticeRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DE2BA251DC6749C146E6F21 /* PracticeRecord.swift */; };
 		238CD58560A93BD25AFE50DA /* CompletionAnimationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED2C3BF4AA027002E25D3DD2 /* CompletionAnimationView.swift */; };
 		2A749B434F23DF2AD90ABB5A /* PracticeStreak.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CEDAD242991DCF42FFECE78 /* PracticeStreak.swift */; };
 		2E345060E9359E5EFD9BD198 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E4A04040FBEED3C943C879EA /* Assets.xcassets */; };
-		38822F2E8FA0A4BFD49E3173 /* tele chorus low.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5AC904B01E30A9755F3588B8 /* tele chorus low.wav */; };
-		38D1CBABD4DE18294E4A59B8 /* AC finger mid.wav in Resources */ = {isa = PBXBuildFile; fileRef = 121E30D55669C0ABFDAF3523 /* AC finger mid.wav */; };
 		43B0FF4BB5E3A2C3D28CA588 /* GuitarMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D968B98AC7D399357EA4AFC7 /* GuitarMathTests.swift */; };
-		45C9D17C2457CE5DD3D2C786 /* tele white hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = B24184ECEC2A50F47FD1AB16 /* tele white hi.wav */; };
-		49E51D28607F0814A6F572C3 /* Flux hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = F2B7480A1583CB4F320855DD /* Flux hi.wav */; };
-		4B2DB3F9FA418FD80E06E594 /* AC pick mid.wav in Resources */ = {isa = PBXBuildFile; fileRef = 02234A306DD12F534168831D /* AC pick mid.wav */; };
 		4B5EBCFDB43BC4F78D4F6282 /* RecordingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83AF531EAD8F6F15F82898F9 /* RecordingManager.swift */; };
 		4B5FCDE4339DB77C58148988 /* AudioEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9964A17470EA289B5F2BA3B1 /* AudioEngineTests.swift */; };
 		5048D1C0C4C70E1C211B7E32 /* PracticeShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D2A8BD0DFC2768F1D564C30 /* PracticeShareView.swift */; };
@@ -40,56 +26,32 @@
 		648D7B2875F3E84F7AD8C6C5 /* StreakManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3E21D5626C0DC1E9D90F485 /* StreakManager.swift */; };
 		674176F311CA20FA4F0B3892 /* TrainingEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BB583E6395AAF64A352AB08 /* TrainingEngine.swift */; };
 		684FD3679926CF97F6141E1D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A124889B5F6FEBD0C1F47EA3 /* SettingsView.swift */; };
-		6BD028D25357170276CEC8EF /* Big Chorus.wav in Resources */ = {isa = PBXBuildFile; fileRef = A67BB92641E9A52768359973 /* Big Chorus.wav */; };
 		6D5C298762385E9A5D61D29D /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 492DF5EC3292659D1A893432 /* HapticManager.swift */; };
-		6D72A5BC88745EF73320AAD9 /* tele filter low.wav in Resources */ = {isa = PBXBuildFile; fileRef = 10FE8FE74750AB2C2B1C59DE /* tele filter low.wav */; };
-		724B638D3AB28D4E6CF64E89 /* tele white mid.wav in Resources */ = {isa = PBXBuildFile; fileRef = 739D1872E06661DD6EEBDFF5 /* tele white mid.wav */; };
-		725817A766D194CA1E29B4B4 /* Crunch.wav in Resources */ = {isa = PBXBuildFile; fileRef = B06F9D175623BE22593CA152 /* Crunch.wav */; };
-		83985465877E7CF602898AC7 /* tele chorus oct hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = 12ACDC09A7FFBB32903A11E7 /* tele chorus oct hi.wav */; };
-		84D64A9F2E0B26CBC47BBB5F /* tele filter hii.wav in Resources */ = {isa = PBXBuildFile; fileRef = 61CB3A8C2686B87C464F2F02 /* tele filter hii.wav */; };
-		87A3E87EFC7253F104D4137A /* tele filter oct hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = 6597299E30A3CB813D1FE9FF /* tele filter oct hi.wav */; };
-		89EBFAF71F209D43B0F61492 /* tele chorus mid.wav in Resources */ = {isa = PBXBuildFile; fileRef = 819DA930293E6365C733BBA7 /* tele chorus mid.wav */; };
-		8AFCCBAEFD0701CCE70D6A11 /* tele white low.wav in Resources */ = {isa = PBXBuildFile; fileRef = 525F2DCE9D396DCAEFE817C6 /* tele white low.wav */; };
 		8C242781B80DAA0DC9B044F1 /* JournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C244E46D22779A774BF6A03 /* JournalView.swift */; };
 		91C67A0FFB440FDD1C0B931B /* tele clean mid.wav in Resources */ = {isa = PBXBuildFile; fileRef = BEB8A2AAD4DC1700218C091D /* tele clean mid.wav */; };
 		91D2CFCEC0F301759B16E3CE /* TrainingOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF8FEF3B36FD51BA1994FDDC /* TrainingOptionsView.swift */; };
-		96A748887D83890DB94455F3 /* tele chorus hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = 7EC3849C46DEA312A700CEA1 /* tele chorus hi.wav */; };
-		9E4E8CFDE452E68B01472E13 /* Drive hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = 0519EF37CD606CDF58577311 /* Drive hi.wav */; };
 		A841D407F17206A45AE066D5 /* PerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0F114E0775CAAA8AA2F79B4 /* PerformanceMonitor.swift */; };
-		AD012973871EA5144EE0CBAB /* tele white oct.wav in Resources */ = {isa = PBXBuildFile; fileRef = 717FB91B6BF3C73FA4F1387F /* tele white oct.wav */; };
 		AE57A8A45E2C57EF202E96C0 /* MetronomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5721E16D7B9C80E92E3A0AA /* MetronomeView.swift */; };
 		B691E7739FADA4F925FDAE15 /* PracticeHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E56669BCEFA1D855B5E1072A /* PracticeHistoryView.swift */; };
 		B81FD1E9B53C8E82D74C43B9 /* UIComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5380199E10153B76EF8C9580 /* UIComponents.swift */; };
 		B93018757D8509AFC39D5EF5 /* TuningManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8568359C9B62D09796874B1B /* TuningManagerTests.swift */; };
 		BEA10CC0DF3269685B3F2701 /* tele clean low.wav in Resources */ = {isa = PBXBuildFile; fileRef = 549AE50FC50AB1E04BB74B36 /* tele clean low.wav */; };
-		BF4B279BEFD7F3027823A307 /* AC pick low.wav in Resources */ = {isa = PBXBuildFile; fileRef = 3A9C0C657485A7C6B68A42F7 /* AC pick low.wav */; };
 		C1FA8AD6A471EEE5C260C86F /* AudioEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB11D5ACE2240019A1C2630C /* AudioEngine.swift */; };
-		C4C6CCA1290AB5F6ACFFA80C /* Flux low.wav in Resources */ = {isa = PBXBuildFile; fileRef = 7E0A85289ED5A7757D6734A1 /* Flux low.wav */; };
 		C762C6FA834553350C98EFF5 /* GuitarMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D11E975EC323A931C053F63 /* GuitarMath.swift */; };
 		CCFCF4C21FE7BFE6EAF5C7CF /* TrainingStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E584B21965AC7C6C3C7ED81 /* TrainingStatusView.swift */; };
 		CF1E6932DB566F78DEB5242F /* FretboardSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DACC7DA2933E88E6909BFD0 /* FretboardSectionView.swift */; };
 		CF66646C5773850D89F750CC /* TrainingEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD5AF02EF082FFC3A8B043FD /* TrainingEngineTests.swift */; };
-		D79B13A52CBD65CDD01149A3 /* Aether.wav in Resources */ = {isa = PBXBuildFile; fileRef = 4B80CA3D9B28A7ACA762825A /* Aether.wav */; };
-		D7AB61C7D4575D90B6001930 /* AC oct hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = 03F8EED84D342410BEFB590E /* AC oct hi.wav */; };
 		D92B5941B6737B3171286721 /* tele clean oct.wav in Resources */ = {isa = PBXBuildFile; fileRef = D889A1B506B0527284C8AF71 /* tele clean oct.wav */; };
 		D9EED256A78FCD96EE6AD83F /* ProManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A96A6182DEADDBC8D23FCCD /* ProManager.swift */; };
 		DA0EBF0923DB1F7868FAC182 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47DA692853689CB41F318350 /* Constants.swift */; };
-		DCA758AB669C6D9CB9A76E44 /* Phaser.wav in Resources */ = {isa = PBXBuildFile; fileRef = B2E9B2F86FFE784E391EF227 /* Phaser.wav */; };
 		DEB03EBB8A85B13526EDF593 /* AchievementManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B690ABD0DA88E4B94CEE927 /* AchievementManager.swift */; };
 		DF2186242E47342BAD59E538 /* TunerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8081D5647BE6318D5AE8674 /* TunerView.swift */; };
-		E4861A05A2043A534C11E221 /* tele white oct hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = CE38C936874DA4F5F123AF8D /* tele white oct hi.wav */; };
 		E71A5297199D155F0950F188 /* DailyGoalManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3DC525092BA37508B7026D8 /* DailyGoalManager.swift */; };
 		E72F0B291FE26364DFAD7505 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64F0926254EE833AB8610492 /* OnboardingView.swift */; };
-		E766DB814073307774F8A0D2 /* ElecFlux hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = DA8505C2367CD19351A4B51F /* ElecFlux hi.wav */; };
 		EA82E24E401B04A8088E6E90 /* tele clean hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = 4190CFC5754E42A103A102F1 /* tele clean hi.wav */; };
-		EC9293E0CBEC802D2B9FDC7D /* Rotate.wav in Resources */ = {isa = PBXBuildFile; fileRef = 8AF66BBF043B7D2122C5314A /* Rotate.wav */; };
-		EE07F5612C69294D5FE67DA1 /* AC finger low.wav in Resources */ = {isa = PBXBuildFile; fileRef = 79BBF6AA02BE1B8E753D07F6 /* AC finger low.wav */; };
-		EE64EC5405C21DCE66D274AD /* AC pick hi.wav in Resources */ = {isa = PBXBuildFile; fileRef = B028BC9235232D4B4D42ECDF /* AC pick hi.wav */; };
 		EFDCD4040B64087100B80843 /* UserPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = D57063E2D5BA61E7F5FBDFA7 /* UserPreferences.swift */; };
-		F1445A62FFC02E0C7CB12642 /* AC oct low.wav in Resources */ = {isa = PBXBuildFile; fileRef = 499AA364B96C2C83D23070EB /* AC oct low.wav */; };
 		F197FE8EB1140038A18328AC /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24583B4E531F418706DEF4A4 /* ContentView.swift */; };
 		F3353510D6A1A308C61D0FCA /* StatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1745C8CB1A5897DA41392E5A /* StatsView.swift */; };
-		F4524A6C42500247C8C92824 /* Drive low.wav in Resources */ = {isa = PBXBuildFile; fileRef = 8AC2F71DD91A3A0B1F7A760D /* Drive low.wav */; };
 		FD4DE8BE984739AB5B4AA7C0 /* FretboardConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE5CDE83D82939624ECFC59 /* FretboardConfiguration.swift */; };
 /* End PBXBuildFile section */
 
@@ -104,16 +66,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		02234A306DD12F534168831D /* AC pick mid.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "AC pick mid.wav"; sourceTree = "<group>"; };
-		03F8EED84D342410BEFB590E /* AC oct hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "AC oct hi.wav"; sourceTree = "<group>"; };
-		0519EF37CD606CDF58577311 /* Drive hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Drive hi.wav"; sourceTree = "<group>"; };
 		0C03A6F9F244BD558D58907C /* CustomPracticeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomPracticeManager.swift; sourceTree = "<group>"; };
 		0C244E46D22779A774BF6A03 /* JournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalView.swift; sourceTree = "<group>"; };
-		10FE8FE74750AB2C2B1C59DE /* tele filter low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele filter low.wav"; sourceTree = "<group>"; };
-		121E30D55669C0ABFDAF3523 /* AC finger mid.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "AC finger mid.wav"; sourceTree = "<group>"; };
-		12ACDC09A7FFBB32903A11E7 /* tele chorus oct hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele chorus oct hi.wav"; sourceTree = "<group>"; };
 		1745C8CB1A5897DA41392E5A /* StatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsView.swift; sourceTree = "<group>"; };
-		1B7FEF1EA3473A573665CF86 /* CloudStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudStore.swift; sourceTree = "<group>"; };
 		1D11E975EC323A931C053F63 /* GuitarMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuitarMath.swift; sourceTree = "<group>"; };
 		1DE2BA251DC6749C146E6F21 /* PracticeRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeRecord.swift; sourceTree = "<group>"; };
 		24583B4E531F418706DEF4A4 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -122,73 +77,42 @@
 		2FE5CDE83D82939624ECFC59 /* FretboardConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FretboardConfiguration.swift; sourceTree = "<group>"; };
 		386C758329D28111D53CE1D7 /* Metronome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Metronome.swift; sourceTree = "<group>"; };
 		3A3FEA09521BCFD8289A6CCF /* FretboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FretboardView.swift; sourceTree = "<group>"; };
-		3A9C0C657485A7C6B68A42F7 /* AC pick low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "AC pick low.wav"; sourceTree = "<group>"; };
-		412F9920F238E9945068826C /* AC finger hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "AC finger hi.wav"; sourceTree = "<group>"; };
 		4190CFC5754E42A103A102F1 /* tele clean hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele clean hi.wav"; sourceTree = "<group>"; };
 		47DA692853689CB41F318350 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		492DF5EC3292659D1A893432 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
-		499AA364B96C2C83D23070EB /* AC oct low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "AC oct low.wav"; sourceTree = "<group>"; };
 		4A96A6182DEADDBC8D23FCCD /* ProManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProManager.swift; sourceTree = "<group>"; };
-		4B80CA3D9B28A7ACA762825A /* Aether.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Aether.wav; sourceTree = "<group>"; };
-		525F2DCE9D396DCAEFE817C6 /* tele white low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele white low.wav"; sourceTree = "<group>"; };
 		5380199E10153B76EF8C9580 /* UIComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIComponents.swift; sourceTree = "<group>"; };
-		546C7CFD1ADCCD7658289098 /* ElecFlux low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "ElecFlux low.wav"; sourceTree = "<group>"; };
 		549AE50FC50AB1E04BB74B36 /* tele clean low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele clean low.wav"; sourceTree = "<group>"; };
-		5AC904B01E30A9755F3588B8 /* tele chorus low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele chorus low.wav"; sourceTree = "<group>"; };
 		5BB583E6395AAF64A352AB08 /* TrainingEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingEngine.swift; sourceTree = "<group>"; };
-		61CB3A8C2686B87C464F2F02 /* tele filter hii.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele filter hii.wav"; sourceTree = "<group>"; };
 		64F0926254EE833AB8610492 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
-		6597299E30A3CB813D1FE9FF /* tele filter oct hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele filter oct hi.wav"; sourceTree = "<group>"; };
 		6DAA26CFFE64FD817740A6ED /* tele clean oct hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele clean oct hi.wav"; sourceTree = "<group>"; };
 		6F3F0FA5AE1220DF09E0327E /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		71013F361615511C82413378 /* Elec Rotate.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Elec Rotate.wav"; sourceTree = "<group>"; };
-		717FB91B6BF3C73FA4F1387F /* tele white oct.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele white oct.wav"; sourceTree = "<group>"; };
-		739D1872E06661DD6EEBDFF5 /* tele white mid.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele white mid.wav"; sourceTree = "<group>"; };
 		742FF509F2FEFF95A83A7A94 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
-		79BBF6AA02BE1B8E753D07F6 /* AC finger low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "AC finger low.wav"; sourceTree = "<group>"; };
 		7B588A89BBBEF1D51FD46FF7 /* GuitarBridgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuitarBridgeApp.swift; sourceTree = "<group>"; };
 		7CEDAD242991DCF42FFECE78 /* PracticeStreak.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeStreak.swift; sourceTree = "<group>"; };
-		7E0A85289ED5A7757D6734A1 /* Flux low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Flux low.wav"; sourceTree = "<group>"; };
 		7E584B21965AC7C6C3C7ED81 /* TrainingStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingStatusView.swift; sourceTree = "<group>"; };
-		7EC3849C46DEA312A700CEA1 /* tele chorus hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele chorus hi.wav"; sourceTree = "<group>"; };
-		819DA930293E6365C733BBA7 /* tele chorus mid.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele chorus mid.wav"; sourceTree = "<group>"; };
 		83AF531EAD8F6F15F82898F9 /* RecordingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingManager.swift; sourceTree = "<group>"; };
 		8568359C9B62D09796874B1B /* TuningManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningManagerTests.swift; sourceTree = "<group>"; };
-		86C67AFA501978794F72AD31 /* tele filter oct.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele filter oct.wav"; sourceTree = "<group>"; };
-		8818BE4199589E9FBC1DB6A1 /* tele chorus oct.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele chorus oct.wav"; sourceTree = "<group>"; };
-		8AC2F71DD91A3A0B1F7A760D /* Drive low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Drive low.wav"; sourceTree = "<group>"; };
-		8AF66BBF043B7D2122C5314A /* Rotate.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Rotate.wav; sourceTree = "<group>"; };
 		9964A17470EA289B5F2BA3B1 /* AudioEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngineTests.swift; sourceTree = "<group>"; };
 		9A377829F01F6FDA42CDB202 /* GuitarBridge.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GuitarBridge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9DACC7DA2933E88E6909BFD0 /* FretboardSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FretboardSectionView.swift; sourceTree = "<group>"; };
-		9E58B2B5006B2E574987A481 /* tele filter mid.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele filter mid.wav"; sourceTree = "<group>"; };
 		A124889B5F6FEBD0C1F47EA3 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		A3BAA08A4B17905CB4ACED1A /* Fall.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Fall.wav; sourceTree = "<group>"; };
-		A67BB92641E9A52768359973 /* Big Chorus.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Big Chorus.wav"; sourceTree = "<group>"; };
-		B028BC9235232D4B4D42ECDF /* AC pick hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "AC pick hi.wav"; sourceTree = "<group>"; };
-		B06F9D175623BE22593CA152 /* Crunch.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Crunch.wav; sourceTree = "<group>"; };
-		B24184ECEC2A50F47FD1AB16 /* tele white hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele white hi.wav"; sourceTree = "<group>"; };
-		B2E9B2F86FFE784E391EF227 /* Phaser.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Phaser.wav; sourceTree = "<group>"; };
 		BB11D5ACE2240019A1C2630C /* AudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
 		BD5AF02EF082FFC3A8B043FD /* TrainingEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingEngineTests.swift; sourceTree = "<group>"; };
 		BEB8A2AAD4DC1700218C091D /* tele clean mid.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele clean mid.wav"; sourceTree = "<group>"; };
-		BF26CC88442CE7AAD955001D /* Cloud.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = Cloud.wav; sourceTree = "<group>"; };
 		C315A455B425AE3486644006 /* ScaleChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScaleChartView.swift; sourceTree = "<group>"; };
 		C5721E16D7B9C80E92E3A0AA /* MetronomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetronomeView.swift; sourceTree = "<group>"; };
-		CE38C936874DA4F5F123AF8D /* tele white oct hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele white oct hi.wav"; sourceTree = "<group>"; };
 		D3DC525092BA37508B7026D8 /* DailyGoalManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyGoalManager.swift; sourceTree = "<group>"; };
 		D3E21D5626C0DC1E9D90F485 /* StreakManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakManager.swift; sourceTree = "<group>"; };
 		D57063E2D5BA61E7F5FBDFA7 /* UserPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPreferences.swift; sourceTree = "<group>"; };
 		D790B5AE42D1BD4EA5D00990 /* GuitarBridgeTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = GuitarBridgeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D889A1B506B0527284C8AF71 /* tele clean oct.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele clean oct.wav"; sourceTree = "<group>"; };
 		D968B98AC7D399357EA4AFC7 /* GuitarMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuitarMathTests.swift; sourceTree = "<group>"; };
-		DA8505C2367CD19351A4B51F /* ElecFlux hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "ElecFlux hi.wav"; sourceTree = "<group>"; };
 		E4A04040FBEED3C943C879EA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E56669BCEFA1D855B5E1072A /* PracticeHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeHistoryView.swift; sourceTree = "<group>"; };
 		E8081D5647BE6318D5AE8674 /* TunerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunerView.swift; sourceTree = "<group>"; };
 		ED2C3BF4AA027002E25D3DD2 /* CompletionAnimationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletionAnimationView.swift; sourceTree = "<group>"; };
 		F0F114E0775CAAA8AA2F79B4 /* PerformanceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceMonitor.swift; sourceTree = "<group>"; };
-		F2B7480A1583CB4F320855DD /* Flux hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "Flux hi.wav"; sourceTree = "<group>"; };
 		FF8FEF3B36FD51BA1994FDDC /* TrainingOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingOptionsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -198,7 +122,6 @@
 			children = (
 				2B690ABD0DA88E4B94CEE927 /* AchievementManager.swift */,
 				BB11D5ACE2240019A1C2630C /* AudioEngine.swift */,
-				1B7FEF1EA3473A573665CF86 /* CloudStore.swift */,
 				ED2C3BF4AA027002E25D3DD2 /* CompletionAnimationView.swift */,
 				47DA692853689CB41F318350 /* Constants.swift */,
 				24583B4E531F418706DEF4A4 /* ContentView.swift */,
@@ -237,14 +160,6 @@
 		56BA9FEBD07E97A6BBD63697 /* Acoustic */ = {
 			isa = PBXGroup;
 			children = (
-				412F9920F238E9945068826C /* AC finger hi.wav */,
-				79BBF6AA02BE1B8E753D07F6 /* AC finger low.wav */,
-				121E30D55669C0ABFDAF3523 /* AC finger mid.wav */,
-				03F8EED84D342410BEFB590E /* AC oct hi.wav */,
-				499AA364B96C2C83D23070EB /* AC oct low.wav */,
-				B028BC9235232D4B4D42ECDF /* AC pick hi.wav */,
-				3A9C0C657485A7C6B68A42F7 /* AC pick low.wav */,
-				02234A306DD12F534168831D /* AC pick mid.wav */,
 			);
 			path = Acoustic;
 			sourceTree = "<group>";
@@ -252,20 +167,6 @@
 		63563D1512C5C2E37D618457 /* SAUCE */ = {
 			isa = PBXGroup;
 			children = (
-				4B80CA3D9B28A7ACA762825A /* Aether.wav */,
-				A67BB92641E9A52768359973 /* Big Chorus.wav */,
-				BF26CC88442CE7AAD955001D /* Cloud.wav */,
-				B06F9D175623BE22593CA152 /* Crunch.wav */,
-				0519EF37CD606CDF58577311 /* Drive hi.wav */,
-				8AC2F71DD91A3A0B1F7A760D /* Drive low.wav */,
-				71013F361615511C82413378 /* Elec Rotate.wav */,
-				DA8505C2367CD19351A4B51F /* ElecFlux hi.wav */,
-				546C7CFD1ADCCD7658289098 /* ElecFlux low.wav */,
-				A3BAA08A4B17905CB4ACED1A /* Fall.wav */,
-				F2B7480A1583CB4F320855DD /* Flux hi.wav */,
-				7E0A85289ED5A7757D6734A1 /* Flux low.wav */,
-				B2E9B2F86FFE784E391EF227 /* Phaser.wav */,
-				8AF66BBF043B7D2122C5314A /* Rotate.wav */,
 			);
 			path = SAUCE;
 			sourceTree = "<group>";
@@ -283,26 +184,11 @@
 		74AC950F2F96FE1E79C5EEF9 /* Telecaster */ = {
 			isa = PBXGroup;
 			children = (
-				7EC3849C46DEA312A700CEA1 /* tele chorus hi.wav */,
-				5AC904B01E30A9755F3588B8 /* tele chorus low.wav */,
-				819DA930293E6365C733BBA7 /* tele chorus mid.wav */,
-				12ACDC09A7FFBB32903A11E7 /* tele chorus oct hi.wav */,
-				8818BE4199589E9FBC1DB6A1 /* tele chorus oct.wav */,
 				4190CFC5754E42A103A102F1 /* tele clean hi.wav */,
 				549AE50FC50AB1E04BB74B36 /* tele clean low.wav */,
 				BEB8A2AAD4DC1700218C091D /* tele clean mid.wav */,
 				6DAA26CFFE64FD817740A6ED /* tele clean oct hi.wav */,
 				D889A1B506B0527284C8AF71 /* tele clean oct.wav */,
-				61CB3A8C2686B87C464F2F02 /* tele filter hii.wav */,
-				10FE8FE74750AB2C2B1C59DE /* tele filter low.wav */,
-				9E58B2B5006B2E574987A481 /* tele filter mid.wav */,
-				6597299E30A3CB813D1FE9FF /* tele filter oct hi.wav */,
-				86C67AFA501978794F72AD31 /* tele filter oct.wav */,
-				B24184ECEC2A50F47FD1AB16 /* tele white hi.wav */,
-				525F2DCE9D396DCAEFE817C6 /* tele white low.wav */,
-				739D1872E06661DD6EEBDFF5 /* tele white mid.wav */,
-				CE38C936874DA4F5F123AF8D /* tele white oct hi.wav */,
-				717FB91B6BF3C73FA4F1387F /* tele white oct.wav */,
 			);
 			path = Telecaster;
 			sourceTree = "<group>";
@@ -438,50 +324,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				168B5597B815EAA104260DE5 /* AC finger hi.wav in Resources */,
-				EE07F5612C69294D5FE67DA1 /* AC finger low.wav in Resources */,
-				38D1CBABD4DE18294E4A59B8 /* AC finger mid.wav in Resources */,
-				D7AB61C7D4575D90B6001930 /* AC oct hi.wav in Resources */,
-				F1445A62FFC02E0C7CB12642 /* AC oct low.wav in Resources */,
-				EE64EC5405C21DCE66D274AD /* AC pick hi.wav in Resources */,
-				BF4B279BEFD7F3027823A307 /* AC pick low.wav in Resources */,
-				4B2DB3F9FA418FD80E06E594 /* AC pick mid.wav in Resources */,
-				D79B13A52CBD65CDD01149A3 /* Aether.wav in Resources */,
 				2E345060E9359E5EFD9BD198 /* Assets.xcassets in Resources */,
-				6BD028D25357170276CEC8EF /* Big Chorus.wav in Resources */,
-				20A35BC0424FCFA3C3D1FA08 /* Cloud.wav in Resources */,
-				725817A766D194CA1E29B4B4 /* Crunch.wav in Resources */,
-				9E4E8CFDE452E68B01472E13 /* Drive hi.wav in Resources */,
-				F4524A6C42500247C8C92824 /* Drive low.wav in Resources */,
-				087AF680A0A9CA1C13138328 /* Elec Rotate.wav in Resources */,
-				E766DB814073307774F8A0D2 /* ElecFlux hi.wav in Resources */,
-				09FB2D0A05D3FCAAC3F66147 /* ElecFlux low.wav in Resources */,
-				231F45747A225A431239A4D5 /* Fall.wav in Resources */,
-				49E51D28607F0814A6F572C3 /* Flux hi.wav in Resources */,
-				C4C6CCA1290AB5F6ACFFA80C /* Flux low.wav in Resources */,
-				DCA758AB669C6D9CB9A76E44 /* Phaser.wav in Resources */,
 				56668AD0F8E22630C57D70D7 /* PrivacyInfo.xcprivacy in Resources */,
-				EC9293E0CBEC802D2B9FDC7D /* Rotate.wav in Resources */,
-				96A748887D83890DB94455F3 /* tele chorus hi.wav in Resources */,
-				38822F2E8FA0A4BFD49E3173 /* tele chorus low.wav in Resources */,
-				89EBFAF71F209D43B0F61492 /* tele chorus mid.wav in Resources */,
-				83985465877E7CF602898AC7 /* tele chorus oct hi.wav in Resources */,
-				19E60805557FC61E2E43FE24 /* tele chorus oct.wav in Resources */,
 				EA82E24E401B04A8088E6E90 /* tele clean hi.wav in Resources */,
 				BEA10CC0DF3269685B3F2701 /* tele clean low.wav in Resources */,
 				91C67A0FFB440FDD1C0B931B /* tele clean mid.wav in Resources */,
 				1CE154A2A996E97A3C1795FA /* tele clean oct hi.wav in Resources */,
 				D92B5941B6737B3171286721 /* tele clean oct.wav in Resources */,
-				84D64A9F2E0B26CBC47BBB5F /* tele filter hii.wav in Resources */,
-				6D72A5BC88745EF73320AAD9 /* tele filter low.wav in Resources */,
-				173ACC5DB22FF4DEF379D18B /* tele filter mid.wav in Resources */,
-				87A3E87EFC7253F104D4137A /* tele filter oct hi.wav in Resources */,
-				1EC8373243E3E6472E7C81B6 /* tele filter oct.wav in Resources */,
-				45C9D17C2457CE5DD3D2C786 /* tele white hi.wav in Resources */,
-				8AFCCBAEFD0701CCE70D6A11 /* tele white low.wav in Resources */,
-				724B638D3AB28D4E6CF64E89 /* tele white mid.wav in Resources */,
-				E4861A05A2043A534C11E221 /* tele white oct hi.wav in Resources */,
-				AD012973871EA5144EE0CBAB /* tele white oct.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -494,7 +343,6 @@
 			files = (
 				DEB03EBB8A85B13526EDF593 /* AchievementManager.swift in Sources */,
 				C1FA8AD6A471EEE5C260C86F /* AudioEngine.swift in Sources */,
-				22A13C21C08884075636478F /* CloudStore.swift in Sources */,
 				238CD58560A93BD25AFE50DA /* CompletionAnimationView.swift in Sources */,
 				DA0EBF0923DB1F7868FAC182 /* Constants.swift in Sources */,
 				F197FE8EB1140038A18328AC /* ContentView.swift in Sources */,
