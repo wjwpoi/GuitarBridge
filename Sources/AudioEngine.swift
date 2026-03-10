@@ -92,6 +92,7 @@ class AudioEngine: ObservableObject {
     private var sampleBuffers: [String: AVAudioPCMBuffer] = [:]
     private var sampleNames: [String] = []
     private var lastPlayedNote: Int? = nil  // 跟踪最后播放的音符，用于停止
+    private var playbackTask: Task<Void, Never>? = nil  // 用于取消之前的播放任务
     
     private let sampleDirectory = "@RJPASIN 1SHOT KIT"
     
@@ -405,6 +406,10 @@ class AudioEngine: ObservableObject {
         
         log("[AudioEngine] play called: midiNote=\(midiNote), state=\(audioEngine.isRunning)")
 
+        // 取消之前的播放任务，确保新播放立即开始
+        playbackTask?.cancel()
+        playbackTask = nil
+        
         // 确保音频引擎始终处于运行状态
         ensureEngineRunning()
         
@@ -545,10 +550,12 @@ class AudioEngine: ObservableObject {
         isPlaying = true
         
         // 采样播放完成后自动停止（使用固定1.5秒，避免受rate影响）
-        Task {
+        playbackTask = Task {
             try? await Task.sleep(nanoseconds: PracticeConstants.Audio.samplePlaybackDuration)
-            playerNode.stop()
-            isPlaying = false
+            if !Task.isCancelled {
+                playerNode.stop()
+                isPlaying = false
+            }
         }
     }
     

@@ -36,6 +36,8 @@ struct FretboardSectionView: View {
                 isDisabled: trainingEngine.state != .awaitingAnswer,
                 selectedPosition: trainingEngine.userAnswer,
                 lastAnswerCorrect: trainingEngine.lastAnswerCorrect,
+                anchorPosition: trainingEngine.anchorNote,
+                targetPosition: trainingEngine.targetNote,
                 showDegrees: showDegrees,
                 showScale: showScale,
                 currentScale: selectedScale,

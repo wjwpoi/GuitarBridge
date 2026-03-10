@@ -7,6 +7,8 @@ struct FretboardView: View {
     let isDisabled: Bool
     let selectedPosition: FretPosition?
     let lastAnswerCorrect: Bool?
+    let anchorPosition: FretPosition?  // 锚点位置，用于播放时高亮
+    let targetPosition: FretPosition?  // 目标位置，用于播放时高亮
     var showDegrees: Bool = false
     var showScale: Bool = false
     var currentScale: ScaleType = .major
@@ -54,6 +56,8 @@ struct FretboardView: View {
         let isSelected = selectedPosition?.string == position.string && selectedPosition?.fret == position.fret
         let showCorrect = isSelected && lastAnswerCorrect == true
         let showIncorrect = isSelected && lastAnswerCorrect == false
+        let showAnchor = anchorPosition?.string == position.string && anchorPosition?.fret == position.fret
+        let showTarget = targetPosition?.string == position.string && targetPosition?.fret == position.fret
         let isInScale = isNoteInScale(midi % 12)
         
         // 显示内容根据 showDegrees 和 showNoteNames 决定
@@ -84,7 +88,7 @@ struct FretboardView: View {
         } label: {
             ZStack {
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(backgroundColor(for: showCorrect, showIncorrect: showIncorrect, isInScale: isInScale))
+                    .fill(backgroundColor(for: showCorrect, showIncorrect: showIncorrect, showAnchor: showAnchor, showTarget: showTarget, isInScale: isInScale))
                 
                 if let text = displayText {
                     Text(text)
@@ -140,11 +144,17 @@ struct FretboardView: View {
         }
     }
     
-    private func backgroundColor(for showCorrect: Bool, showIncorrect: Bool, isInScale: Bool) -> Color {
+    private func backgroundColor(for showCorrect: Bool, showIncorrect: Bool, showAnchor: Bool, showTarget: Bool, isInScale: Bool) -> Color {
         if showCorrect {
             return theme.accentGlowColor.opacity(0.8)
         } else if showIncorrect {
             return Color.red.opacity(0.8)
+        } else if showAnchor {
+            // 锚点音高亮 - 绿色
+            return Color.green.opacity(0.6)
+        } else if showTarget {
+            // 目标音高亮 - 橙色
+            return Color.orange.opacity(0.6)
         } else if showScale && isInScale {
             // 显示音阶时使用蓝色高亮
             return Color.blue.opacity(0.5)
