@@ -89,6 +89,8 @@ struct FretboardView: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(backgroundColor(for: showCorrect, showIncorrect: showIncorrect, showAnchor: showAnchor, showTarget: showTarget, isInScale: isInScale))
+                    .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: showAnchor)
+                    .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: showTarget)
                 
                 if let text = displayText {
                     Text(text)

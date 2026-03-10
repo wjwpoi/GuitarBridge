@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -86,7 +86,7 @@
 		5BB583E6395AAF64A352AB08 /* TrainingEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingEngine.swift; sourceTree = "<group>"; };
 		64F0926254EE833AB8610492 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		6DAA26CFFE64FD817740A6ED /* tele clean oct hi.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "tele clean oct hi.wav"; sourceTree = "<group>"; };
-		6F3F0FA5AE1220DF09E0327E /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		6F3F0FA5AE1220DF09E0327E /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		742FF509F2FEFF95A83A7A94 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		7B588A89BBBEF1D51FD46FF7 /* GuitarBridgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuitarBridgeApp.swift; sourceTree = "<group>"; };
 		7CEDAD242991DCF42FFECE78 /* PracticeStreak.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeStreak.swift; sourceTree = "<group>"; };
@@ -157,20 +157,6 @@
 			path = Sources;
 			sourceTree = "<group>";
 		};
-		56BA9FEBD07E97A6BBD63697 /* Acoustic */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Acoustic;
-			sourceTree = "<group>";
-		};
-		63563D1512C5C2E37D618457 /* SAUCE */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = SAUCE;
-			sourceTree = "<group>";
-		};
 		662F800B2041131CEC592ADE /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -205,8 +191,6 @@
 		AF596983D2ABC7C49609F271 /* @RJPASIN 1SHOT KIT */ = {
 			isa = PBXGroup;
 			children = (
-				56BA9FEBD07E97A6BBD63697 /* Acoustic */,
-				63563D1512C5C2E37D618457 /* SAUCE */,
 				74AC950F2F96FE1E79C5EEF9 /* Telecaster */,
 			);
 			path = "@RJPASIN 1SHOT KIT";
@@ -309,7 +293,6 @@
 			);
 			mainGroup = B9D7F5E6E695C2AEBBB69AAB;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (

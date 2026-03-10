@@ -72,6 +72,12 @@ struct ContentView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView(audioEngine: audioEngine)
             }
+            .onDisappear {
+                // 页面消失时停止训练
+                if trainingEngine.state != .idle {
+                    trainingEngine.reset()
+                }
+            }
             .onReceive(trainingEngine.$state) { newState in
                 if newState == .completed {
                     showCompletionAnimation = true
@@ -326,7 +332,8 @@ struct ContentView: View {
                 }
             }
             
-            // Show hint when answer is wrong
+            // 隐藏答案提示（按需求不显示正确答案）
+            /*
             if trainingEngine.lastAnswerCorrect == false, let correct = trainingEngine.targetNote {
                 HStack {
                     Image(systemName: "lightbulb.fill")
@@ -339,6 +346,7 @@ struct ContentView: View {
                 .background(.yellow.opacity(0.2))
                 .cornerRadius(UIConstants.cornerRadiusSmall)
             }
+            */
             
             Button {
                 if trainingEngine.state == .idle {

@@ -33,7 +33,7 @@ struct FretboardSectionView: View {
                 tuning: selectedTuning,
                 theme: theme,
                 onFretTapped: onFretTapped,
-                isDisabled: trainingEngine.state != .awaitingAnswer,
+                isDisabled: trainingEngine.state == .playingAnchor || trainingEngine.state == .playingTarget,
                 selectedPosition: trainingEngine.userAnswer,
                 lastAnswerCorrect: trainingEngine.lastAnswerCorrect,
                 anchorPosition: trainingEngine.anchorNote,
