@@ -107,14 +107,23 @@ struct FretboardView: View {
         let semitones = (noteIndex - keyIndex + 12) % 12
         let degrees = currentScale.intervals
         
+        // 判断是否为升降音（黑键：1,3,6,8,10）
+        let isSharp = [1, 3, 6, 8, 10].contains(noteIndex)
+        
         // Find which degree this note is in the scale
         if let index = degrees.firstIndex(of: semitones) {
             let degreeNames = ["I", "II", "III", "IV", "V", "VI", "VII"]
-            return index < degreeNames.count ? degreeNames[index] : nil
+            let degree = index < degreeNames.count ? degreeNames[index] : nil
+            // 添加升降标记
+            if let deg = degree {
+                return isSharp ? "\(deg)#" : deg
+            }
+            return nil
         }
         
         // 不在音阶内时显示音名，确保始终有内容显示
-        return GuitarMath.noteNames[noteIndex]
+        let noteName = GuitarMath.noteNames[noteIndex]
+        return isSharp ? "\(noteName)#" : noteName
     }
     
     private func backgroundColor(for showCorrect: Bool, showIncorrect: Bool, isInScale: Bool) -> Color {
