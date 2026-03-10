@@ -104,15 +104,15 @@ struct MetronomeView: View {
                 } label: {
                     Text("Tap Tempo")
                         .font(.headline)
-                        .padding(.horizontal, 32)
-                        .padding(.vertical, 12)
+                        .padding(.horizontal, UIConstants.paddingXXLarge)
+                        .padding(.vertical, UIConstants.paddingLarge)
                         .background(Color.gray.opacity(0.2))
-                        .cornerRadius(8)
+                        .cornerRadius(UIConstants.cornerRadiusMedium)
                 }
                 
                 Spacer()
             }
-            .padding(.top, 24)
+            .padding(.top, UIConstants.paddingXLarge)
             .navigationTitle("节拍器")
             .toolbar { ToolbarItem(placement: .principal) { Text("") } }
             .toolbar {
