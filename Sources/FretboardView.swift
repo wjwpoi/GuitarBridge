@@ -51,7 +51,7 @@ struct FretboardView: View {
         
         // Use GuitarMath.fretPosition for validated FretPosition creation
         let position = GuitarMath.fretPosition(string: string, fret: fret, tuning: tuning)
-        let isSelected = selectedPosition?.midiNote == position.midiNote
+        let isSelected = selectedPosition?.string == position.string && selectedPosition?.fret == position.fret
         let showCorrect = isSelected && lastAnswerCorrect == true
         let showIncorrect = isSelected && lastAnswerCorrect == false
         let isInScale = isNoteInScale(midi % 12)

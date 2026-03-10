@@ -490,13 +490,12 @@ class AudioEngine: ObservableObject {
             return
         }
         
-        // 根据实际 MIDI 音高选择采样，确保不同八度有不同音色
-        let baseMidi = 24  // 采样起始音高
-        let noteIndex = max(0, midiNote - baseMidi)  // 计算相对于起始音高的偏移
-        let sampleIndex = noteIndex % sampleNames.count  // 循环使用可用采样
+        // 使用音高类（0-11）选择采样，确保同音高使用相同样本
+        let noteClass = midiNote % 12
+        let sampleIndex = noteClass % sampleNames.count  // 循环使用可用采样
         let sampleName = sampleNames[sampleIndex]
         
-        log("[AudioEngine] MIDI note: \(midiNote), noteIndex: \(noteIndex), sampleIndex: \(sampleIndex), sampleName: \(sampleName)")
+        log("[AudioEngine] MIDI note: \(midiNote), noteClass: \(noteClass), sampleIndex: \(sampleIndex), sampleName: \(sampleName)")
         
         guard let buffer = sampleBuffers[sampleName] else {
             // Fallback to MIDI sampler if sample not found
