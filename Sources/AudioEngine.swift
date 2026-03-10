@@ -97,6 +97,7 @@ class AudioEngine: ObservableObject {
     private var currentVelocity: UInt8 = 80
     private var sampleBuffers: [String: AVAudioPCMBuffer] = [:]
     private var sampleNames: [String] = []
+    private var lastPlayedNote: Int? = nil  // 跟踪最后播放的音符，用于停止
     
     private let sampleDirectory = "@RJPASIN 1SHOT KIT"
     
@@ -451,12 +452,22 @@ class AudioEngine: ObservableObject {
             return
         }
         
-        sampler.startNote(UInt8(midiNote), withVelocity: currentVelocity, onChannel: 0)
+        // 停止之前播放的音符
+        if let lastNote = lastPlayedNote {
+            for sampler in toneSamplers.values {
+                sampler.stopNote(UInt8(lastNote), onChannel: 0)
+            }
+            lastPlayedNote = nil
+        }
         
-        // 1秒后自动停止音符（模拟音符释放）
+        sampler.startNote(UInt8(midiNote), withVelocity: currentVelocity, onChannel: 0)
+        lastPlayedNote = midiNote
+        
+        // 1.5秒后自动停止音符（固定时长）
         Task {
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
             sampler.stopNote(UInt8(midiNote), onChannel: 0)
+            lastPlayedNote = nil
         }
     }
     
@@ -466,8 +477,15 @@ class AudioEngine: ObservableObject {
         guard !sampleBuffers.isEmpty else {
             // Fallback to sampler if no samples
             log("[AudioEngine] No samples, falling back to MIDI sampler")
+            // 停止之前的音符
+            if let lastNote = lastPlayedNote {
+                for sampler in toneSamplers.values {
+                    sampler.stopNote(UInt8(lastNote), onChannel: 0)
+                }
+            }
             if let sampler = toneSamplers[activeTone] {
                 sampler.startNote(UInt8(midiNote), withVelocity: currentVelocity, onChannel: 0)
+                lastPlayedNote = midiNote
             }
             return
         }
@@ -512,10 +530,17 @@ class AudioEngine: ObservableObject {
             }
         }
         
+        // 先停止之前播放的声音，确保立刻切换
+        if playerNode.isPlaying {
+            playerNode.stop()
+            log("[AudioEngine] Stopped previous playback")
+        }
+        
         playerNode.volume = volume  // 应用音量
         log("[AudioEngine] Playing sample: \(sampleName), volume: \(volume)")
         
-        playerNode.scheduleBuffer(buffer, at: nil, options: [], completionHandler: nil)
+        // 使用 .interrupts 选项确保新播放会中断之前的
+        playerNode.scheduleBuffer(buffer, at: nil, options: .interrupts, completionHandler: nil)
         
         if !playerNode.isPlaying {
             playerNode.play()
@@ -524,10 +549,9 @@ class AudioEngine: ObservableObject {
         
         isPlaying = true
         
-        // 采样播放完成后自动停止
+        // 采样播放完成后自动停止（使用固定1.5秒，避免受rate影响）
         Task {
-            let duration = Double(buffer.frameLength) / buffer.format.sampleRate
-            try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+            try? await Task.sleep(nanoseconds: 1_500_000_000)  // 1.5秒固定时长
             playerNode.stop()
             isPlaying = false
         }
