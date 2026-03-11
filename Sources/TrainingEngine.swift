@@ -396,6 +396,7 @@ class TrainingEngine: ObservableObject {
         anchorNote = nil
         targetNote = nil
         userAnswer = nil
+        previousTargetPosition = nil
         completedQuestions = 0
     }
     
