@@ -156,6 +156,7 @@ class TrainingEngine: ObservableObject {
     private var audioEngine: AudioEngine?
     private var playbackSessionToken: Int = 0
     private var currentTuning: Tuning = .standard
+    private var previousTargetPosition: FretPosition?
     var sleep: @Sendable (UInt64) async -> Void = { duration in
         try? await Task.sleep(nanoseconds: duration)
     }
@@ -248,122 +249,86 @@ class TrainingEngine: ObservableObject {
         playAnchorNotes(sessionToken: playbackSessionToken)
     }
     
-    private func generateQuestion() {
-        // Get the MIDI note index for current key
-        let keyIndex = getKeyMidiIndex()
-        
-        // Use a rotating pattern to ensure more even string distribution
-        // Combine random with round-robin to avoid bias
-        let randomString = Int.random(in: 1...6)
-        
-        // Progressive difficulty: more frets as accuracy improves
-        let maxFret = 8 + (correctCount * 2)
-        let baseFret = Int.random(in: 2...min(maxFret, 15))
-        
-        // Generate anchor note within current key
-        let keyNotesInRange = getNotesForKey(keyIndex, string: randomString, fret: baseFret)
-        var anchorMidi = keyNotesInRange.randomElement() ?? 64
-        
-        // Fallback if no notes in range - use any note
-        if anchorMidi == 64 && keyNotesInRange.isEmpty {
-            anchorMidi = 40 + Int.random(in: 0...36)  // E2 to E5
-        }
-        
-        // Also set anchorNote for audio playback
+    private func visibleFretRange() -> ClosedRange<Int> {
+        let maxVisibleFret = min(12, 8 + (correctCount * 2))
+        return 0...max(4, maxVisibleFret)
+    }
+
+    private func candidatePositions(in fretRange: ClosedRange<Int>) -> [FretPosition] {
+        var positions: [FretPosition] = []
         for string in 1...6 {
-            for fret in 0...15 {
-                let pos = GuitarMath.fretPosition(string: string, fret: fret, tuning: currentTuning)
-                if pos.midiNote == anchorMidi {
-                    anchorNote = pos
-                    break
-                }
+            for fret in fretRange {
+                positions.append(GuitarMath.fretPosition(string: string, fret: fret, tuning: currentTuning))
             }
-            if anchorNote?.midiNote == anchorMidi { break }
         }
-        
-        // If still no anchorNote, create one
-        if anchorNote == nil {
-            anchorNote = GuitarMath.fretPosition(string: randomString, fret: baseFret, tuning: currentTuning)
-            anchorMidi = anchorNote?.midiNote ?? 64
+        return positions
+    }
+
+    private func weightedAnchorCandidates(from positions: [FretPosition], keyIndex: Int) -> [FretPosition] {
+        let scaleIntervals = Set(scaleType.intervals)
+        let previous = previousTargetPosition
+        return positions.filter { position in
+            let semitonesFromKey = (position.midiNote % 12 - keyIndex + 12) % 12
+            guard scaleIntervals.contains(semitonesFromKey) else { return false }
+            guard let previous else { return true }
+            return abs(position.fret - previous.fret) <= 4 && abs(position.string - previous.string) <= 2
         }
-        
-        // Calculate which scale degree the anchor note is relative to currentKey
-        let anchorNoteIndex = anchorMidi % 12
-        let semitonesFromKey = (anchorNoteIndex - keyIndex + 12) % 12
+    }
+
+    private func pickAnchor(from visiblePositions: [FretPosition], keyIndex: Int) -> FretPosition {
+        let nearbyCandidates = weightedAnchorCandidates(from: visiblePositions, keyIndex: keyIndex)
+        let fallbackCandidates = visiblePositions.filter {
+            let semitonesFromKey = ($0.midiNote % 12 - keyIndex + 12) % 12
+            return scaleType.intervals.contains(semitonesFromKey)
+        }
+        if !nearbyCandidates.isEmpty && Int.random(in: 0..<100) < 75 {
+            return nearbyCandidates.randomElement() ?? visiblePositions[0]
+        }
+        return (fallbackCandidates.randomElement() ?? visiblePositions.randomElement()) ?? GuitarMath.fretPosition(string: 3, fret: 5, tuning: currentTuning)
+    }
+
+    private func pickTarget(for anchor: FretPosition, in visiblePositions: [FretPosition], keyIndex: Int) -> FretPosition {
         let scaleIntervals = scaleType.intervals
-        
-        // Find the scale degree of the anchor note
-        if let anchorDegreeIndex = scaleIntervals.firstIndex(of: semitonesFromKey) {
-            // Pick a random target degree (different from anchor)
-            let availableDegrees = (0..<scaleIntervals.count).filter { $0 != anchorDegreeIndex }
-            let targetDegreeIndex = availableDegrees.randomElement() ?? 0
-            let targetSemitones = scaleIntervals[targetDegreeIndex]
-            
-            // Calculate the interval between anchor and target degrees
-            currentInterval = abs(targetSemitones - semitonesFromKey)
-            
-            // Calculate target MIDI note based on scale degrees
-            var targetMidi: Int
-            if targetSemitones > semitonesFromKey {
-                targetMidi = anchorMidi + (targetSemitones - semitonesFromKey)
-            } else if targetSemitones < semitonesFromKey {
-                targetMidi = anchorMidi - (semitonesFromKey - targetSemitones)
-            } else {
-                // Same degree - pick another
-                let newDegree = (targetDegreeIndex + 1) % scaleIntervals.count
-                targetMidi = anchorMidi + scaleIntervals[newDegree] - semitonesFromKey
-            }
-            
-            var adjustedMidi = targetMidi
-            
-            // Keep target note in playable range
-            while adjustedMidi > 76 || adjustedMidi < 40 {
-                if adjustedMidi > 76 { adjustedMidi -= 12 }
-                if adjustedMidi < 40 { adjustedMidi += 12 }
-            }
-            
-            // Find target note, preferring the same string or adjacent strings
-            var preferredStrings = [randomString, randomString - 1, randomString + 1, 7 - randomString]
-                .filter { $0 >= 1 && $0 <= 6 }
-            preferredStrings = Array(Set(preferredStrings))
-            
-            for string in preferredStrings {
-                for fret in 0...15 {
-                    let pos = GuitarMath.fretPosition(string: string, fret: fret, tuning: currentTuning)
-                    if pos.midiNote == adjustedMidi {
-                        targetNote = pos
-                        break
-                    }
-                }
-                if targetNote != nil { break }
-            }
-            
-            // Fallback: search all strings
-            if targetNote == nil {
-                for string in 1...6 {
-                    for fret in 0...15 {
-                        let pos = GuitarMath.fretPosition(string: string, fret: fret, tuning: currentTuning)
-                        if pos.midiNote == adjustedMidi {
-                            targetNote = pos
-                            break
-                        }
-                    }
-                    if targetNote != nil { break }
-                }
-            }
-            
-            // Final fallback
-            if targetNote == nil {
-                let fallbackInterval = scaleIntervals.randomElement() ?? 0
-                targetNote = GuitarMath.fretPosition(string: randomString, fret: min(baseFret + fallbackInterval, 15), tuning: currentTuning)
-            }
-        } else {
-            // Anchor not in scale - use simple fallback
-            let fallbackInterval = scaleIntervals.randomElement() ?? 0
-            anchorNote = GuitarMath.fretPosition(string: randomString, fret: baseFret, tuning: currentTuning)
-            targetNote = GuitarMath.fretPosition(string: randomString, fret: min(baseFret + fallbackInterval, 15), tuning: currentTuning)
-            currentInterval = fallbackInterval
+        let semitonesFromKey = (anchor.midiNote % 12 - keyIndex + 12) % 12
+        let anchorDegreeIndex = scaleIntervals.firstIndex(of: semitonesFromKey) ?? 0
+        let availableDegrees = (0..<scaleIntervals.count).filter { $0 != anchorDegreeIndex }
+        let targetDegreeIndex = availableDegrees.randomElement() ?? 0
+        let targetSemitones = scaleIntervals[targetDegreeIndex]
+        currentInterval = abs(targetSemitones - semitonesFromKey)
+
+        let candidates = visiblePositions.filter { position in
+            guard position != anchor else { return false }
+            let candidateSemitones = (position.midiNote % 12 - keyIndex + 12) % 12
+            guard candidateSemitones == targetSemitones else { return false }
+            return abs(position.fret - anchor.fret) <= 5 && abs(position.string - anchor.string) <= 2
         }
+
+        if !candidates.isEmpty && Int.random(in: 0..<100) < 80 {
+            return candidates.min {
+                let left = abs($0.fret - anchor.fret) + abs($0.string - anchor.string) * 2
+                let right = abs($1.fret - anchor.fret) + abs($1.string - anchor.string) * 2
+                return left < right
+            } ?? candidates[0]
+        }
+
+        let relaxedCandidates = visiblePositions.filter { position in
+            guard position != anchor else { return false }
+            let candidateSemitones = (position.midiNote % 12 - keyIndex + 12) % 12
+            return candidateSemitones == targetSemitones
+        }
+        return relaxedCandidates.randomElement() ?? anchor
+    }
+    
+    private func generateQuestion() {
+        let keyIndex = getKeyMidiIndex()
+        let visiblePositions = candidatePositions(in: visibleFretRange())
+
+        let anchor = pickAnchor(from: visiblePositions, keyIndex: keyIndex)
+        let target = pickTarget(for: anchor, in: visiblePositions, keyIndex: keyIndex)
+
+        anchorNote = anchor
+        targetNote = target
+        previousTargetPosition = target
     }
     
     func submitAnswer(_ position: FretPosition) {
