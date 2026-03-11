@@ -95,9 +95,17 @@ class AudioEngine: ObservableObject {
     private var playbackTask: Task<Void, Never>? = nil  // 用于取消之前的播放任务
     
     private let sampleDirectory = "@RJPASIN 1SHOT KIT"
+    private let requiredTeleCleanSamples = [
+        "Telecaster/tele clean hi.wav",
+        "Telecaster/tele clean low.wav",
+        "Telecaster/tele clean mid.wav",
+        "Telecaster/tele clean oct hi.wav",
+        "Telecaster/tele clean oct.wav"
+    ]
     
     init() {
         setupAudioSession()
+        validateRequiredSamples()
         loadGuitarSamples()
         setupMultiToneAudioEngine()
         
@@ -119,10 +127,44 @@ class AudioEngine: ObservableObject {
         }
     }
     
+    private func validateRequiredSamples() {
+        guard let resourcesURL = Bundle.main.resourceURL else {
+            let message = "[AudioEngine] Sample validation failed: missing resource URL"
+            log(message)
+            lastError = message
+            return
+        }
+        
+        let sampleRootURL = resourcesURL.appendingPathComponent(sampleDirectory)
+        let missingSamples = requiredTeleCleanSamples.filter {
+            !FileManager.default.fileExists(atPath: sampleRootURL.appendingPathComponent($0).path)
+        }
+        
+        if missingSamples.isEmpty {
+            log("[AudioEngine] Sample validation passed: tele clean set complete")
+        } else {
+            let message = "[AudioEngine] Missing required tele clean samples: \(missingSamples.joined(separator: ", "))"
+            log(message)
+            lastError = message
+        }
+    }
+    
+    private func validateLoadedSamples() {
+        let missingSamples = requiredTeleCleanSamples.filter { sampleBuffers[$0] == nil }
+        if missingSamples.isEmpty {
+            log("[AudioEngine] Loaded required tele clean samples successfully")
+        } else {
+            let message = "[AudioEngine] Failed to load required tele clean samples: \(missingSamples.joined(separator: ", "))"
+            log(message)
+            lastError = message
+        }
+    }
+    
     private func loadGuitarSamples() {
         guard let resourcesURL = Bundle.main.resourceURL else {
             log("[AudioEngine] Could not get resource URL")
             loadSamplesFromBundle()
+            validateLoadedSamples()
             return
         }
         
@@ -151,6 +193,7 @@ class AudioEngine: ObservableObject {
                 
                 if !sampleBuffers.isEmpty {
                     log("[AudioEngine] Loaded \(sampleBuffers.count) guitar samples from subdirectories")
+                    validateLoadedSamples()
                     return
                 }
             }
@@ -162,9 +205,11 @@ class AudioEngine: ObservableObject {
             }
             
             log("[AudioEngine] Loaded \(sampleBuffers.count) guitar samples from root")
+            validateLoadedSamples()
         } catch {
             log("[AudioEngine] Error loading samples: \(error)")
             loadSamplesFromBundle()
+            validateLoadedSamples()
         }
     }
     
@@ -207,6 +252,8 @@ class AudioEngine: ObservableObject {
             }
             log("[AudioEngine] Bundle scan loaded \(sampleBuffers.count) samples from root")
         }
+        
+        validateLoadedSamples()
     }
     
     private func loadWavFile(url: URL, name: String) {
