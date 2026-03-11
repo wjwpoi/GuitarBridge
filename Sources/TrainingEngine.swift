@@ -156,6 +156,9 @@ class TrainingEngine: ObservableObject {
     private var audioEngine: AudioEngine?
     private var playbackSessionToken: Int = 0
     private var currentTuning: Tuning = .standard
+    var sleep: @Sendable (UInt64) async -> Void = { duration in
+        try? await Task.sleep(nanoseconds: duration)
+    }
     
     /// 用户可配置的问题数量（优先使用，否则使用难度默认值）
     @AppStorage("customQuestionCount") var customQuestionCount: Int = 0
@@ -201,11 +204,11 @@ class TrainingEngine: ObservableObject {
         Task { @MainActor in
             guard sessionToken == self.playbackSessionToken else { return }
             for _ in 0..<2 {
-                try? await Task.sleep(nanoseconds: PracticeConstants.Audio.anchorNoteDelay)
+                await self.sleep(PracticeConstants.Audio.anchorNoteDelay)
                 guard sessionToken == self.playbackSessionToken else { return }
                 self.audioEngine?.play(midiNote: anchor.midiNote)
             }
-            try? await Task.sleep(nanoseconds: PracticeConstants.Audio.anchorToTargetDelay)
+            await self.sleep(PracticeConstants.Audio.anchorToTargetDelay)
             guard sessionToken == self.playbackSessionToken else { return }
             self.playTargetNote(sessionToken: sessionToken)
         }
@@ -223,7 +226,7 @@ class TrainingEngine: ObservableObject {
         audioEngine?.play(midiNote: target.midiNote)
         
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: PracticeConstants.Audio.targetToAnswerDelay)
+            await self.sleep(PracticeConstants.Audio.targetToAnswerDelay)
             guard sessionToken == self.playbackSessionToken else { return }
             self.state = .awaitingAnswer
         }
@@ -379,7 +382,7 @@ class TrainingEngine: ObservableObject {
             state = .showingResult(correct: true)
             
             Task { @MainActor in
-                try? await Task.sleep(nanoseconds: PracticeConstants.Audio.correctAnswerDelay)
+                await self.sleep(PracticeConstants.Audio.correctAnswerDelay)
                 guard sessionToken == self.playbackSessionToken else { return }
                 self.nextQuestion(sessionToken: sessionToken)
             }
@@ -391,7 +394,7 @@ class TrainingEngine: ObservableObject {
             state = .showingResult(correct: false)
             
             Task { @MainActor in
-                try? await Task.sleep(nanoseconds: PracticeConstants.Audio.wrongAnswerDelay)
+                await self.sleep(PracticeConstants.Audio.wrongAnswerDelay)
                 guard sessionToken == self.playbackSessionToken else { return }
                 self.userAnswer = nil
                 self.lastAnswerCorrect = nil
