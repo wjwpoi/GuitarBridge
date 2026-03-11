@@ -366,9 +366,9 @@ class TrainingEngine: ObservableObject {
     func submitAnswer(_ position: FretPosition) {
         userAnswer = position
         let isCorrect = position.midiNote == targetNote?.midiNote
+        let sessionToken = playbackSessionToken
         
         if isCorrect {
-            // 选对答案时增加 success 震动
             HapticManager.notification(.success)
             correctCount += 1
             currentStreak += 1
@@ -378,23 +378,21 @@ class TrainingEngine: ObservableObject {
             lastAnswerCorrect = true
             state = .showingResult(correct: true)
             
-            // 正确答案停留 1.5 秒后进入下一题
             Task { @MainActor in
                 try? await Task.sleep(nanoseconds: PracticeConstants.Audio.correctAnswerDelay)
-                self.nextQuestion()
+                guard sessionToken == self.playbackSessionToken else { return }
+                self.nextQuestion(sessionToken: sessionToken)
             }
         } else {
-            // 选错答案时增加 error 震动
             HapticManager.notification(.error)
-            // 点错后计入错误
             currentStreak = 0
             totalAttempts += 1
             lastAnswerCorrect = false
             state = .showingResult(correct: false)
             
-            // 点错后重置状态，等待用户重选
             Task { @MainActor in
                 try? await Task.sleep(nanoseconds: PracticeConstants.Audio.wrongAnswerDelay)
+                guard sessionToken == self.playbackSessionToken else { return }
                 self.userAnswer = nil
                 self.lastAnswerCorrect = nil
                 self.state = .awaitingAnswer
@@ -402,7 +400,8 @@ class TrainingEngine: ObservableObject {
         }
     }
     
-    func nextQuestion() {
+    func nextQuestion(sessionToken: Int? = nil) {
+        if let sessionToken, sessionToken != playbackSessionToken { return }
         userAnswer = nil
         lastAnswerCorrect = nil
         startQuestion()
