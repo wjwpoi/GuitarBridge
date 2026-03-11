@@ -154,6 +154,7 @@ class TrainingEngine: ObservableObject {
     @Published var lastAnswerCorrect: Bool?
     
     private var audioEngine: AudioEngine?
+    private var playbackSessionToken: Int = 0
     private var currentTuning: Tuning = .standard
     
     /// 用户可配置的问题数量（优先使用，否则使用难度默认值）
@@ -184,11 +185,13 @@ class TrainingEngine: ObservableObject {
         totalAttempts = 0
         currentStreak = 0
         completedQuestions = 0
+        playbackSessionToken += 1
         state = .playingAnchor
-        playAnchorNotes()
+        playAnchorNotes(sessionToken: playbackSessionToken)
     }
     
-    private func playAnchorNotes() {
+    private func playAnchorNotes(sessionToken: Int) {
+        guard sessionToken == playbackSessionToken else { return }
         guard let anchor = anchorNote else {
             startQuestion()
             return
@@ -196,18 +199,20 @@ class TrainingEngine: ObservableObject {
         
         audioEngine?.play(midiNote: anchor.midiNote)
         Task { @MainActor in
-            // 播放2次锚点音，每次间隔800ms（增加间隔便于听清）
+            guard sessionToken == self.playbackSessionToken else { return }
             for _ in 0..<2 {
-                try? await Task.sleep(nanoseconds: 800_000_000)
+                try? await Task.sleep(nanoseconds: PracticeConstants.Audio.anchorNoteDelay)
+                guard sessionToken == self.playbackSessionToken else { return }
                 self.audioEngine?.play(midiNote: anchor.midiNote)
             }
-            // 锚点和目标音之间间隔800ms
-            try? await Task.sleep(nanoseconds: 800_000_000)
-            self.playTargetNote()
+            try? await Task.sleep(nanoseconds: PracticeConstants.Audio.anchorToTargetDelay)
+            guard sessionToken == self.playbackSessionToken else { return }
+            self.playTargetNote(sessionToken: sessionToken)
         }
     }
     
-    private func playTargetNote() {
+    private func playTargetNote(sessionToken: Int) {
+        guard sessionToken == playbackSessionToken else { return }
         state = .playingTarget
         
         guard let target = targetNote else {
@@ -218,7 +223,8 @@ class TrainingEngine: ObservableObject {
         audioEngine?.play(midiNote: target.midiNote)
         
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 800_000_000)
+            try? await Task.sleep(nanoseconds: PracticeConstants.Audio.targetToAnswerDelay)
+            guard sessionToken == self.playbackSessionToken else { return }
             self.state = .awaitingAnswer
         }
     }
@@ -234,8 +240,9 @@ class TrainingEngine: ObservableObject {
         }
         
         generateQuestion()
+        playbackSessionToken += 1
         state = .playingAnchor
-        playAnchorNotes()
+        playAnchorNotes(sessionToken: playbackSessionToken)
     }
     
     private func generateQuestion() {
@@ -416,6 +423,7 @@ class TrainingEngine: ObservableObject {
     }
     
     func reset() {
+        playbackSessionToken += 1
         sessionStartTime = nil
         state = .idle
         anchorNote = nil

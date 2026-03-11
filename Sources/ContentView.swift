@@ -188,57 +188,6 @@ struct ContentView: View {
         .cornerRadius(UIConstants.cornerRadiusMedium)
     }
     
-    private var fretboardSection: some View {
-        VStack(spacing: 8) {
-            // 状态指示器：显示当前播放的是锚点音还是目标音
-            if trainingEngine.state != .idle {
-                playbackStatusIndicator
-            }
-            
-            FretboardView(
-                tuning: selectedTuning,
-                theme: currentTheme,
-                onFretTapped: handleFretTap,
-                isDisabled: trainingEngine.state != .awaitingAnswer,
-                selectedPosition: trainingEngine.userAnswer,
-                lastAnswerCorrect: trainingEngine.lastAnswerCorrect,
-                anchorPosition: trainingEngine.anchorNote,
-                targetPosition: trainingEngine.targetNote,
-                showDegrees: showDegrees,
-                showScale: showScale,
-                currentScale: selectedScale,
-                currentKey: selectedKey,
-                showNoteNames: showNoteNames,
-                showFretNumbers: showFretNumbers
-            )
-            .frame(height: 220)
-            
-            // 重播按钮 - 紧凑排列
-            if trainingEngine.state == .awaitingAnswer || trainingEngine.state == .playingTarget || trainingEngine.state == .playingAnchor {
-                HStack(spacing: 8) {
-                    Button {
-                        HapticManager.impact(.light)
-                        trainingEngine.replayAnchorNote()
-                    } label: {
-                        Label("锚点", systemImage: "arrow.uturn.backward.circle.fill")
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    
-                    Button {
-                        HapticManager.impact(.light)
-                        trainingEngine.replayTargetNote()
-                    } label: {
-                        Label("目标", systemImage: "play.circle.fill")
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(.blue)
-                    .controlSize(.small)
-                }
-            }
-        }
-    }
-    
     // MARK: - 播放状态指示器
     private var playbackStatusIndicator: some View {
         HStack(spacing: 8) {
