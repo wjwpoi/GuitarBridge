@@ -333,7 +333,7 @@ class TrainingEngine: ObservableObject {
     
     func submitAnswer(_ position: FretPosition) {
         userAnswer = position
-        let isCorrect = position.midiNote == targetNote?.midiNote
+        let isCorrect = position.string == targetNote?.string && position.fret == targetNote?.fret
         let sessionToken = playbackSessionToken
         
         if isCorrect {
