@@ -1,4 +1,5 @@
-﻿import 'package:flutter_test/flutter_test.dart';
+import 'package:guitar_bridge/core/guitar_math.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:guitar_bridge/models/note.dart';
 import 'package:guitar_bridge/models/scale.dart';
 import 'package:guitar_bridge/models/tuning.dart';
@@ -29,7 +30,7 @@ void main() {
   setUp(() {
     engine = TrainingEngine();
     mockAudio = MockAudioEngine();
-    engine.configure(audioEngine: mockAudio, tuning: Tuning.standard);
+    engine.configure(engine: mockAudio, tuning: Tuning.standard);
     engine
       ..currentKey = 'C'
       ..scaleType = ScaleType.major
@@ -43,7 +44,7 @@ void main() {
 
     test('configure sets audio engine and tuning', () {
       final e = TrainingEngine();
-      e.configure(audioEngine: mockAudio, tuning: Tuning.dropD);
+      e.configure(engine: mockAudio, tuning: Tuning.dropD);
       expect(e.currentTuning.name, 'Drop D');
     });
 
@@ -233,7 +234,7 @@ void main() {
     });
 
     test('tuning change updates configuration', () {
-      engine.configure(audioEngine: mockAudio, tuning: Tuning.dropD);
+      engine.configure(engine: mockAudio, tuning: Tuning.dropD);
       expect(engine.currentTuning.name, 'Drop D');
     });
   });

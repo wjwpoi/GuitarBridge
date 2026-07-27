@@ -1,4 +1,4 @@
-﻿import 'note.dart';
+import 'note.dart';
 
 /// 音阶类型
 enum ScaleType {

@@ -1,4 +1,5 @@
-﻿/// 吉他采样 WAV 生成器
+import 'dart:convert';
+/// 吉他采样 WAV 生成器
 ///
 /// 用法: dart run tool/generate_samples.dart
 ///

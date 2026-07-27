@@ -1,4 +1,4 @@
-﻿/// 音符模型 - 完整的音名、半音索引、音高映射
+/// 音符模型 - 完整的音名、半音索引、音高映射
 enum NoteName {
   c, cSharp, d, dSharp, e, f, fSharp, g, gSharp, a, aSharp, b;
 
@@ -47,8 +47,8 @@ enum ScaleDegree {
   vi(5, 'VI', '下中音'),
   vii(6, 'VII', '导音');
 
-  final int index;
+  final int degreeIndex;
   final String roman;
   final String chineseName;
-  const ScaleDegree(this.index, this.roman, this.chineseName);
+  const ScaleDegree(this.degreeIndex, this.roman, this.chineseName);
 }

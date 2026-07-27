@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../models/practice_record.dart';
 import '../../services/streak_manager.dart';
 
@@ -93,7 +93,7 @@ class StatsScreen extends StatelessWidget {
             _buildStatRow('正确数', '$totalCorrect', Icons.check_circle),
             _buildStatRow('总练习时长', _formatDuration(duration), Icons.timer),
             _buildStatRow('最佳连击', '$bestStreak', Icons.local_fire_department),
-            _buildStatRow('连续天数', '${streakManager.currentStreak}', Icons.streak),
+            _buildStatRow('连续天数', '${streakManager.currentStreak}', Icons.local_fire_department),
           ],
         ),
       ),

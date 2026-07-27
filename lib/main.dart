@@ -1,9 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'engine/audio_engine.dart';
 import 'services/storage_service.dart';
 import 'services/streak_manager.dart';
 import 'ui/screens/onboarding_screen.dart';
+import 'models/practice_record.dart';
+import 'core/theme.dart';
 import 'ui/screens/home_screen.dart';
 
 void main() async {

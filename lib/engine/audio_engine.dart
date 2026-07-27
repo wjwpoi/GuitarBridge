@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
@@ -243,7 +243,7 @@ class AudioEngine extends ChangeNotifier {
 
     // 30步 sine curve crossfade
     const steps = AppConstants.crossfadeSteps;
-    const stepDuration = AppConstants.crossfadeDuration ~/ steps;
+    final stepDuration = AppConstants.crossfadeDuration ~/ steps;
 
     _crossfadeTimer?.cancel();
     _crossfadeTimer = Timer.periodic(stepDuration, (timer) {
