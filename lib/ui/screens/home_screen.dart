@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../models/note.dart';
 import '../../models/scale.dart';
 import '../../models/tuning.dart';
 import '../../models/practice_record.dart';

@@ -1,4 +1,3 @@
-﻿import 'note.dart';
 
 /// 吉他调弦配置
 class Tuning {

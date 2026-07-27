@@ -1,4 +1,3 @@
-﻿import 'package:flutter/material.dart';
 
 /// 全局常量（对应原 Swift Constants.swift）
 class AppConstants {

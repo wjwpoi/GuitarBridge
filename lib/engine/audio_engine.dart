@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import '../core/constants.dart';
 import 'sample_config.dart';
 
@@ -93,7 +92,6 @@ class AudioEngine extends ChangeNotifier {
       for (int midi = AppConstants.guitarLowestMidi;
           midi <= AppConstants.guitarHighestMidi;
           midi++) {
-        final path = SampleConfig.samplePath(mode, midi);
         try {
           // 尝试加载以确认文件存在
           // await rootBundle.load(path);
@@ -113,22 +111,7 @@ class AudioEngine extends ChangeNotifier {
     debugPrint('[AudioEngine] Clean samples: ${_sampleAvailability[ToneMode.clean]!.values.where((v) => v).length} available');
   }
 
-  /// 预加载采样到 Soloud 引擎
-  Future<void> _preloadSamples(dynamic soloud) async {
-    for (final mode in ToneMode.values) {
-      for (var entry in _sampleAvailability[mode]!.entries) {
-        if (!entry.value) continue;
-        final path = SampleConfig.samplePath(mode, entry.key);
-        try {
-          // final handle = await soloud.loadAsset(path, mode: LoadMode.memory);
-          // _sampleHandles[mode]![entry.key] = handle;
-        } catch (e) {
-          debugPrint('[AudioEngine] Failed to load $path: $e');
-          _sampleAvailability[mode]![entry.key] = false;
-        }
-      }
-    }
-  }
+
 
   /// 播放指定 MIDI 音高
   Future<void> playNote(int midiNote) async {
@@ -155,7 +138,6 @@ class AudioEngine extends ChangeNotifier {
 
   /// 播放真实采样（支持八度折叠复用）
   Future<void> _playSample(int midiNote) async {
-    final nearestMidi = SampleConfig.nearestSampleMidi(midiNote);
     final shift = SampleConfig.octaveShift(midiNote);
     final playbackRate = pow(2.0, shift).toDouble();
 
@@ -237,7 +219,6 @@ class AudioEngine extends ChangeNotifier {
 
     _crossfading = true;
     _crossfadeStep = 0;
-    final oldMode = _currentMode;
     _currentMode = newMode;
     notifyListeners();
 
@@ -248,7 +229,6 @@ class AudioEngine extends ChangeNotifier {
     _crossfadeTimer?.cancel();
     _crossfadeTimer = Timer.periodic(stepDuration, (timer) {
       _crossfadeStep++;
-      final t = _crossfadeStep / steps;
       // Sine curve easing for smooth gain transition
       // final oldGain = cos(t * pi / 2);  // unused if no active voice
       // final newGain = sin(t * pi / 2);

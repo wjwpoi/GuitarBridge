@@ -4,7 +4,6 @@ import 'package:guitar_bridge/ui/widgets/completion_animation.dart';
 import 'package:guitar_bridge/ui/widgets/training_status.dart';
 import 'package:guitar_bridge/ui/widgets/scale_chart.dart';
 import 'package:guitar_bridge/engine/training_engine.dart';
-import 'package:guitar_bridge/engine/audio_engine.dart';
 import 'package:guitar_bridge/models/scale.dart';
 
 void main() {

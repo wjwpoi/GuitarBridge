@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../models/note.dart';
 import '../../models/scale.dart';
 import '../../models/tuning.dart';
-import '../../core/constants.dart';
 import '../../core/guitar_math.dart';
 import '../../core/theme.dart';
 import '../../engine/training_engine.dart';
