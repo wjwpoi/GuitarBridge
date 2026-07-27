@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../models/note.dart';
 import '../../models/scale.dart';
 import '../../models/tuning.dart';
@@ -75,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final difficulty = AppConstants.difficulties[_selectedDifficulty] ??
         AppConstants.difficulties['easy']!;
     _trainingEngine
-      ..configure(audioEngine: _audioEngine, tuning: tuning)
+      ..configure(engine: _audioEngine, tuning: tuning)
       ..currentKey = _selectedKey
       ..scaleType = scaleType
       ..difficulty = difficulty;
