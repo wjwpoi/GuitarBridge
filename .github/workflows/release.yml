@@ -1,0 +1,56 @@
+﻿name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.x'
+          cache: true
+
+      - run: flutter pub get
+
+      # Android
+      - name: Build Android APK
+        run: flutter build apk --release --split-per-abi
+
+      # Web
+      - name: Build Web
+        run: flutter build web --release
+
+      # Create Release
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: GuitarBridge ${{ github.ref_name }}
+          body: |
+            ## GuitarBridge ${{ github.ref_name }}
+
+            ### 跨平台吉他练耳训练工具
+
+            - Android APK（多架构）
+            - Web 版（可直接部署）
+            - 其他平台需从源码构建
+
+            ### 安装说明
+            1. Android: 下载对应架构 APK 安装
+            2. Web: 解压 web-build.zip 部署到任意静态服务器
+          files: |
+            build/app/outputs/flutter-apk/*.apk
+
+      - name: Upload Web Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: build/web/
