@@ -1,4 +1,4 @@
-﻿# GuitarBridge v3.0 — Flutter 跨平台版
+# GuitarBridge v3.0 — Flutter 跨平台版
 
 > 相对音准训练工具 | 调性内音程识别 | 吉他指板训练
 
@@ -126,11 +126,6 @@ idle → playingRoot → waitingAnswer → showingResult → playingRoot → ...
 - **Duplicate prevention** — 同一音程组合不会重复出题
 - **6-state FSM** — 完整的训练生命周期管理
 
-## 原项目团队
-
-- 萨拉托加 — 产品/需求
-- 翔鹤 — 开发
-- 加贺 — 测试
 
 ## License
 

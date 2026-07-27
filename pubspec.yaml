@@ -1,9 +1,9 @@
-﻿name: guitar_bridge
+name: guitar_bridge
 description: 跨平台吉他练耳训练工具 - 相对音准识别与指板训练
 version: 3.0.0
 
 environment:
-  sdk: ^3.9.0
+  sdk: ^3.6.0
 
 dependencies:
   flutter:
