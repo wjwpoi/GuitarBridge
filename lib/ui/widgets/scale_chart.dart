@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../../models/scale.dart';
 import '../../models/note.dart';
 
-/// 音阶图表（对应原 Swift ScaleChartView.swift�?class ScaleChartWidget extends StatelessWidget {
+/// 音阶图表（对应原 Swift ScaleChartView.swift）
+class ScaleChartWidget extends StatelessWidget {
   final String selectedKey;
   final ScaleType scaleType;
 

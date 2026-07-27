@@ -2,17 +2,22 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import '../core/constants.dart';
 import 'sample_config.dart';
 
-/// 音频引擎状�?enum AudioEngineState { uninitialized, loading, ready, error }
+/// 音频引擎状态
+enum AudioEngineState { uninitialized, loading, ready, error }
 
 /// 音色模式
 enum ToneMode { clean, overdrive, distortion }
 
-/// 跨平台音频引�?///
-/// 采样策略�?/// - 有真实采样：通过 flutter_soloud 加载并播放，支持八度折叠复用
-/// - 无采样：实时合成正弦波（�?ADSR 包络�?/// - 音色切换�?0�?sine curve crossfade
+/// 跨平台音频引擎
+///
+/// 采样策略：
+/// - 有真实采样：通过 flutter_soloud 加载并播放，支持八度折叠复用
+/// - 无采样：实时合成正弦波（带 ADSR 包络）
+/// - 音色切换：30步 sine curve crossfade
 class AudioEngine extends ChangeNotifier {
   AudioEngineState _state = AudioEngineState.uninitialized;
   ToneMode _currentMode = ToneMode.clean;
@@ -20,15 +25,18 @@ class AudioEngine extends ChangeNotifier {
   bool _isPlaying = false;
   String? _error;
 
-  // 采样缓存：mode -> midi -> 加载状�?  final Map<ToneMode, Map<int, bool>> _sampleAvailability = {
+  // 采样缓存：mode -> midi -> 加载状态
+  final Map<ToneMode, Map<int, bool>> _sampleAvailability = {
     for (var m in ToneMode.values) m: <int, bool>{},
   };
 
-  // Crossfade 状�?  bool _crossfading = false;
+  // Crossfade 状态
+  bool _crossfading = false;
   Timer? _crossfadeTimer;
   int _crossfadeStep = 0;
 
-  // 合成音参�?  static const int _sampleRate = 44100;
+  // 合成音参数
+  static const int _sampleRate = 44100;
   final Map<ToneMode, double> _modeGain = {
     ToneMode.clean: 1.0,
     ToneMode.overdrive: 1.4,
@@ -43,11 +51,13 @@ class AudioEngine extends ChangeNotifier {
   String? get error => _error;
   bool get isCrossfading => _crossfading;
 
-  /// 检查特定音色模式下是否有采�?  bool hasSamples(ToneMode mode) {
+  /// 检查特定音色模式下是否有采样
+  bool hasSamples(ToneMode mode) {
     return _sampleAvailability[mode]?.values.any((v) => v) ?? false;
   }
 
-  /// 初始化音频引�?  Future<void> initialize() async {
+  /// 初始化音频引擎
+  Future<void> initialize() async {
     if (_state == AudioEngineState.ready) return;
     _state = AudioEngineState.loading;
     notifyListeners();
@@ -56,7 +66,7 @@ class AudioEngine extends ChangeNotifier {
       // 扫描可用采样文件
       await _scanAvailableSamples();
 
-      // 初始�?flutter_soloud
+      // 初始化 flutter_soloud
       // final soloud = SoLoud.instance;
       // await soloud.init(
       //   sampleRate: _sampleRate,
@@ -85,10 +95,12 @@ class AudioEngine extends ChangeNotifier {
           midi++) {
         final path = SampleConfig.samplePath(mode, midi);
         try {
-          // 尝试加载以确认文件存�?          // await rootBundle.load(path);
+          // 尝试加载以确认文件存在
+          // await rootBundle.load(path);
           // _sampleAvailability[mode]![midi] = true;
 
-          // 模拟：假设所�?clean 模式采样都可�?          if (mode == ToneMode.clean) {
+          // 模拟：假设所有 clean 模式采样都可用
+          if (mode == ToneMode.clean) {
             _sampleAvailability[mode]![midi] = true;
           } else {
             _sampleAvailability[mode]![midi] = false;
@@ -157,12 +169,15 @@ class AudioEngine extends ChangeNotifier {
     await Future.delayed(Duration(milliseconds: (800 / playbackRate).toInt()));
   }
 
-  /// 合成正弦波并播放（带 ADSR 包络 + 泛音�?  Future<void> _synthesizeNote(int midiNote) async {
+  /// 合成正弦波并播放（带 ADSR 包络 + 泛音）
+  Future<void> _synthesizeNote(int midiNote) async {
     final freq = 440.0 * pow(2.0, (midiNote - 69) / 12.0);
-    final duration = 0.8; // �?    final totalSamples = (_sampleRate * duration).toInt();
+    final duration = 0.8; // 秒
+    final totalSamples = (_sampleRate * duration).toInt();
     final gain = _volume * (_modeGain[_currentMode] ?? 1.0);
 
-    // 生成�?ADSR 包络和泛音的正弦�?    final buffer = Float64List(totalSamples);
+    // 生成带 ADSR 包络和泛音的正弦波
+    final buffer = Float64List(totalSamples);
 
     // ADSR 参数
     final attackSamples = (_sampleRate * 0.02).toInt();  // 20ms
@@ -205,7 +220,8 @@ class AudioEngine extends ChangeNotifier {
         sample += 0.2 * (sample > 0 ? 1.0 : -1.0) * sin(2 * pi * freq * 1.5 * t);
       }
 
-      buffer[i] = sample * envelope * gain * 0.3; // 归一�?    }
+      buffer[i] = sample * envelope * gain * 0.3; // 归一化
+    }
 
     // flutter_soloud 播放合成波形:
     // final wave = SoLoudWave.fromBuffer(buffer, _sampleRate, 1);
@@ -215,7 +231,8 @@ class AudioEngine extends ChangeNotifier {
     await Future.delayed(Duration(milliseconds: (duration * 1000).toInt()));
   }
 
-  /// 音色切换（带 crossfade�?  Future<void> switchToneMode(ToneMode newMode) async {
+  /// 音色切换（带 crossfade）
+  Future<void> switchToneMode(ToneMode newMode) async {
     if (newMode == _currentMode || _crossfading) return;
 
     _crossfading = true;
@@ -224,7 +241,7 @@ class AudioEngine extends ChangeNotifier {
     _currentMode = newMode;
     notifyListeners();
 
-    // 30�?sine curve crossfade
+    // 30步 sine curve crossfade
     const steps = AppConstants.crossfadeSteps;
     final stepDuration = AppConstants.crossfadeDuration ~/ steps;
 
@@ -244,7 +261,7 @@ class AudioEngine extends ChangeNotifier {
     });
   }
 
-  /// 取消正在进行�?crossfade（快速切换场景）
+  /// 取消正在进行的 crossfade（快速切换场景）
   void cancelCrossfade() {
     _crossfadeTimer?.cancel();
     _crossfading = false;
