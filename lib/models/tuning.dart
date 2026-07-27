@@ -19,7 +19,7 @@ class Tuning {
   static const dropD = Tuning('Drop D', [64, 59, 55, 50, 45, 38]);
 
   /// DADGAD
-  static const dadgad = Tuning('DADGAD', [62, 59, 55, 50, 43, 38]);
+  static const dadgad = Tuning('DADGAD', [62, 57, 55, 50, 45, 38]);
 
   /// Open G
   static const openG = Tuning('Open G', [64, 60, 55, 50, 43, 38]);

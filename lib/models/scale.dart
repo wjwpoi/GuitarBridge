@@ -52,7 +52,7 @@ class KeySignature {
   String get displayName => '${tonic.sharpName} ${scaleType.chineseName}';
 
   List<int> notesInKey({int octave = 4}) {
-    final root = tonic.semitoneIndex + octave * 12;
+    final root = tonic.semitoneIndex + (octave + 1) * 12;
     return scaleType.notesInKey(root);
   }
 
