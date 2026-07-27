@@ -7,22 +7,22 @@ class Tuning {
   const Tuning(this.name, this.openStringNotes);
 
   /// 标准调弦 E2 A2 D3 G3 B3 E4
-  static const standard = Tuning('标准 (EADGBE)', [40, 45, 50, 55, 59, 64]);
+  static const standard = Tuning('标准 (EADGBE)', [64, 59, 55, 50, 45, 40]);
 
   /// 降半音
-  static const halfStepDown = Tuning('降半音 (Eb)', [39, 44, 49, 54, 58, 63]);
+  static const halfStepDown = Tuning('降半音 (Eb)', [63, 58, 54, 49, 44, 39]);
 
   /// 降全音
-  static const fullStepDown = Tuning('降全音 (D)', [38, 43, 48, 53, 57, 62]);
+  static const fullStepDown = Tuning('降全音 (D)', [62, 57, 53, 48, 43, 38]);
 
   /// Drop D
-  static const dropD = Tuning('Drop D', [38, 45, 50, 55, 59, 64]);
+  static const dropD = Tuning('Drop D', [64, 59, 55, 50, 45, 38]);
 
   /// DADGAD
-  static const dadgad = Tuning('DADGAD', [38, 43, 50, 55, 59, 62]);
+  static const dadgad = Tuning('DADGAD', [62, 59, 55, 50, 43, 38]);
 
   /// Open G
-  static const openG = Tuning('Open G', [38, 43, 50, 55, 60, 64]);
+  static const openG = Tuning('Open G', [64, 60, 55, 50, 43, 38]);
 
   static const all = [standard, halfStepDown, fullStepDown, dropD, dadgad, openG];
 

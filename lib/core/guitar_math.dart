@@ -16,7 +16,8 @@ class GuitarMath {
 
   /// 从基准音到目标音的音程类型（八度内）
   static IntervalType intervalBetween(int rootMidi, int targetMidi) {
-    final semitones = ((targetMidi - rootMidi) % 12 + 12) % 12;
+    final diff = targetMidi - rootMidi;
+    final semitones = diff == 0 ? 0 : ((diff % 12 + 12 - 1) % 12 + 1);
     return IntervalType.values.firstWhere((i) => i.semitones == semitones);
   }
 
