@@ -20,7 +20,6 @@ jobs:
           cache: true
 
       - run: flutter pub get
-      - run: dart format lib/ test/ tool/
       - run: flutter analyze
       - run: flutter test --coverage
 
