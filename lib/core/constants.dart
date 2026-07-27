@@ -1,36 +1,35 @@
-﻿import 'package:flutter/material.dart';
 
-/// 全局常量（对应原 Swift Constants.swift）
+/// ȫ�ֳ�������Ӧԭ Swift Constants.swift��
 class AppConstants {
   AppConstants._();
 
-  // === 指板物理规格 ===
-  /// Fender 标准弦长 25.5 英寸 -> 品间距公式系数
+  // === ָ��������� ===
+  /// Fender ��׼�ҳ� 25.5 Ӣ�� -> Ʒ��๫ʽϵ��
   static const double fretSpacingFactor = 17.817;
 
-  /// 默认最大品位
+  /// Ĭ�����Ʒλ
   static const int maxFret = 22;
 
-  /// 弦数
+  /// ����
   static const int stringCount = 6;
 
-  // === 训练配置 ===
+  // === ѵ������ ===
   static const int defaultQuestionsPerSession = 10;
   static const int minQuestions = 5;
   static const int maxQuestions = 50;
 
-  // === 音频配置 ===
+  // === ��Ƶ���� ===
   static const double defaultVolume = 0.8;
   static const int crossfadeSteps = 30;
   static const Duration crossfadeDuration = Duration(milliseconds: 150);
 
-  // === MIDI 范围 ===
-  /// 标准吉他最低音 E2
+  // === MIDI ��Χ ===
+  /// ��׼��������� E2
   static const int guitarLowestMidi = 40;
-  /// 标准吉他最高音 (24品 1弦) E6
+  /// ��׼��������� (24Ʒ 1��) E6
   static const int guitarHighestMidi = 88;
 
-  // === 难度配置 ===
+  // === �Ѷ����� ===
   static const Map<String, DifficultyConfig> difficulties = {
     'easy': DifficultyConfig(
       fretRange: (0, 5),
@@ -41,7 +40,7 @@ class AppConstants {
     'medium': DifficultyConfig(
       fretRange: (0, 12),
       stringRange: (0, 5),
-      allowedIntervals: [0, 1, 2, 3, 4, 5, 7, 8, 9], // 增加大/小二度、六度
+      allowedIntervals: [0, 1, 2, 3, 4, 5, 7, 8, 9], // ���Ӵ�/С���ȡ�����
       showHint: false,
     ),
     'hard': DifficultyConfig(

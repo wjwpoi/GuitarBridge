@@ -2,14 +2,11 @@ import 'package:flutter/material.dart';
 import '../../models/note.dart';
 import '../../models/scale.dart';
 import '../../models/tuning.dart';
-import '../../core/constants.dart';
 import '../../core/guitar_math.dart';
 import '../../core/theme.dart';
 import '../../engine/training_engine.dart';
 
-/// 吉他指板组件（对应原 Swift FretboardView.swift）
-/// 可滚动、可点击的完整指板视图
-class FretboardWidget extends StatelessWidget {
+/// 吉他指板组件（对应原 Swift FretboardView.swift�?/// 可滚动、可点击的完整指板视�?class FretboardWidget extends StatelessWidget {
   final TrainingEngine trainingEngine;
   final Tuning tuning;
   final ScaleType scaleType;
@@ -72,7 +69,7 @@ class FretboardWidget extends StatelessWidget {
   }
 
   double _calculateHeight() {
-    // 弦间距 36px * 6弦 + padding
+    // 弦间�?36px * 6�?+ padding
     return 36.0 * tuning.stringCount + 40.0;
   }
 
@@ -148,8 +145,7 @@ class FretboardWidget extends StatelessWidget {
   }
 
   Color _borderColor(int midiNote) {
-    // 目标音边框高亮
-    if (trainingEngine.isWaitingAnswer &&
+    // 目标音边框高�?    if (trainingEngine.isWaitingAnswer &&
         trainingEngine.targetMidi != null &&
         midiNote % 12 == trainingEngine.targetMidi! % 12) {
       return AppTheme.accentColor;
@@ -184,7 +180,7 @@ class FretboardWidget extends StatelessWidget {
   }
 }
 
-/// 指板绘制器 - 使用 CustomPainter 实现物理品格间距
+/// 指板绘制�?- 使用 CustomPainter 实现物理品格间距
 class _FretboardPainter extends CustomPainter {
   final Tuning tuning;
   final KeySignature keySignature;

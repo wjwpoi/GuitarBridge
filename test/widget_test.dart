@@ -4,7 +4,6 @@ import 'package:guitar_bridge/ui/widgets/completion_animation.dart';
 import 'package:guitar_bridge/ui/widgets/training_status.dart';
 import 'package:guitar_bridge/ui/widgets/scale_chart.dart';
 import 'package:guitar_bridge/engine/training_engine.dart';
-import 'package:guitar_bridge/engine/audio_engine.dart';
 import 'package:guitar_bridge/models/scale.dart';
 
 void main() {
@@ -21,10 +20,10 @@ void main() {
         ),
       );
 
-      expect(find.text('训练完成！'), findsOneWidget);
-      expect(find.text('80% 准确率'), findsOneWidget);
-      expect(find.text('8 / 10 道正确'), findsOneWidget);
-      expect(find.text('最佳连击: 5'), findsOneWidget);
+      expect(find.text('训练完成�?), findsOneWidget);
+      expect(find.text('80% 准确�?), findsOneWidget);
+      expect(find.text('8 / 10 道正�?), findsOneWidget);
+      expect(find.text('最佳连�? 5'), findsOneWidget);
       expect(find.text('完成'), findsOneWidget);
     });
 
@@ -57,7 +56,7 @@ void main() {
         ),
       );
 
-      expect(find.text('100% 准确率'), findsOneWidget);
+      expect(find.text('100% 准确�?), findsOneWidget);
       expect(find.byIcon(Icons.emoji_events), findsOneWidget);
     });
   });
@@ -78,7 +77,7 @@ void main() {
         ),
       );
 
-      expect(find.text('开始训练'), findsOneWidget);
+      expect(find.text('开始训�?), findsOneWidget);
     });
 
     testWidgets('shows replay buttons when waiting for answer', (tester) async {
@@ -98,7 +97,7 @@ void main() {
       );
 
       // In idle state, should show start button
-      expect(find.text('开始训练'), findsOneWidget);
+      expect(find.text('开始训�?), findsOneWidget);
     });
   });
 
