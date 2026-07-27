@@ -43,7 +43,6 @@ class ScaleChartWidget extends StatelessWidget {
               children: List.generate(notes.length, (i) {
                 final midi = notes[i];
                 final name = NoteName.values[midi % 12];
-                final degree = i + 1;
                 return Chip(
                   label: Text(
                     '${ScaleDegree.values[i].roman} ${name.sharpName}',
