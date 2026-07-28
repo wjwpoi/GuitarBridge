@@ -106,7 +106,7 @@
 | 4 | `feat/fix:` | SoLoud 采样、合成回退和 Flutter 3.32 API 兼容 | `c4385c8` |
 | 5 | `feat/fix:` | 设置、记录、streak 持久化和本地日期语义 | `ea3f151`, `eaadc98` |
 | 6 | `test/chore:` | 领域模型、采样映射、存储、Widget 回归测试和零 issue lint | `b3e20ac`, `ca87a41` |
-| 7 | `fix/build:` | SDK 验证产生的平台兼容性和无签名构建修复 | `6a2814c`, `70579c9` |
+| 7 | `fix/build:` | SDK 验证产生的平台兼容性、无签名构建和脚本入口修复 | `6a2814c`, `70579c9`, `04da3ba` |
 | 8 | `docs:` | 最终进度、真实验证结果和未迁移功能清单 | `f126fae`, `c497719`, `9587036` |
 
 ### 下一提交门禁：流水线与依赖
@@ -161,6 +161,7 @@
 - `flutter pub get` 成功，lockfile 当前解析 `flutter_soloud 3.5.4`（满足 `^3.4.0` 且仍兼容 Flutter 3.32）；Web 产物包含 `worker.dart.js`、插件 JS 和 WASM 资源。
 - 首次格式化发现并修复指板 Widget 括号错误和测试导入位置错误；训练专项测试当前 27 项通过。
 - `flutter analyze` 已达到 `No issues found`，加入 UTC/local streak 回归后全量测试 88 项通过。
+- `bash -x ./tool/build.sh web --release` 已通过；脚本首字节为标准 shebang，文件 mode 为 `100755`。
 
 ### Release 构建记录（2026-07-28）
 
