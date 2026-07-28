@@ -19,6 +19,15 @@
 - 发布制品必须来自与 CI 相同的质量门禁和构建定义；禁止 Release workflow 偷换 Flutter 版本、跳过测试或使用 `continue-on-error`。
 - Workflow action 依赖必须固定到完整 commit SHA，并用行尾注释保留对应 major tag；禁止直接依赖可移动的 `@v2`、`@v4`、`@v5`。
 
+## 当前交接状态（2026-07-28）
+
+- 工作分支：`review/flutter-cross-platform-refactor`。
+- Pull Request：[#1 refactor: stabilize cross-platform GuitarBridge](https://github.com/wjwpoi/GuitarBridge/pull/1)，目标分支为 `main`，必须保留现有提交历史，禁止 squash。
+- 首次 CI 失败对应的 PR HEAD：`f6f7d8194e1c0c0641efe7a23c4c41f040b9463a`；后续以 PR 页面最新 HEAD 为准。
+- 首次 GitHub Actions 运行：[CI run 30333751004](https://github.com/wjwpoi/GuitarBridge/actions/runs/30333751004)。format、lockfile、analyze 均通过，`flutter test --coverage` 失败：61 项通过、27 项失败；六个平台构建因质量门禁失败而全部正确跳过。
+- 27 项失败具有同一根因：`test/training_engine_test.dart` 的 `MockAudioEngine extends AudioEngine` 会执行父类字段初始化，`AudioEngine` 又在构造阶段求值 `SoLoud.instance`，Ubuntu 单元测试进程因此尝试加载不存在的 `libflutter_soloud_plugin.so`。这是测试边界泄漏，不是 27 个独立业务错误。
+- 当前状态不得合并。下一位协作者只能先完成下文“接管入口：CI 音频测试隔离”，待新一轮质量门禁通过后再观察六个平台构建的真实结果。
+
 ## 当前风险基线
 
 以下项目已经在工作区完成初步实现，但尚未通过固定 Flutter SDK 的完整验证，提交前仍视为风险项：
@@ -29,6 +38,7 @@
 - 指板绘制与点击已共用品距坐标，并保留同音位置；需要做窄屏和各平台交互检查。
 - 统计、streak、设置已接入持久化；需要验证迁移旧 JSON、重启恢复和清除语义。
 - Flutter 平台目录和 lockfile 已生成；CI/Release 已统一到可复用构建定义，六平台真实构建仍需对应 runner 完成。
+- Ubuntu 质量门禁中的训练测试尚未与 SoLoud 原生动态库隔离；首次 PR CI 已证明当前测试替身仍会加载插件。
 
 ## 分阶段 TODO
 
@@ -63,6 +73,7 @@
 ### P2：质量与发布
 
 - [x] 为数学、题目池、FSM 取消、持久化、采样映射、关键 Widget 增加回归测试。
+- [ ] 修复训练测试对 `AudioEngine` 具体类的继承依赖，使纯 Dart/Flutter 单元测试不加载 SoLoud 动态库；不得通过跳过测试或修改 runner 环境掩盖问题。
 - [ ] 发布工作流复用已通过 CI 门禁的构建定义，上传带平台/架构标识的制品和 SHA256 校验文件（当前未在 CI runner 上完成闭环）。
 - [ ] 明确尚未迁移的 Swift 功能：调音器、节拍器、日志、分享、录音、Watch/Widget。
 
@@ -102,10 +113,10 @@
 | 阶段 | 状态 | 说明 |
 | --- | --- | --- |
 | 文档、TODO、验收标准 | 已完成 | 本文档先于代码变更创建 |
-| 平台工程与可复现流水线 | 进行中 | 已固定 SDK/依赖、恢复质量门禁、加入 Linux job、按主机选择构建目标；`d273466` 补齐可复用 CI/Release 定义、签名门禁和制品校验，待 GitHub runner 实际执行 |
+| 平台工程与可复现流水线 | 阻塞 | `d273466` 已补齐可复用 CI/Release 定义；PR #1 首次运行在 Ubuntu 训练测试加载 SoLoud 动态库时失败，六平台构建尚未开始 |
 | 音频与训练核心 | 进行中 | 训练题目已改为具体弦位，题库有限生成并支持确定性循环，增加 generation token；SoLoud 3.x 异步句柄已校正，待各平台播放验证 |
 | 持久化、统计、设置 | 进行中 | 已修复 streak 历史/清除、暴露真实 records、设置序列化并接入 Home；单元测试已覆盖，待手动重启恢复检查 |
-| 测试与发布验证 | 进行中 | 训练测试 27 项、全量测试 88 项已通过；各平台 release 构建仍受本机工具链限制 |
+| 测试与发布验证 | 阻塞 | macOS 本地全量 88 项通过，但 Ubuntu CI 为 61 通过、27 失败；必须先隔离原生音频依赖，再以 GitHub runner 结果为准 |
 
 ## 本轮不做
 
@@ -136,6 +147,20 @@
 | 7 | `fix/build:` | SDK 验证产生的平台兼容性、无签名构建和脚本入口修复 | `6a2814c`, `70579c9`, `04da3ba` |
 | 8 | `docs:` | 最终进度、真实验证结果和未迁移功能清单 | `f126fae`, `c497719`, `9587036` |
 | 9 | `ci:` | CI/Release 共用六平台构建、签名门禁、制品打包和 SHA256 校验 | `d273466`，待 runner 实际闭环 |
+| 10 | `docs:` | 记录 PR #1 首次 CI 失败、SoLoud 测试边界根因和后续模型接管限制 | 本行所在提交 |
+
+### 接管入口：CI 音频测试隔离（唯一 P0）
+
+下一位模型必须从本节开始，不得先处理其他 TODO。
+
+- 目标：让 `TrainingEngine` 依赖一个不包含第三方插件初始化的最小音频端口，使训练单元测试使用纯 fake，生产环境仍由 `AudioEngine`/SoLoud 提供实现。
+- 允许修改：新增一个位于 `lib/engine/` 的最小端口文件，以及 `lib/engine/audio_engine.dart`、`lib/engine/training_engine.dart`、`test/training_engine_test.dart` 和本文档。
+- 端口只暴露训练状态机实际需要的成员：`bool get isReady` 与 `Future<void> playNote(int midiNote)`。`AudioEngine` 实现该端口；测试 fake 直接实现端口，不得继承或构造 `AudioEngine`。
+- 不允许修改：`.github/workflows/`、SoLoud 采样/播放算法、训练题目生成、UI、持久化、平台工程和依赖版本。不得安装/复制 `libflutter_soloud_plugin.so` 到质量门禁，不得使用 `continue-on-error`，不得跳过 27 项测试，不得仅根据操作系统条件绕过测试。
+- 提交顺序：本交接文档提交之后，使用一个独立 `fix:` 提交完成端口隔离；验证完成后再用一个独立 `docs:` 提交回填命令结果、CI run URL 和六平台状态。若实现前发现边界需要扩大，必须先修改本文档并单独提交，不得直接改代码。
+- 本地验收：`dart format --output=none --set-exit-if-changed .`、`flutter analyze`、`flutter test test/training_engine_test.dart`、`flutter test --coverage`，预期全量 88 项通过。
+- CI 验收：PR #1 的 Quality gates 成功，随后 Android、iOS unsigned、macOS unsigned、Windows、Linux、Web 六个 build job 全部成功。任一平台出现新失败时，先在本文档记录 runner、失败步骤、日志 URL、根因假设和允许修改范围，再创建该平台独立修复提交。
+- 合并门禁：所有 PR checks 成功后使用 merge commit 合入 `main`，禁止 squash、禁止在红灯或 skipped 状态下强制合并。Release/tag 不属于此修复提交；Android 正式发布仍受 signing secrets 门禁约束。
 
 ### 下一提交门禁：流水线与依赖
 
