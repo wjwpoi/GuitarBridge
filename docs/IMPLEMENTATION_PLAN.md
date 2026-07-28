@@ -100,11 +100,17 @@
 
 | 顺序 | 提交类型 | 内容 | 状态 |
 | --- | --- | --- | --- |
-| 1 | `docs:` | 建立架构决策、TODO、验收标准和协作规则 | 进行中 |
-| 2 | `build:` | 固定 SDK/依赖、恢复 CI 门禁、生成平台工程 | 待提交 |
+| 1 | `docs:` | 建立架构决策、TODO、验收标准和协作规则 | 已提交 `b3fb36d` |
+| 2 | `build:` | 固定 SDK/依赖、恢复 CI 门禁、生成平台工程 | 配置待提交，平台工程待 SDK 安装 |
 | 3 | `feat:` | 位置感知题目、有限题库和可取消训练 FSM | 待提交 |
 | 4 | `feat:` | SoLoud 采样与合成回退 | 待提交 |
 | 5 | `feat:` | 设置、记录和 streak 持久化 | 待提交 |
 | 6 | `test:` | 领域模型、采样映射、存储和 Widget 回归测试 | 待提交 |
 | 7 | `fix:` | SDK 验证产生的平台兼容性修复 | 待产生 |
 | 8 | `docs:` | 最终进度、真实验证结果和未迁移功能清单 | 待产生 |
+
+### 下一提交门禁：流水线与依赖
+
+- 变更范围：CI/release 工作流、`.gitignore`、`pubspec.yaml`、跨平台构建脚本和 README 启动说明。
+- 必须满足：Flutter 版本固定为 3.32.8；`pubspec.lock` 不再被忽略；format、analyze、test 和资源数量检查会阻断流水线；构建脚本遇到失败返回非零状态。
+- 验收命令：`dart format --output=none --set-exit-if-changed .`、`flutter analyze`、`flutter test`；平台目录生成后追加各平台 release/debug 构建。
