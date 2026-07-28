@@ -5,6 +5,7 @@ import 'package:guitar_bridge/models/tuning.dart';
 import 'package:guitar_bridge/engine/training_engine.dart';
 import 'package:guitar_bridge/engine/audio_engine.dart';
 import 'package:guitar_bridge/core/constants.dart';
+import 'package:guitar_bridge/models/training_question.dart';
 
 /// Mock AudioEngine that doesn't actually play audio
 class MockAudioEngine extends AudioEngine {
@@ -27,7 +28,7 @@ void main() {
   late MockAudioEngine mockAudio;
 
   setUp(() {
-    engine = TrainingEngine();
+    engine = TrainingEngine(delay: (_) async {});
     mockAudio = MockAudioEngine();
     engine.configure(engine: mockAudio, tuning: Tuning.standard);
     engine
@@ -167,6 +168,54 @@ void main() {
         expect(engine.bestStreak, 1); // Best streak should stay at 1
       }
     });
+
+    test('exact position mode rejects a different fret', () async {
+      await engine.start();
+      final target = engine.targetPosition!;
+      final wrong = FretPosition(
+        stringIndex: target.stringIndex,
+        fret: target.fret + 1,
+        midi: target.midi + 1,
+      );
+      await engine.submitAnswer(wrong);
+      expect(engine.lastAnswerCorrect, false);
+    });
+
+    test('pitch class mode accepts another position with the same note', () async {
+      engine.answerMode = AnswerMode.pitchClass;
+      engine.difficulty = AppConstants.difficulties['hard']!;
+      await engine.start();
+      final target = engine.targetPosition!;
+      final alternate = [
+        for (var stringIndex = 0;
+            stringIndex < Tuning.standard.stringCount;
+            stringIndex++)
+          FretPosition(
+            stringIndex: stringIndex,
+            fret: target.midi - Tuning.standard.noteAt(stringIndex, 0),
+            midi: target.midi,
+          ),
+      ].firstWhere(
+        (position) =>
+            position.fret >= 0 &&
+            position.fret <= AppConstants.maxFret &&
+            position != target,
+      );
+      final answer = FretPosition(
+        stringIndex: alternate.stringIndex,
+        fret: alternate.fret,
+        midi: target.midi,
+      );
+      await engine.submitAnswer(answer);
+      expect(engine.lastAnswerCorrect, true);
+    });
+
+    test('submitAnswer ignores unsupported answer types', () async {
+      await engine.start();
+      await engine.submitAnswer(Object());
+      expect(engine.state, TrainingState.waitingAnswer);
+      expect(engine.currentQuestion, 0);
+    });
   });
 
   group('TrainingEngine - Session Management', () {
@@ -235,5 +284,29 @@ void main() {
       engine.configure(engine: mockAudio, tuning: Tuning.dropD);
       expect(engine.currentTuning.name, 'Drop D');
     });
+
+    test('large sessions use a finite question pool', () async {
+      engine.questionsPerSession = 50;
+      await engine.start();
+      expect(engine.totalQuestions, 50);
+    });
+
+    test('reset prevents an older async start from restoring state', () async {
+      final delayGate = Completer<void>();
+      final delayedEngine = TrainingEngine(delay: (_) => delayGate.future)
+        ..configure(engine: mockAudio, tuning: Tuning.standard)
+        ..currentKey = 'C'
+        ..scaleType = ScaleType.major
+        ..difficulty = AppConstants.difficulties['easy']!;
+
+      final start = delayedEngine.start();
+      await Future<void>.delayed(Duration.zero);
+      delayedEngine.reset();
+      delayGate.complete();
+      await start;
+
+      expect(delayedEngine.state, TrainingState.idle);
+    });
   });
 }
+import 'dart:async';
