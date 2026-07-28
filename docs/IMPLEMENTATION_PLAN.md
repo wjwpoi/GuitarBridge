@@ -145,3 +145,9 @@
 - 变更范围：CI Linux 构建 job、macOS/Linux shell 构建脚本和 Windows PowerShell 构建脚本。
 - 必须满足：CI 至少覆盖 Android、iOS（无签名）、macOS、Windows、Linux、Web；本地主机的 `all` 只选择该主机可执行的平台，不把不可能的目标伪装成成功。
 - 验收命令：对应主机运行 `./tool/build.sh all` 或 `./tool/build.ps1 -Platform all`；CI 失败必须阻断合并。
+
+### 下一提交门禁：平台工程基线
+
+- 变更范围：Flutter 生成的 Android、iOS、macOS、Windows、Linux、Web 工程、`.metadata` 和 `pubspec.lock`。
+- 必须满足：六个平台源文件纳入版本控制；iOS deployment target >=13.0、macOS >=10.15，匹配 `flutter_soloud 3.4.0`；生成文件不覆盖业务代码；依赖版本由 lockfile 固定。
+- 验收命令：`flutter pub get`、`flutter analyze`、`flutter test`，以及当前 macOS 主机可执行的 Web/macOS/iOS/Android 构建。
