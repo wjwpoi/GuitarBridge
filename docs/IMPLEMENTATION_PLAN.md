@@ -155,6 +155,19 @@
 ### SDK 验证记录（2026-07-28）
 
 - Flutter 3.32.8 / Dart 3.8.1 已安装到工作区临时 SDK。
-- `flutter pub get` 成功，lockfile 当前解析 `flutter_soloud 3.5.4`（满足 `^3.4.0` 且仍兼容 Flutter 3.32）。
+- `flutter pub get` 成功，lockfile 当前解析 `flutter_soloud 3.5.4`（满足 `^3.4.0` 且仍兼容 Flutter 3.32）；Web 产物包含 `worker.dart.js`、插件 JS 和 WASM 资源。
 - 首次格式化发现并修复指板 Widget 括号错误和测试导入位置错误；训练专项测试当前 27 项通过。
-- `flutter analyze` 无 error/warning；const 建议和脚本输出 lint 已列入当前质量清理，目标是让门禁输出为 0 issues。
+- `flutter analyze` 已达到 `No issues found`，全量测试 87 项通过。
+
+### Release 构建记录（2026-07-28）
+
+| 平台 | 结果 | 说明 |
+| --- | --- | --- |
+| Web | 通过 | `flutter build web --release` 成功，`build/web` 约 25 MB，包含 SoLoud WASM 资源 |
+| macOS | 环境阻塞 | Xcode 16.3 可用，但本机没有 CocoaPods；临时安装因系统 Ruby 2.6 与当前 Xcode SDK 头文件不匹配失败 |
+| iOS | 环境阻塞 | 与 macOS 共用 CocoaPods，未执行插件编译 |
+| Android | 环境阻塞 | 本机没有 Android SDK 和 Java，CI Ubuntu job 负责验证 |
+| Linux | 未执行 | 需要 Linux 主机或 CI Ubuntu job |
+| Windows | 未执行 | 需要 Windows 主机或 CI Windows job |
+
+当前代码级门禁通过，Apple/Android/桌面三项仍需在具备对应工具链的 CI runner 上完成；不能把本机环境阻塞误报为平台代码通过。
