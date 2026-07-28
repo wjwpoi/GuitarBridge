@@ -17,7 +17,7 @@
 - 训练异步任务已加入 generation token，题目池改为有限生成；需要补充页面销毁和重复启动回归验证。
 - 指板绘制与点击已共用品距坐标，并保留同音位置；需要做窄屏和各平台交互检查。
 - 统计、streak、设置已接入持久化；需要验证迁移旧 JSON、重启恢复和清除语义。
-- Flutter 平台目录和 lockfile 尚未生成；CI 工作流已收紧，需用真实构建结果校正平台配置。
+- Flutter 平台目录和 lockfile 已生成；CI 工作流已收紧，六平台真实构建仍需对应 runner 完成。
 
 ## 分阶段 TODO
 
@@ -53,7 +53,7 @@
 
 ## 验收标准
 
-1. `flutter format --set-exit-if-changed .`、`flutter analyze`、`flutter test --coverage` 全部通过。
+1. `dart format --set-exit-if-changed .`、`flutter analyze`、`flutter test --coverage` 全部通过。
 2. Android、Web、macOS、Windows 至少能完成 release build；iOS/Linux 工程能完成依赖解析和 debug build。
 3. 首次启动可播放根音和目标音；clean、overdrive、distortion 均有可听见输出或明确错误状态。
 4. 点击错误弦位/品位不会判对；点击正确目标位置会进入下一题；等待回答界面不泄露答案。
@@ -65,7 +65,7 @@
 - `TrainingQuestion` 必须同时保存 `root` 和 `target` 的 `stringIndex`、`fret`、`midi`，UI 点击回传完整 `FretPosition`。
 - 默认 `AnswerMode.exactPosition` 比较弦和品；未来若增加听音练习模式，`AnswerMode.pitchClass` 必须是显式配置，不能隐式替代精确寻址。
 - 训练异步流程以 generation token 绑定；每次 `start`、`reset`、完成或销毁都使旧 token 失效。
-- 题目池一次性按当前调性、调弦、难度生成并打乱；题量超过池容量时取模循环但不重复同一轮中的题目，禁止无界递归。
+- 题目池一次性按当前调性、调弦、难度生成并打乱；题量超过池容量时先消耗完整一轮，再按模循环作为明确降级策略，禁止无界递归。
 - 指板绘制和点击都由同一个 `fretX(fret)` 坐标函数计算；完整指板显示 0–22 品，不能删除同音位置。
 - `UserPreferences` 是唯一设置来源，题量、显示开关、音量和音色都必须序列化；Home、Settings 和 TrainingEngine 通过同一对象同步。
 - `StreakManager.records` 是统计页的唯一数据入口；日期 streak 按本地日去重，但不得删除历史日期，清除操作必须同时清空两类存储。
@@ -107,7 +107,7 @@
 | 5 | `feat/fix:` | 设置、记录、streak 持久化和本地日期语义 | `ea3f151`, `eaadc98` |
 | 6 | `test/chore:` | 领域模型、采样映射、存储、Widget 回归测试和零 issue lint | `b3e20ac`, `ca87a41` |
 | 7 | `fix/build:` | SDK 验证产生的平台兼容性和无签名构建修复 | `6a2814c`, `70579c9` |
-| 8 | `docs:` | 最终进度、真实验证结果和未迁移功能清单 | `f126fae`, `c497719` |
+| 8 | `docs:` | 最终进度、真实验证结果和未迁移功能清单 | `f126fae`, `c497719`, `9587036` |
 
 ### 下一提交门禁：流水线与依赖
 
