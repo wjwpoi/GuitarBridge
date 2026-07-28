@@ -141,7 +141,8 @@
 - 必须满足：Flutter 版本固定为 3.32.8；CI 与 Release 共用一份质量/构建定义；六平台构建失败阻断；所有构建制品可下载；Release 生成带平台/架构标识的压缩包和 SHA256 文件；无正式 Android signing secrets 时不得创建公开 Release。
 - 验收命令：本地执行 YAML 语法检查、`dart format --output=none --set-exit-if-changed .`、`flutter analyze`、`flutter test`；GitHub runner 实际执行六平台 release matrix 和 tag release dry-run/发布流程。
 - 产物契约：Android 为正式签名的 ABI APK；iOS 为明确标注的 unsigned `.app` 压缩包；macOS/Windows/Linux 为可运行目录的压缩包；Web 为静态部署 zip；每个制品旁边有同名 `.sha256`。
-- 签名契约：签名密钥只来自 GitHub Actions secrets，不进入仓库、日志或 artifact；CI 普通分支只验证构建，不发布签名包。
+- 签名契约：Android 使用 `ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD` 四个 GitHub Actions secrets；签名密钥不进入仓库、日志或 artifact；CI 普通分支只验证构建，不发布签名包。
+- 未签名边界：iOS 和 macOS 产物文件名必须包含 `unsigned`，Release notes 必须说明不可直接分发；Apple Developer ID/App Store 签名、公证，以及 Windows 代码签名/安装器是独立后续发布任务，不得在本轮伪造完成状态。
 
 ### 下一提交门禁：训练核心
 
