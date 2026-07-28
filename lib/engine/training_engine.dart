@@ -29,8 +29,8 @@ typedef Delay = Future<void> Function(Duration duration);
 /// guarded by a generation token so reset/start cannot resurrect old work.
 class TrainingEngine extends ChangeNotifier {
   TrainingEngine({Random? random, Delay? delay})
-      : _random = random ?? Random(),
-        _delay = delay ?? ((duration) => Future<void>.delayed(duration));
+    : _random = random ?? Random(),
+      _delay = delay ?? ((duration) => Future<void>.delayed(duration));
 
   final Random _random;
   final Delay _delay;
@@ -45,10 +45,9 @@ class TrainingEngine extends ChangeNotifier {
   int _questionsPerSession = AppConstants.defaultQuestionsPerSession;
   int get questionsPerSession => _questionsPerSession;
   set questionsPerSession(int value) {
-    _questionsPerSession = value.clamp(
-      AppConstants.minQuestions,
-      AppConstants.maxQuestions,
-    ).toInt();
+    _questionsPerSession = value
+        .clamp(AppConstants.minQuestions, AppConstants.maxQuestions)
+        .toInt();
   }
 
   TrainingState _state = TrainingState.idle;
@@ -82,15 +81,13 @@ class TrainingEngine extends ChangeNotifier {
   int? get userAnswerMidi => _userAnswerMidi;
   bool get lastAnswerCorrect => _lastAnswerCorrect;
   bool get isWaitingAnswer => _state == TrainingState.waitingAnswer;
-  int get totalQuestions => _sessionQuestionCount == 0
-      ? questionsPerSession
-      : _sessionQuestionCount;
+  int get totalQuestions =>
+      _sessionQuestionCount == 0 ? questionsPerSession : _sessionQuestionCount;
   double get progress => totalQuestions == 0
       ? 0
       : (_currentQuestion / totalQuestions).clamp(0.0, 1.0).toDouble();
-  double get accuracy => _currentQuestion == 0
-      ? 0
-      : _correctCount / _currentQuestion * 100;
+  double get accuracy =>
+      _currentQuestion == 0 ? 0 : _correctCount / _currentQuestion * 100;
   double get averageResponseTime => _responseTimes.isEmpty
       ? 0
       : _responseTimes.reduce((a, b) => a + b) / _responseTimes.length;
@@ -99,12 +96,12 @@ class TrainingEngine extends ChangeNotifier {
       : DateTime.now().difference(_sessionStartTime!);
 
   KeySignature get currentKeySignature => KeySignature(
-        NoteName.values.firstWhere(
-          (n) => n.sharpName == currentKey || n.flatName == currentKey,
-          orElse: () => NoteName.c,
-        ),
-        scaleType,
-      );
+    NoteName.values.firstWhere(
+      (n) => n.sharpName == currentKey || n.flatName == currentKey,
+      orElse: () => NoteName.c,
+    ),
+    scaleType,
+  );
 
   void configure({required AudioEngine engine, required Tuning tuning}) {
     audioEngine = engine;
@@ -130,17 +127,23 @@ class TrainingEngine extends ChangeNotifier {
   void _buildQuestionPool() {
     final keySig = currentKeySignature;
     final positions = <FretPosition>[];
-    for (var string = difficulty.stringRange.$1;
-        string <= difficulty.stringRange.$2;
-        string++) {
-      for (var fret = difficulty.fretRange.$1;
-          fret <= difficulty.fretRange.$2;
-          fret++) {
-        positions.add(FretPosition.fromTuning(
-          tuning: currentTuning,
-          stringIndex: string,
-          fret: fret,
-        ));
+    for (
+      var string = difficulty.stringRange.$1;
+      string <= difficulty.stringRange.$2;
+      string++
+    ) {
+      for (
+        var fret = difficulty.fretRange.$1;
+        fret <= difficulty.fretRange.$2;
+        fret++
+      ) {
+        positions.add(
+          FretPosition.fromTuning(
+            tuning: currentTuning,
+            stringIndex: string,
+            fret: fret,
+          ),
+        );
       }
     }
 
@@ -155,11 +158,13 @@ class TrainingEngine extends ChangeNotifier {
         if (root == target) continue;
         final interval = ((target.midi - root.midi) % 12 + 12) % 12;
         if (allowed.contains(interval) && interval != 0) {
-          pool.add(TrainingQuestion(
-            root: root,
-            target: target,
-            intervalSemitones: interval,
-          ));
+          pool.add(
+            TrainingQuestion(
+              root: root,
+              target: target,
+              intervalSemitones: interval,
+            ),
+          );
         }
       }
     }
@@ -167,11 +172,13 @@ class TrainingEngine extends ChangeNotifier {
     if (pool.isEmpty && roots.length >= 2) {
       for (var i = 0; i < roots.length; i++) {
         final target = roots[(i + 1) % roots.length];
-        pool.add(TrainingQuestion(
-          root: roots[i],
-          target: target,
-          intervalSemitones: ((target.midi - roots[i].midi) % 12 + 12) % 12,
-        ));
+        pool.add(
+          TrainingQuestion(
+            root: roots[i],
+            target: target,
+            intervalSemitones: ((target.midi - roots[i].midi) % 12 + 12) % 12,
+          ),
+        );
       }
     }
 
@@ -217,7 +224,9 @@ class TrainingEngine extends ChangeNotifier {
   /// Accepts a concrete [FretPosition]. The integer form is retained for
   /// service-level callers and tests; it intentionally uses pitch-class mode.
   Future<void> submitAnswer(Object answer) async {
-    if (_state != TrainingState.waitingAnswer || _targetPosition == null) return;
+    if (_state != TrainingState.waitingAnswer || _targetPosition == null) {
+      return;
+    }
     if (answer is! FretPosition && answer is! int) return;
 
     final target = _targetPosition!;
@@ -228,9 +237,8 @@ class TrainingEngine extends ChangeNotifier {
     final isCorrect = answer is int
         ? midi % 12 == target.midi % 12
         : answerMode == AnswerMode.exactPosition
-            ? position != null &&
-        position == target
-            : midi % 12 == target.midi % 12;
+        ? position != null && position == target
+        : midi % 12 == target.midi % 12;
     _lastAnswerCorrect = isCorrect;
 
     if (_questionStartTime != null) {

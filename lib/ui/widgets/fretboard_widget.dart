@@ -75,7 +75,7 @@ class FretboardWidget extends StatelessWidget {
                 child: _buildTouchTargets(keySig),
               ),
             ),
-          ),
+          );
         },
       ),
     );
@@ -90,12 +90,16 @@ class FretboardWidget extends StatelessWidget {
             (constraints.maxHeight - 20) / (tuning.stringCount - 1);
         return Stack(
           children: [
-            for (var stringIndex = 0;
-                stringIndex < tuning.stringCount;
-                stringIndex++)
-              for (var fret = startFret;
-                  fret < startFret + visibleFrets;
-                  fret++)
+            for (
+              var stringIndex = 0;
+              stringIndex < tuning.stringCount;
+              stringIndex++
+            )
+              for (
+                var fret = startFret;
+                fret < startFret + visibleFrets;
+                fret++
+              )
                 _buildFretButton(
                   stringIndex,
                   fret,
@@ -150,9 +154,7 @@ class FretboardWidget extends StatelessWidget {
   }
 
   double _fretCenterX(int fret, double width) {
-    return (_fretBoundaryX(fret, width) +
-            _fretBoundaryX(fret + 1, width)) /
-        2;
+    return (_fretBoundaryX(fret, width) + _fretBoundaryX(fret + 1, width)) / 2;
   }
 
   Color _buttonColor(FretPosition position, KeySignature keySig) {
@@ -182,8 +184,8 @@ class FretboardWidget extends StatelessWidget {
     final label = showDegrees && degree != null
         ? ScaleDegree.values[degree - 1].roman
         : showNoteNames
-            ? GuitarMath.noteNameAt(midi).sharpName
-            : null;
+        ? GuitarMath.noteNameAt(midi).sharpName
+        : null;
     if (label == null) return null;
     return Text(
       label,
@@ -240,9 +242,7 @@ class _FretboardPainter extends CustomPainter {
       ..color = Colors.grey.shade400
       ..strokeWidth = 1.5;
     final stringSpacing = (size.height - 20) / (tuning.stringCount - 1);
-    for (var stringIndex = 0;
-        stringIndex < tuning.stringCount;
-        stringIndex++) {
+    for (var stringIndex = 0; stringIndex < tuning.stringCount; stringIndex++) {
       final y = 10 + stringIndex * stringSpacing;
       canvas.drawLine(Offset(0, y), Offset(size.width, y), stringPaint);
     }
@@ -255,11 +255,7 @@ class _FretboardPainter extends CustomPainter {
     for (var fret = startFret; fret <= startFret + visibleFrets; fret++) {
       final ratio = (GuitarMath.fretRatio(fret) - start) / (end - start);
       final x = size.width * ratio.clamp(0.0, 1.0).toDouble();
-      canvas.drawLine(
-        Offset(x, 10),
-        Offset(x, size.height - 10),
-        fretPaint,
-      );
+      canvas.drawLine(Offset(x, 10), Offset(x, size.height - 10), fretPaint);
       if (showFretNumbers && fret % 2 == 0) {
         final textPainter = TextPainter(
           text: TextSpan(

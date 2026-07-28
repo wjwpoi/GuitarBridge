@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:guitar_bridge/core/guitar_math.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guitar_bridge/models/scale.dart';
@@ -87,7 +89,10 @@ void main() {
       await engine.start();
       expect(
         engine.rootMidi!,
-        inInclusiveRange(AppConstants.guitarLowestMidi, AppConstants.guitarHighestMidi),
+        inInclusiveRange(
+          AppConstants.guitarLowestMidi,
+          AppConstants.guitarHighestMidi,
+        ),
       );
     });
 
@@ -127,10 +132,11 @@ void main() {
     test('submitAnswer updates counters on correct answer', () async {
       await engine.start();
       if (engine.targetMidi != null) {
-        await engine.submitAnswer(engine.targetMidi!);
+        final submission = engine.submitAnswer(engine.targetMidi!);
         expect(engine.lastAnswerCorrect, true);
         expect(engine.correctCount, 1);
         expect(engine.currentStreak, 1);
+        await submission;
       }
     });
 
@@ -138,10 +144,11 @@ void main() {
       await engine.start();
       if (engine.targetMidi != null) {
         // Submit a note one semitone off
-        await engine.submitAnswer(engine.targetMidi! + 1);
+        final submission = engine.submitAnswer(engine.targetMidi! + 1);
         expect(engine.lastAnswerCorrect, false);
         expect(engine.correctCount, 0);
         expect(engine.currentStreak, 0);
+        await submission;
       }
     });
 
@@ -162,7 +169,8 @@ void main() {
       }
 
       // Next question: wrong answer
-      if (engine.state == TrainingState.waitingAnswer && engine.targetMidi != null) {
+      if (engine.state == TrainingState.waitingAnswer &&
+          engine.targetMidi != null) {
         await engine.submitAnswer(engine.targetMidi! + 1);
         expect(engine.currentStreak, 0);
         expect(engine.bestStreak, 1); // Best streak should stay at 1
@@ -177,38 +185,46 @@ void main() {
         fret: target.fret + 1,
         midi: target.midi + 1,
       );
-      await engine.submitAnswer(wrong);
+      final submission = engine.submitAnswer(wrong);
       expect(engine.lastAnswerCorrect, false);
+      await submission;
     });
 
-    test('pitch class mode accepts another position with the same note', () async {
-      engine.answerMode = AnswerMode.pitchClass;
-      engine.difficulty = AppConstants.difficulties['hard']!;
-      await engine.start();
-      final target = engine.targetPosition!;
-      final alternate = [
-        for (var stringIndex = 0;
-            stringIndex < Tuning.standard.stringCount;
-            stringIndex++)
-          FretPosition(
-            stringIndex: stringIndex,
-            fret: target.midi - Tuning.standard.noteAt(stringIndex, 0),
-            midi: target.midi,
-          ),
-      ].firstWhere(
-        (position) =>
-            position.fret >= 0 &&
-            position.fret <= AppConstants.maxFret &&
-            position != target,
-      );
-      final answer = FretPosition(
-        stringIndex: alternate.stringIndex,
-        fret: alternate.fret,
-        midi: target.midi,
-      );
-      await engine.submitAnswer(answer);
-      expect(engine.lastAnswerCorrect, true);
-    });
+    test(
+      'pitch class mode accepts another position with the same note',
+      () async {
+        engine.answerMode = AnswerMode.pitchClass;
+        engine.difficulty = AppConstants.difficulties['hard']!;
+        await engine.start();
+        final target = engine.targetPosition!;
+        final alternate =
+            [
+              for (
+                var stringIndex = 0;
+                stringIndex < Tuning.standard.stringCount;
+                stringIndex++
+              )
+                FretPosition(
+                  stringIndex: stringIndex,
+                  fret: target.midi - Tuning.standard.noteAt(stringIndex, 0),
+                  midi: target.midi,
+                ),
+            ].firstWhere(
+              (position) =>
+                  position.fret >= 0 &&
+                  position.fret <= AppConstants.maxFret &&
+                  position != target,
+            );
+        final answer = FretPosition(
+          stringIndex: alternate.stringIndex,
+          fret: alternate.fret,
+          midi: target.midi,
+        );
+        final submission = engine.submitAnswer(answer);
+        expect(engine.lastAnswerCorrect, true);
+        await submission;
+      },
+    );
 
     test('submitAnswer ignores unsupported answer types', () async {
       await engine.start();
@@ -237,7 +253,8 @@ void main() {
       // Wait for state to settle
       await Future.delayed(const Duration(milliseconds: 200));
 
-      if (engine.state == TrainingState.waitingAnswer && engine.targetMidi != null) {
+      if (engine.state == TrainingState.waitingAnswer &&
+          engine.targetMidi != null) {
         await engine.submitAnswer(engine.targetMidi!);
         // Give time for state transition
         await Future.delayed(const Duration(milliseconds: 100));
@@ -246,7 +263,12 @@ void main() {
       // Either completed or still processing
       expect(
         engine.state,
-        anyOf(TrainingState.completed, TrainingState.playingRoot, TrainingState.waitingAnswer, TrainingState.showingResult),
+        anyOf(
+          TrainingState.completed,
+          TrainingState.playingRoot,
+          TrainingState.waitingAnswer,
+          TrainingState.showingResult,
+        ),
       );
     });
 
@@ -309,4 +331,3 @@ void main() {
     });
   });
 }
-import 'dart:async';
