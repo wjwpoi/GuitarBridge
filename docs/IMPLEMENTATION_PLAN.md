@@ -75,10 +75,10 @@
 | 阶段 | 状态 | 说明 |
 | --- | --- | --- |
 | 文档、TODO、验收标准 | 已完成 | 本文档先于代码变更创建 |
-| 平台工程与可复现流水线 | 进行中 | 已固定 SDK/依赖、恢复质量门禁并修复构建脚本；平台目录和 lockfile 待生成 |
-| 音频与训练核心 | 进行中 | 训练题目已改为具体弦位，题库有限生成并支持确定性循环，增加 generation token；训练提交安全性待 SDK 验证，音频另行提交 |
-| 持久化、统计、设置 | 进行中 | 已修复 streak 历史/清除、暴露真实 records、设置序列化并接入 Home；待 SDK 验证和测试补齐 |
-| 测试与发布验证 | 进行中 | 已增加题目、采样映射、存储回归测试；等待临时 Flutter SDK 完成安装后执行 |
+| 平台工程与可复现流水线 | 进行中 | 已固定 SDK/依赖、恢复质量门禁、加入 Linux job、按主机选择构建目标；六个平台工程和 lockfile 已生成，待 release 构建 |
+| 音频与训练核心 | 进行中 | 训练题目已改为具体弦位，题库有限生成并支持确定性循环，增加 generation token；SoLoud 3.x 异步句柄已校正，待各平台播放验证 |
+| 持久化、统计、设置 | 进行中 | 已修复 streak 历史/清除、暴露真实 records、设置序列化并接入 Home；单元测试已覆盖，待手动重启恢复检查 |
+| 测试与发布验证 | 进行中 | 训练测试 27 项已通过；全量测试、静态分析和各平台 release 构建待完成 |
 
 ## 本轮不做
 
@@ -151,3 +151,10 @@
 - 变更范围：Flutter 生成的 Android、iOS、macOS、Windows、Linux、Web 工程、`.metadata` 和 `pubspec.lock`。
 - 必须满足：六个平台源文件纳入版本控制；iOS deployment target >=13.0、macOS >=10.15，匹配 `flutter_soloud 3.4.0`；生成文件不覆盖业务代码；依赖版本由 lockfile 固定。
 - 验收命令：`flutter pub get`、`flutter analyze`、`flutter test`，以及当前 macOS 主机可执行的 Web/macOS/iOS/Android 构建。
+
+### SDK 验证记录（2026-07-28）
+
+- Flutter 3.32.8 / Dart 3.8.1 已安装到工作区临时 SDK。
+- `flutter pub get` 成功，lockfile 当前解析 `flutter_soloud 3.5.4`（满足 `^3.4.0` 且仍兼容 Flutter 3.32）。
+- 首次格式化发现并修复指板 Widget 括号错误和测试导入位置错误；训练专项测试当前 27 项通过。
+- `flutter analyze` 无 error/warning，仍有 32 条 info 级 lint，后续可单独清理，不阻断当前门禁。
