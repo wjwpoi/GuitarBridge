@@ -278,7 +278,15 @@ class TrainingEngine extends ChangeNotifier {
     _currentStreak = 0;
     _failedAttempts++;
 
-    if (maxFailedAttempts > 0 && _failedAttempts >= maxFailedAttempts) {
+    if (maxFailedAttempts == 0) {
+      // Legacy: advance immediately, never reveal.
+      _currentQuestion++;
+      final token = _generation;
+      _state = TrainingState.showingResult;
+      notifyListeners();
+      await _delay(const Duration(milliseconds: 1200));
+      await _nextQuestion(token);
+    } else if (_failedAttempts >= maxFailedAttempts) {
       // Reveal the correct position and advance.
       _showCorrectPosition = true;
       _currentQuestion++;
