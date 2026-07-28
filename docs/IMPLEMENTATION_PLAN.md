@@ -306,16 +306,15 @@ CMake Error at CMakeLists.txt:3 (project):
 
 - `b26ff31`：`jsonDecode` 包在 try-catch 中；损坏 JSON 返回空列表/默认值；+2 项恢复测试。
 
-### 当前阶段：训练试错与答案揭示（2026-07-28）
+### 当前阶段：训练试错与答案揭示 ✅ 已完成（PR #7）
 
-- 目标：答错不立即跳到下一题，允许用户在指板上多次尝试；超过 N 次失败后高亮正确位置。
-- 允许修改：`lib/engine/training_engine.dart`、`lib/models/practice_record.dart`、`lib/ui/widgets/fretboard_widget.dart`、`lib/ui/screens/settings_screen.dart`、`lib/ui/screens/home_screen.dart`、`test/training_engine_test.dart`、本文档。
-- 实现方案：
-  1. `UserPreferences` 新增 `maxFailedAttempts`：0=永不揭示，1–5=容错次数，默认 3；
-  2. `TrainingEngine.submitAnswer()` 重写错误分支：未达上限保持 `waitingAnswer`，达上限揭示答案后推进；
-  3. `FretboardWidget`：答题阶段保留根音标记；揭示答案时高亮 target；
-  4. 设置页新增选项（永不、1、2、3、4、5）。
-- 验收：`dart analyze lib/` 零新增 issue；`flutter test --coverage` 99 项通过（新增 9 项试错回归测试）；手动验证答错不推进、达上限揭示答案。
+- `maxFailedAttempts` 设置（0=永不揭示，1–5），默认 3；答错保持 `waitingAnswer` 允许多次尝试；达上限金色高亮正确位置后推进。
+- 验收：99 项测试通过（新增 9 项试错回归），六平台构建全绿。
+
+### 当前阶段：布局响应式适配 ✅ 已完成（PR #6）
+
+- `MediaQuery` 检测窄屏（<360dp），动态 `contentPadding` 和 `gapSize`；`SingleChildScrollView` 保证横竖屏可滚动。
+- 验收：90 项测试通过，六平台构建全绿。
 
 ### 当前阶段：音频错误 UI（2026-07-28）
 

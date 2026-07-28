@@ -111,6 +111,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrow = screenWidth < 360;
+    final contentPadding = isNarrow
+        ? const EdgeInsets.symmetric(horizontal: 8, vertical: 6)
+        : const EdgeInsets.all(12);
+    final gapSize = isNarrow ? 8.0 : 12.0;
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       appBar: _buildAppBar(),
@@ -135,7 +142,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               SafeArea(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(12),
+                  padding: contentPadding,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -211,12 +218,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: gapSize),
                       ScaleChartWidget(
                         selectedKey: _selectedKey,
                         scaleType: _scaleTypeFromName(_selectedScale),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: gapSize),
                       Semantics(
                         label: 'Guitar fretboard',
                         child: FretboardWidget(
@@ -233,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           onFretTapped: _onFretTapped,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: gapSize),
                       Semantics(
                         label: 'Training controls',
                         child: TrainingStatusWidget(
