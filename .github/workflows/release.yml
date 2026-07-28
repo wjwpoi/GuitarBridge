@@ -5,61 +5,107 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  release:
-    name: Create GitHub Release
+  validate-tag:
+    name: Validate release tag and signing inputs
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    timeout-minutes: 5
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.32.8'
-          cache: true
-
-      - run: flutter pub get
-      - run: dart format --output=none --set-exit-if-changed .
-      - run: flutter analyze
-      - run: flutter test
-
-      # Android
-      - name: Build Android APK
-        run: flutter build apk --release --split-per-abi
-
-      # Web
-      - name: Build Web
-        run: flutter build web --release
-
-      - name: Package Web
+      - name: Match tag to pubspec version
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          cd build
-          zip -qr web-build.zip web
+          app_version="$(sed -n 's/^version:[[:space:]]*//p' pubspec.yaml)"
+          test -n "$app_version"
+          expected_tag="v${app_version%%+*}"
+          if [[ "$RELEASE_TAG" != "$expected_tag" ]]; then
+            echo "Release tag $RELEASE_TAG does not match pubspec version $app_version" >&2
+            exit 1
+          fi
 
-      # Create Release
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
+      - name: Require Android release signing secrets
+        shell: bash
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+
+  quality-and-build:
+    name: Quality and six-platform build
+    needs: validate-tag
+    uses: ./.github/workflows/build.yml
+    with:
+      require_android_signing: true
+    secrets: inherit
+
+  publish:
+    name: Publish verified artifacts
+    needs: quality-and-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: guitarbridge-*
+          path: release-artifacts
+          merge-multiple: true
+
+      - name: Generate and verify SHA256 checksums
+        shell: bash
+        run: |
+          cd release-artifacts
+          shopt -s nullglob
+          artifacts=(*.apk *.zip *.tar.gz)
+          test "${#artifacts[@]}" -gt 0
+          : > SHA256SUMS
+          for artifact in "${artifacts[@]}"; do
+            checksum="$(shasum -a 256 "$artifact")"
+            printf '%s\n' "$checksum" >> SHA256SUMS
+            printf '%s\n' "$checksum" > "$artifact.sha256"
+          done
+          shasum -a 256 -c SHA256SUMS
+
+      - name: Preserve assembled release bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: guitarbridge-release-${{ github.ref_name }}
+          path: release-artifacts/
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           name: GuitarBridge ${{ github.ref_name }}
+          fail_on_unmatched_files: true
           body: |
             ## GuitarBridge ${{ github.ref_name }}
 
-            ### 跨平台吉他练耳训练工具
+            Release artifacts were produced by the same quality and build
+            workflow used by CI. Verify downloads with `SHA256SUMS` or the
+            adjacent `.sha256` file.
 
-            - Android APK（多架构）
-            - Web 版（可直接部署）
-            - 其他平台需从源码构建
+            - Android: signed, split-per-ABI APKs
+            - Web: deployable static bundle
+            - Linux and Windows: portable build bundles
+            - iOS and macOS: unsigned validation builds, not directly installable
 
-            ### 安装说明
-            1. Android: 下载对应架构 APK 安装
-            2. Web: 解压 web-build.zip 部署到任意静态服务器
-          files: |
-            build/app/outputs/flutter-apk/*.apk
-            build/web-build.zip
-
-      - name: Upload Web Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-build
-          path: build/web-build.zip
+            Apple distribution signing/notarization and Windows code signing
+            remain separate release-engineering tasks.
+          files: release-artifacts/*
