@@ -120,4 +120,18 @@ void main() {
     expect(manager.bestStreak, 2);
     expect(manager.totalPracticeDays, 3);
   });
+
+  test('corrupted record JSON returns empty list', () async {
+    SharedPreferences.setMockInitialValues({'practice_records': '{bad json'});
+    final storage = StorageService(await SharedPreferences.getInstance());
+    expect(await storage.getRecords(), isEmpty);
+  });
+
+  test('corrupted preferences JSON returns defaults', () async {
+    SharedPreferences.setMockInitialValues({'user_preferences': '{bad json'});
+    final storage = StorageService(await SharedPreferences.getInstance());
+    final prefs = await storage.getPreferences();
+    expect(prefs.audioVolume, 0.8);
+    expect(prefs.questionsPerSession, 10);
+  });
 }
