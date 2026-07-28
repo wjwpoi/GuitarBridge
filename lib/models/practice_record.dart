@@ -73,6 +73,9 @@ class UserPreferences {
   String selectedKey;
   String selectedScale;
   String difficulty;
+  int questionsPerSession;
+  double audioVolume;
+  String toneMode;
   bool hasCompletedOnboarding;
 
   UserPreferences({
@@ -83,6 +86,9 @@ class UserPreferences {
     this.selectedKey = 'C',
     this.selectedScale = '自然大调',
     this.difficulty = 'easy',
+    this.questionsPerSession = 10,
+    this.audioVolume = 0.8,
+    this.toneMode = 'clean',
     this.hasCompletedOnboarding = false,
   });
 
@@ -94,6 +100,9 @@ class UserPreferences {
         'selectedKey': selectedKey,
         'selectedScale': selectedScale,
         'difficulty': difficulty,
+        'questionsPerSession': questionsPerSession,
+        'audioVolume': audioVolume,
+        'toneMode': toneMode,
         'hasCompletedOnboarding': hasCompletedOnboarding,
       };
 
@@ -106,6 +115,9 @@ class UserPreferences {
         selectedKey: json['selectedKey'] as String? ?? 'C',
         selectedScale: json['selectedScale'] as String? ?? '自然大调',
         difficulty: json['difficulty'] as String? ?? 'easy',
+        questionsPerSession: (json['questionsPerSession'] as num?)?.toInt() ?? 10,
+        audioVolume: (json['audioVolume'] as num?)?.toDouble() ?? 0.8,
+        toneMode: json['toneMode'] as String? ?? 'clean',
         hasCompletedOnboarding:
             json['hasCompletedOnboarding'] as bool? ?? false,
       );

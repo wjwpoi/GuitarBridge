@@ -27,7 +27,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _volume = widget.audioEngine.volume;
-    _questionsPerSession = 10;
+    _questionsPerSession = widget.preferences.questionsPerSession;
   }
 
   @override
@@ -57,7 +57,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     activeColor: Colors.cyan,
                     onChanged: (v) {
                       setState(() => _volume = v);
+                      widget.preferences.audioVolume = v;
                       widget.audioEngine.setVolume(v);
+                      widget.onPreferencesChanged(widget.preferences);
                     },
                   ),
                 ],
@@ -81,8 +83,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       return ChoiceChip(
                         label: Text('$n'),
                         selected: _questionsPerSession == n,
-                        onSelected: (_) =>
-                            setState(() => _questionsPerSession = n),
+                        onSelected: (_) {
+                          setState(() => _questionsPerSession = n);
+                          widget.preferences.questionsPerSession = n;
+                          widget.onPreferencesChanged(widget.preferences);
+                        },
                         selectedColor: Colors.cyan.withAlpha(100),
                       );
                     }).toList(),
@@ -104,7 +109,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     value: prefs.showNoteNames,
                     activeColor: Colors.cyan,
                     onChanged: (v) {
-                      prefs.showNoteNames = v;
+                      setState(() => prefs.showNoteNames = v);
                       widget.onPreferencesChanged(prefs);
                     },
                   ),
@@ -114,7 +119,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     value: prefs.showFretNumbers,
                     activeColor: Colors.cyan,
                     onChanged: (v) {
-                      prefs.showFretNumbers = v;
+                      setState(() => prefs.showFretNumbers = v);
                       widget.onPreferencesChanged(prefs);
                     },
                   ),
@@ -124,7 +129,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     value: prefs.showDegrees,
                     activeColor: Colors.cyan,
                     onChanged: (v) {
-                      prefs.showDegrees = v;
+                      setState(() => prefs.showDegrees = v);
                       widget.onPreferencesChanged(prefs);
                     },
                   ),

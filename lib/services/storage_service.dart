@@ -31,6 +31,10 @@ class StorageService {
     await _prefs.remove(_recordsKey);
   }
 
+  Future<void> clearStreaks() async {
+    await _prefs.remove(_streaksKey);
+  }
+
   // === 连续练习 ===
 
   Future<List<PracticeStreak>> getStreaks() async {
@@ -42,11 +46,16 @@ class StorageService {
 
   Future<void> addStreak(PracticeStreak streak) async {
     final streaks = await getStreaks();
-    // 仅保留今天的 streak，避免重复
-    final today = DateTime.now();
-    final todayStart = DateTime(today.year, today.month, today.day);
-    streaks.removeWhere((s) => s.date.isBefore(todayStart));
-    if (!streaks.any((s) => s.date.isAfter(todayStart))) {
+    final date = DateTime(streak.date.year, streak.date.month, streak.date.day);
+    final hasDate = streaks.any((existing) {
+      final existingDate = DateTime(
+        existing.date.year,
+        existing.date.month,
+        existing.date.day,
+      );
+      return existingDate == date;
+    });
+    if (!hasDate) {
       streaks.add(streak);
     }
     await _prefs.setString(_streaksKey, jsonEncode(streaks.map((s) => s.toMap()).toList()));

@@ -15,6 +15,13 @@ class StatsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: streakManager,
+      builder: (context, _) => _buildBody(context, streakManager.records),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, List<PracticeRecord> records) {
     final totalSessions = records.length;
     final totalCorrect = records.fold<int>(0, (s, r) => s + r.correctAnswers);
     final totalAttempts = records.fold<int>(0, (s, r) => s + r.totalAttempts);
