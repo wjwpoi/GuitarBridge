@@ -1,17 +1,17 @@
+import 'dart:async';
+
 import 'package:guitar_bridge/core/guitar_math.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guitar_bridge/models/scale.dart';
 import 'package:guitar_bridge/models/tuning.dart';
 import 'package:guitar_bridge/engine/training_engine.dart';
-import 'package:guitar_bridge/engine/audio_engine.dart';
+import 'package:guitar_bridge/engine/training_audio_port.dart';
 import 'package:guitar_bridge/core/constants.dart';
+import 'package:guitar_bridge/models/training_question.dart';
 
-/// Mock AudioEngine that doesn't actually play audio
-class MockAudioEngine extends AudioEngine {
+/// Fake audio port for unit tests — never touches SoLoud.
+class MockAudioEngine implements TrainingAudioPort {
   int playCallCount = 0;
-
-  @override
-  Future<void> initialize() async {}
 
   @override
   bool get isReady => true;
@@ -27,7 +27,17 @@ void main() {
   late MockAudioEngine mockAudio;
 
   setUp(() {
-    engine = TrainingEngine();
+    engine = TrainingEngine(delay: (_) async {});
+    mockAudio = MockAudioEngine();
+    engine.configure(engine: mockAudio, tuning: Tuning.standard);
+    engine
+      ..currentKey = 'C'
+      ..scaleType = ScaleType.major
+      ..difficulty = AppConstants.difficulties['easy']!;
+  });
+
+  setUp(() {
+    engine = TrainingEngine(delay: (_) async {});
     mockAudio = MockAudioEngine();
     engine.configure(engine: mockAudio, tuning: Tuning.standard);
     engine
@@ -86,7 +96,10 @@ void main() {
       await engine.start();
       expect(
         engine.rootMidi!,
-        inInclusiveRange(AppConstants.guitarLowestMidi, AppConstants.guitarHighestMidi),
+        inInclusiveRange(
+          AppConstants.guitarLowestMidi,
+          AppConstants.guitarHighestMidi,
+        ),
       );
     });
 
@@ -126,10 +139,11 @@ void main() {
     test('submitAnswer updates counters on correct answer', () async {
       await engine.start();
       if (engine.targetMidi != null) {
-        await engine.submitAnswer(engine.targetMidi!);
+        final submission = engine.submitAnswer(engine.targetMidi!);
         expect(engine.lastAnswerCorrect, true);
         expect(engine.correctCount, 1);
         expect(engine.currentStreak, 1);
+        await submission;
       }
     });
 
@@ -137,10 +151,11 @@ void main() {
       await engine.start();
       if (engine.targetMidi != null) {
         // Submit a note one semitone off
-        await engine.submitAnswer(engine.targetMidi! + 1);
+        final submission = engine.submitAnswer(engine.targetMidi! + 1);
         expect(engine.lastAnswerCorrect, false);
         expect(engine.correctCount, 0);
         expect(engine.currentStreak, 0);
+        await submission;
       }
     });
 
@@ -161,11 +176,68 @@ void main() {
       }
 
       // Next question: wrong answer
-      if (engine.state == TrainingState.waitingAnswer && engine.targetMidi != null) {
+      if (engine.state == TrainingState.waitingAnswer &&
+          engine.targetMidi != null) {
         await engine.submitAnswer(engine.targetMidi! + 1);
         expect(engine.currentStreak, 0);
         expect(engine.bestStreak, 1); // Best streak should stay at 1
       }
+    });
+
+    test('exact position mode rejects a different fret', () async {
+      await engine.start();
+      final target = engine.targetPosition!;
+      final wrong = FretPosition(
+        stringIndex: target.stringIndex,
+        fret: target.fret + 1,
+        midi: target.midi + 1,
+      );
+      final submission = engine.submitAnswer(wrong);
+      expect(engine.lastAnswerCorrect, false);
+      await submission;
+    });
+
+    test(
+      'pitch class mode accepts another position with the same note',
+      () async {
+        engine.answerMode = AnswerMode.pitchClass;
+        engine.difficulty = AppConstants.difficulties['hard']!;
+        await engine.start();
+        final target = engine.targetPosition!;
+        final alternate =
+            [
+              for (
+                var stringIndex = 0;
+                stringIndex < Tuning.standard.stringCount;
+                stringIndex++
+              )
+                FretPosition(
+                  stringIndex: stringIndex,
+                  fret: target.midi - Tuning.standard.noteAt(stringIndex, 0),
+                  midi: target.midi,
+                ),
+            ].firstWhere(
+              (position) =>
+                  position.fret >= 0 &&
+                  position.fret <= AppConstants.maxFret &&
+                  position != target,
+            );
+        final answer = FretPosition(
+          stringIndex: alternate.stringIndex,
+          fret: alternate.fret,
+          midi: target.midi,
+        );
+        final submission = engine.submitAnswer(answer);
+        expect(engine.lastAnswerCorrect, true);
+        await submission;
+      },
+    );
+
+    test('submitAnswer ignores unsupported answer types', () async {
+      await engine.start();
+      await engine.submitAnswer(Object());
+      expect(engine.state, TrainingState.waitingAnswer);
+      expect(engine.currentQuestion, 0);
     });
   });
 
@@ -188,7 +260,8 @@ void main() {
       // Wait for state to settle
       await Future.delayed(const Duration(milliseconds: 200));
 
-      if (engine.state == TrainingState.waitingAnswer && engine.targetMidi != null) {
+      if (engine.state == TrainingState.waitingAnswer &&
+          engine.targetMidi != null) {
         await engine.submitAnswer(engine.targetMidi!);
         // Give time for state transition
         await Future.delayed(const Duration(milliseconds: 100));
@@ -197,7 +270,12 @@ void main() {
       // Either completed or still processing
       expect(
         engine.state,
-        anyOf(TrainingState.completed, TrainingState.playingRoot, TrainingState.waitingAnswer, TrainingState.showingResult),
+        anyOf(
+          TrainingState.completed,
+          TrainingState.playingRoot,
+          TrainingState.waitingAnswer,
+          TrainingState.showingResult,
+        ),
       );
     });
 
@@ -234,6 +312,29 @@ void main() {
     test('tuning change updates configuration', () {
       engine.configure(engine: mockAudio, tuning: Tuning.dropD);
       expect(engine.currentTuning.name, 'Drop D');
+    });
+
+    test('large sessions use a finite question pool', () async {
+      engine.questionsPerSession = 50;
+      await engine.start();
+      expect(engine.totalQuestions, 50);
+    });
+
+    test('reset prevents an older async start from restoring state', () async {
+      final delayGate = Completer<void>();
+      final delayedEngine = TrainingEngine(delay: (_) => delayGate.future)
+        ..configure(engine: mockAudio, tuning: Tuning.standard)
+        ..currentKey = 'C'
+        ..scaleType = ScaleType.major
+        ..difficulty = AppConstants.difficulties['easy']!;
+
+      final start = delayedEngine.start();
+      await Future<void>.delayed(Duration.zero);
+      delayedEngine.reset();
+      delayGate.complete();
+      await start;
+
+      expect(delayedEngine.state, TrainingState.idle);
     });
   });
 }

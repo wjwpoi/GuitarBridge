@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/practice_record.dart';
 
@@ -18,17 +18,26 @@ class StorageService {
     final json = _prefs.getString(_recordsKey);
     if (json == null) return [];
     final list = jsonDecode(json) as List;
-    return list.map((e) => PracticeRecord.fromMap(e as Map<String, dynamic>)).toList();
+    return list
+        .map((e) => PracticeRecord.fromMap(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<void> saveRecord(PracticeRecord record) async {
     final records = await getRecords();
     records.add(record);
-    await _prefs.setString(_recordsKey, jsonEncode(records.map((r) => r.toMap()).toList()));
+    await _prefs.setString(
+      _recordsKey,
+      jsonEncode(records.map((r) => r.toMap()).toList()),
+    );
   }
 
   Future<void> clearRecords() async {
     await _prefs.remove(_recordsKey);
+  }
+
+  Future<void> clearStreaks() async {
+    await _prefs.remove(_streaksKey);
   }
 
   // === 连续练习 ===
@@ -37,19 +46,27 @@ class StorageService {
     final json = _prefs.getString(_streaksKey);
     if (json == null) return [];
     final list = jsonDecode(json) as List;
-    return list.map((e) => PracticeStreak.fromMap(e as Map<String, dynamic>)).toList();
+    return list
+        .map((e) => PracticeStreak.fromMap(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<void> addStreak(PracticeStreak streak) async {
     final streaks = await getStreaks();
-    // 仅保留今天的 streak，避免重复
-    final today = DateTime.now();
-    final todayStart = DateTime(today.year, today.month, today.day);
-    streaks.removeWhere((s) => s.date.isBefore(todayStart));
-    if (!streaks.any((s) => s.date.isAfter(todayStart))) {
+    final date = _localDay(streak.date);
+    final hasDate = streaks.any((existing) => _localDay(existing.date) == date);
+    if (!hasDate) {
       streaks.add(streak);
     }
-    await _prefs.setString(_streaksKey, jsonEncode(streaks.map((s) => s.toMap()).toList()));
+    await _prefs.setString(
+      _streaksKey,
+      jsonEncode(streaks.map((s) => s.toMap()).toList()),
+    );
+  }
+
+  DateTime _localDay(DateTime value) {
+    final local = value.toLocal();
+    return DateTime(local.year, local.month, local.day);
   }
 
   // === 用户设置 ===

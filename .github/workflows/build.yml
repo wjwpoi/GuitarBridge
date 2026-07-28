@@ -1,0 +1,275 @@
+name: Quality and Build
+
+on:
+  workflow_call:
+    inputs:
+      require_android_signing:
+        description: Require a release keystore for Android artifacts.
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      ANDROID_KEYSTORE_BASE64:
+        required: false
+      ANDROID_KEYSTORE_PASSWORD:
+        required: false
+      ANDROID_KEY_ALIAS:
+        required: false
+      ANDROID_KEY_PASSWORD:
+        required: false
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: '3.32.8'
+
+jobs:
+  quality:
+    name: Quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - name: Verify lockfile is unchanged
+        shell: bash
+        run: git diff --exit-code -- pubspec.lock
+      - run: dart format --output=none --set-exit-if-changed .
+      - run: flutter analyze
+      - run: flutter test --coverage
+      - name: Validate bundled samples
+        shell: bash
+        run: |
+          test "$(find assets/samples -type f -name '*.wav' | wc -l)" -eq 36
+          for mode in clean overdrive distortion; do
+            test "$(find "assets/samples/$mode" -type f -name '*.wav' | wc -l)" -eq 12
+          done
+
+  build-android:
+    name: Build Android APKs
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Require Android signing secrets for Release
+        if: ${{ inputs.require_android_signing }}
+        shell: bash
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+
+      - name: Configure Android signing
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' && env.ANDROID_KEYSTORE_PASSWORD != '' && env.ANDROID_KEY_ALIAS != '' && env.ANDROID_KEY_PASSWORD != '' }}
+        shell: bash
+        run: |
+          keystore_path="$RUNNER_TEMP/guitarbridge-release.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
+          echo "ANDROID_KEYSTORE_PATH=$keystore_path" >> "$GITHUB_ENV"
+
+      - run: flutter pub get
+      - run: flutter build apk --release --split-per-abi
+      - name: Normalize Android artifact names
+        shell: bash
+        run: |
+          mkdir -p build/release-android
+          shopt -s nullglob
+          apks=(build/app/outputs/flutter-apk/*-release.apk)
+          test "${#apks[@]}" -gt 0
+          for apk in "${apks[@]}"; do
+            filename="$(basename "$apk")"
+            abi="${filename#app-}"
+            abi="${abi%-release.apk}"
+            cp "$apk" "build/release-android/guitarbridge-android-${abi}.apk"
+          done
+      - name: Verify signed Android artifacts
+        if: ${{ inputs.require_android_signing }}
+        shell: bash
+        run: |
+          apksigner="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
+          test -x "$apksigner"
+          shopt -s nullglob
+          apks=(build/release-android/*.apk)
+          test "${#apks[@]}" -gt 0
+          for apk in "${apks[@]}"; do
+            certs="$("$apksigner" verify --print-certs "$apk" 2>&1)"
+            printf '%s\n' "$certs"
+            printf '%s\n' "$certs" | grep -qi 'Android Debug' && exit 1
+            "$apksigner" verify "$apk"
+          done
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: guitarbridge-android-apk
+          path: build/release-android/*.apk
+          if-no-files-found: error
+
+  build-ios:
+    name: Build iOS (unsigned)
+    needs: quality
+    runs-on: macos-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter build ios --release --no-codesign
+      - name: Package unsigned iOS app
+        shell: bash
+        run: |
+          test -d build/ios/iphoneos/Runner.app
+          ditto -c -k --sequesterRsrc --keepParent \
+            build/ios/iphoneos/Runner.app build/guitarbridge-ios-unsigned.zip
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: guitarbridge-ios-unsigned
+          path: build/guitarbridge-ios-unsigned.zip
+          if-no-files-found: error
+
+  build-macos:
+    name: Build macOS (unsigned)
+    needs: quality
+    runs-on: macos-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter build macos --release
+      - name: Package macOS app
+        shell: bash
+        run: |
+          app_path="$(find build/macos/Build/Products/Release -maxdepth 1 -type d -name '*.app' -print -quit)"
+          test -n "$app_path"
+          ditto -c -k --sequesterRsrc --keepParent \
+            "$app_path" build/guitarbridge-macos-unsigned.zip
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: guitarbridge-macos-unsigned
+          path: build/guitarbridge-macos-unsigned.zip
+          if-no-files-found: error
+
+  build-windows:
+    name: Build Windows
+    needs: quality
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - name: Package Windows bundle
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'build/windows/x64/runner/Release')) {
+            throw 'Windows release directory was not produced'
+          }
+          Compress-Archive `
+            -Path 'build/windows/x64/runner/Release/*' `
+            -DestinationPath 'build/guitarbridge-windows-x64.zip' `
+            -Force
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: guitarbridge-windows
+          path: build/guitarbridge-windows-x64.zip
+          if-no-files-found: error
+
+  build-linux:
+    name: Build Linux
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install Linux desktop dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libasound2-dev
+      - run: flutter pub get
+      - run: flutter build linux --release
+      - name: Package Linux bundle
+        shell: bash
+        run: |
+          test -d build/linux/x64/release/bundle
+          tar -C build/linux/x64/release -czf \
+            build/guitarbridge-linux-x64.tar.gz bundle
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: guitarbridge-linux
+          path: build/guitarbridge-linux-x64.tar.gz
+          if-no-files-found: error
+
+  build-web:
+    name: Build Web
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter build web --release
+      - name: Package Web bundle
+        shell: bash
+        run: |
+          test -d build/web
+          (cd build && zip -qr guitarbridge-web.zip web)
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: guitarbridge-web
+          path: build/guitarbridge-web.zip
+          if-no-files-found: error

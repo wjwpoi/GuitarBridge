@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/scale.dart';
 import '../../models/tuning.dart';
 import '../../models/practice_record.dart';
+import '../../models/training_question.dart';
 import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../../engine/audio_engine.dart';
@@ -47,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late bool _showNoteNames;
   late bool _showFretNumbers;
   bool _showCompletion = false;
+  bool _sessionRecorded = false;
 
   @override
   void initState() {
@@ -58,11 +60,17 @@ class _HomeScreenState extends State<HomeScreen> {
     _selectedScale = prefs.selectedScale;
     _selectedTuning = prefs.selectedTuning;
     _selectedDifficulty = prefs.difficulty;
-    _currentToneMode = _audioEngine.currentMode;
+    _currentToneMode = ToneMode.values.firstWhere(
+      (mode) => mode.name == prefs.toneMode,
+      orElse: () => ToneMode.clean,
+    );
+    _audioEngine.setVolume(prefs.audioVolume);
+    _audioEngine.switchToneMode(_currentToneMode);
     _showDegrees = prefs.showDegrees;
     _showNoteNames = prefs.showNoteNames;
     _showFretNumbers = prefs.showFretNumbers;
     _configureEngine();
+    _trainingEngine.addListener(_checkCompletion);
   }
 
   void _configureEngine() {
@@ -71,13 +79,15 @@ class _HomeScreenState extends State<HomeScreen> {
       orElse: () => Tuning.standard,
     );
     final scaleType = _scaleTypeFromName(_selectedScale);
-    final difficulty = AppConstants.difficulties[_selectedDifficulty] ??
+    final difficulty =
+        AppConstants.difficulties[_selectedDifficulty] ??
         AppConstants.difficulties['easy']!;
     _trainingEngine
       ..configure(engine: _audioEngine, tuning: tuning)
       ..currentKey = _selectedKey
       ..scaleType = scaleType
-      ..difficulty = difficulty;
+      ..difficulty = difficulty
+      ..questionsPerSession = widget.initialPreferences.questionsPerSession;
   }
 
   ScaleType _scaleTypeFromName(String name) {
@@ -120,26 +130,41 @@ class _HomeScreenState extends State<HomeScreen> {
                     onKeyChanged: (v) {
                       setState(() => _selectedKey = v);
                       _trainingEngine.currentKey = v;
+                      _persistCurrentPreferences();
                     },
                     onScaleChanged: (v) {
                       setState(() => _selectedScale = v);
                       _trainingEngine.scaleType = _scaleTypeFromName(v);
+                      _persistCurrentPreferences();
                     },
                     onTuningChanged: (v) {
                       setState(() => _selectedTuning = v);
                       _configureEngine();
+                      _persistCurrentPreferences();
                     },
                     onDifficultyChanged: (v) {
                       setState(() => _selectedDifficulty = v);
-                      _trainingEngine.difficulty = AppConstants.difficulties[v]!;
+                      _trainingEngine.difficulty =
+                          AppConstants.difficulties[v]!;
+                      _persistCurrentPreferences();
                     },
                     onToneModeChanged: (mode) {
                       _audioEngine.switchToneMode(mode);
                       setState(() => _currentToneMode = mode);
+                      _persistCurrentPreferences();
                     },
-                    onToggleDegrees: () => setState(() => _showDegrees = !_showDegrees),
-                    onToggleNoteNames: () => setState(() => _showNoteNames = !_showNoteNames),
-                    onToggleFretNumbers: () => setState(() => _showFretNumbers = !_showFretNumbers),
+                    onToggleDegrees: () {
+                      setState(() => _showDegrees = !_showDegrees);
+                      _persistCurrentPreferences();
+                    },
+                    onToggleNoteNames: () {
+                      setState(() => _showNoteNames = !_showNoteNames);
+                      _persistCurrentPreferences();
+                    },
+                    onToggleFretNumbers: () {
+                      setState(() => _showFretNumbers = !_showFretNumbers);
+                      _persistCurrentPreferences();
+                    },
                   ),
                   const SizedBox(height: 12),
                   ScaleChartWidget(
@@ -200,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
               MaterialPageRoute(
                 builder: (_) => StatsScreen(
                   streakManager: widget.streakManager,
-                  records: [],
+                  records: widget.streakManager.records,
                 ),
               ),
             );
@@ -216,9 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 builder: (_) => SettingsScreen(
                   audioEngine: _audioEngine,
                   preferences: widget.initialPreferences,
-                  onPreferencesChanged: (prefs) {
-                    widget.storage.savePreferences(prefs);
-                  },
+                  onPreferencesChanged: _updatePreferences,
                 ),
               ),
             );
@@ -233,20 +256,24 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_trainingEngine.state == TrainingState.completed) {
       _trainingEngine.reset();
     }
+    _sessionRecorded = false;
     _configureEngine();
     await _trainingEngine.start();
   }
 
-  void _onFretTapped(int midiNote) {
-    if (_trainingEngine.state != TrainingState.waitingAnswer) return;
+  void _onFretTapped(FretPosition position) {
+    if (_trainingEngine.state != TrainingState.waitingAnswer) {
+      // The board remains useful as a playable instrument outside a session.
+      _audioEngine.playNote(position.midi);
+      return;
+    }
     HapticManager.light();
-    _trainingEngine.submitAnswer(midiNote);
-    _trainingEngine.addListener(_checkCompletion);
+    _trainingEngine.submitAnswer(position);
   }
 
   void _checkCompletion() {
-    if (_trainingEngine.state == TrainingState.completed) {
-      _trainingEngine.removeListener(_checkCompletion);
+    if (_trainingEngine.state == TrainingState.completed && !_sessionRecorded) {
+      _sessionRecorded = true;
       _recordSession();
       setState(() => _showCompletion = true);
     }
@@ -263,5 +290,36 @@ class _HomeScreenState extends State<HomeScreen> {
       bestStreak: _trainingEngine.bestStreak,
     );
     await widget.streakManager.recordSession(record);
+  }
+
+  void _persistCurrentPreferences() {
+    final prefs = widget.initialPreferences;
+    prefs
+      ..showDegrees = _showDegrees
+      ..showNoteNames = _showNoteNames
+      ..showFretNumbers = _showFretNumbers
+      ..selectedKey = _selectedKey
+      ..selectedScale = _selectedScale
+      ..selectedTuning = _selectedTuning
+      ..difficulty = _selectedDifficulty
+      ..toneMode = _currentToneMode.name;
+    widget.storage.savePreferences(prefs);
+  }
+
+  void _updatePreferences(UserPreferences prefs) {
+    if (!mounted) return;
+    setState(() {
+      _showDegrees = prefs.showDegrees;
+      _showNoteNames = prefs.showNoteNames;
+      _showFretNumbers = prefs.showFretNumbers;
+      _currentToneMode = ToneMode.values.firstWhere(
+        (mode) => mode.name == prefs.toneMode,
+        orElse: () => ToneMode.clean,
+      );
+    });
+    _audioEngine.setVolume(prefs.audioVolume);
+    _trainingEngine.questionsPerSession = prefs.questionsPerSession;
+    _audioEngine.switchToneMode(_currentToneMode);
+    widget.storage.savePreferences(prefs);
   }
 }

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 /// 完成动画（对应原 Swift CompletionAnimationView.swift）
 class CompletionAnimationWidget extends StatelessWidget {
@@ -31,23 +31,23 @@ class CompletionAnimationWidget extends StatelessWidget {
               accuracy >= 90
                   ? Icons.emoji_events
                   : accuracy >= 70
-                      ? Icons.star
-                      : Icons.music_note,
+                  ? Icons.star
+                  : Icons.music_note,
               size: 80,
               color: accuracy >= 90
                   ? Colors.amber
                   : accuracy >= 70
-                      ? Colors.cyan
-                      : Colors.grey,
+                  ? Colors.cyan
+                  : Colors.grey,
             ),
             const SizedBox(height: 24),
 
             Text(
               '训练完成！',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 16),
 
@@ -76,7 +76,10 @@ class CompletionAnimationWidget extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.cyan,
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 16,
+                ),
                 textStyle: const TextStyle(fontSize: 18),
               ),
             ),

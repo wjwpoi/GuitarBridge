@@ -23,15 +23,11 @@ function Build-Platform($p) {
 flutter pub get
 flutter analyze
 
-$platforms = if ($Platform -eq "all") { @("android", "ios", "windows", "macos", "web") } else { @($Platform) }
+$platforms = if ($Platform -eq "all") { @("android", "windows", "web") } else { @($Platform) }
 
 foreach ($p in $platforms) {
-    try {
-        Build-Platform $p
-        Write-Host "  [OK] $p build succeeded" -ForegroundColor Green
-    } catch {
-        Write-Host "  [FAIL] $p build failed: $_" -ForegroundColor Red
-    }
+    Build-Platform $p
+    Write-Host "  [OK] $p build succeeded" -ForegroundColor Green
 }
 
 Write-Host "`n=== Build Complete ===" -ForegroundColor Cyan

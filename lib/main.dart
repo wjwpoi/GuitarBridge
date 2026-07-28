@@ -23,12 +23,14 @@ void main() async {
 
   final userPrefs = await storage.getPreferences();
 
-  runApp(GuitarBridgeApp(
-    audioEngine: audioEngine,
-    storage: storage,
-    streakManager: streakManager,
-    userPreferences: userPrefs,
-  ));
+  runApp(
+    GuitarBridgeApp(
+      audioEngine: audioEngine,
+      storage: storage,
+      streakManager: streakManager,
+      userPreferences: userPrefs,
+    ),
+  );
 }
 
 class GuitarBridgeApp extends StatefulWidget {
@@ -78,6 +80,12 @@ class _GuitarBridgeAppState extends State<GuitarBridgeApp> {
   void _onOnboardingComplete() async {
     widget.userPreferences.hasCompletedOnboarding = true;
     await widget.storage.savePreferences(widget.userPreferences);
-    setState(() => _showOnboarding = false);
+    if (mounted) setState(() => _showOnboarding = false);
+  }
+
+  @override
+  void dispose() {
+    widget.audioEngine.dispose();
+    super.dispose();
   }
 }

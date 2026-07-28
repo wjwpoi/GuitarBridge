@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 /// 吉他采样 WAV 生成器
 ///
 /// 用法: dart run tool/generate_samples.dart
@@ -17,19 +18,40 @@ const bitsPerSample = 16;
 const channels = 1;
 
 // 12 半音名称
-const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const noteNames = [
+  'C',
+  'C#',
+  'D',
+  'D#',
+  'E',
+  'F',
+  'F#',
+  'G',
+  'G#',
+  'A',
+  'A#',
+  'B',
+];
 
 // 音色参数
 const toneParams = {
   'clean': (gain: 0.8, clip: 1.0, harmonics: [1.0, 0.4, 0.25, 0.15, 0.08]),
-  'overdrive': (gain: 1.2, clip: 0.7, harmonics: [1.0, 0.6, 0.4, 0.25, 0.15, 0.1]),
-  'distortion': (gain: 1.8, clip: 0.4, harmonics: [1.0, 0.8, 0.6, 0.5, 0.4, 0.3, 0.2]),
+  'overdrive': (
+    gain: 1.2,
+    clip: 0.7,
+    harmonics: [1.0, 0.6, 0.4, 0.25, 0.15, 0.1],
+  ),
+  'distortion': (
+    gain: 1.8,
+    clip: 0.4,
+    harmonics: [1.0, 0.8, 0.6, 0.5, 0.4, 0.3, 0.2],
+  ),
 };
 
 void main() {
   final baseDir = Directory('assets/samples');
   if (!baseDir.existsSync()) {
-    print('Error: Run from project root (GuitarBridge_Flutter/)');
+    stderr.writeln('Error: Run from project root (GuitarBridge/)');
     return;
   }
 
@@ -45,13 +67,17 @@ void main() {
 
       final samples = _generateGuitarTone(freq, tone, duration: 2.0);
       _writeWav(path, samples);
-      print('Generated: $path (${freq.toStringAsFixed(1)} Hz)');
+      stdout.writeln('Generated: $path (${freq.toStringAsFixed(1)} Hz)');
     }
   }
-  print('\nDone! 36 WAV files generated.');
+  stdout.writeln('\nDone! 36 WAV files generated.');
 }
 
-List<int> _generateGuitarTone(double freq, String tone, {double duration = 2.0}) {
+List<int> _generateGuitarTone(
+  double freq,
+  String tone, {
+  double duration = 2.0,
+}) {
   final params = toneParams[tone]!;
   final totalSamples = (sampleRate * duration).toInt();
   final samples = <int>[];
@@ -59,7 +85,7 @@ List<int> _generateGuitarTone(double freq, String tone, {double duration = 2.0})
   // ADSR
   final attackSamples = (sampleRate * 0.01).toInt();
   final decaySamples = (sampleRate * 0.15).toInt();
-  final sustainLevel = 0.7;
+  const sustainLevel = 0.7;
   final releaseStart = totalSamples - (sampleRate * 0.3).toInt();
 
   for (int i = 0; i < totalSamples; i++) {
@@ -79,11 +105,14 @@ List<int> _generateGuitarTone(double freq, String tone, {double duration = 2.0})
     if (i < attackSamples) {
       envelope = i / attackSamples;
     } else if (i < attackSamples + decaySamples) {
-      envelope = 1.0 - (1.0 - sustainLevel) * (i - attackSamples) / decaySamples;
+      envelope =
+          1.0 - (1.0 - sustainLevel) * (i - attackSamples) / decaySamples;
     } else if (i < releaseStart) {
       envelope = sustainLevel;
     } else {
-      envelope = sustainLevel * (1.0 - (i - releaseStart) / (totalSamples - releaseStart));
+      envelope =
+          sustainLevel *
+          (1.0 - (i - releaseStart) / (totalSamples - releaseStart));
     }
 
     sample *= envelope * params.gain;
@@ -109,8 +138,8 @@ void _writeWav(String path, List<int> samples) {
   bytes.add(_int32LE(36 + dataSize));
   bytes.add(utf8.encode('WAVE'));
   bytes.add(utf8.encode('fmt '));
-  bytes.add(_int32LE(16));           // chunk size
-  bytes.add(_int16LE(1));            // PCM
+  bytes.add(_int32LE(16)); // chunk size
+  bytes.add(_int16LE(1)); // PCM
   bytes.add(_int16LE(channels));
   bytes.add(_int32LE(sampleRate));
   bytes.add(_int32LE(sampleRate * channels * bitsPerSample ~/ 8));
@@ -127,5 +156,10 @@ void _writeWav(String path, List<int> samples) {
   file.writeAsBytesSync(bytes.toBytes());
 }
 
-List<int> _int32LE(int v) => [(v & 0xFF), (v >> 8) & 0xFF, (v >> 16) & 0xFF, (v >> 24) & 0xFF];
+List<int> _int32LE(int v) => [
+  (v & 0xFF),
+  (v >> 8) & 0xFF,
+  (v >> 16) & 0xFF,
+  (v >> 24) & 0xFF,
+];
 List<int> _int16LE(int v) => [(v & 0xFF), (v >> 8) & 0xFF];

@@ -3,23 +3,18 @@ description: 跨平台吉他练耳训练工具 - 相对音准识别与指板训�
 version: 3.0.0
 
 environment:
-  sdk: ^3.6.0
+  sdk: '>=3.8.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  flutter_soloud: any
-  shared_preferences: any
-  sqflite: any
-  path_provider: any
-  flutter_animate: any
-  provider: any
-  intl: any
+  flutter_soloud: ^3.4.0
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: any
+  flutter_lints: ^5.0.0
 
 flutter:
   uses-material-design: true

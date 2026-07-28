@@ -1,259 +1,303 @@
-﻿import 'dart:async';
 import 'dart:math';
+
 import 'package:flutter/foundation.dart';
-import '../models/note.dart';
-import '../models/scale.dart';
-import '../models/tuning.dart';
+
 import '../core/constants.dart';
 import '../core/guitar_math.dart';
-import 'audio_engine.dart';
+import '../models/note.dart';
+import '../models/scale.dart';
+import '../models/training_question.dart';
+import '../models/tuning.dart';
+import 'training_audio_port.dart';
 
-/// 训练状态机
+/// Training lifecycle.
 enum TrainingState {
-  idle,         // 未开始
-  configuring,  // 配置中
-  playingRoot,  // 播放基准音
-  waitingAnswer,// 等待用户回答
-  showingResult,// 显示结果
-  completed,    // 本轮完成
+  idle,
+  configuring,
+  playingRoot,
+  waitingAnswer,
+  showingResult,
+  completed,
 }
 
-/// 训练引擎（对应原 Swift TrainingEngine.swift）
-/// 核心逻辑：调性建立 -> 物理锚点 -> 听觉挑战 -> 寻址判定
-class TrainingEngine extends ChangeNotifier {
-  final Random _random = Random();
+typedef Delay = Future<void> Function(Duration duration);
 
-  // === 配置状态 ===
+/// Coordinates question generation, playback and answer evaluation.
+///
+/// The engine owns concrete fretboard positions. UI code never has to infer a
+/// string or fret from a MIDI number, and every asynchronous operation is
+/// guarded by a generation token so reset/start cannot resurrect old work.
+class TrainingEngine extends ChangeNotifier {
+  TrainingEngine({Random? random, Delay? delay})
+    : _random = random ?? Random(),
+      _delay = delay ?? ((duration) => Future<void>.delayed(duration));
+
+  final Random _random;
+  final Delay _delay;
+
   String currentKey = 'C';
   ScaleType scaleType = ScaleType.major;
   Tuning currentTuning = Tuning.standard;
   DifficultyConfig difficulty = AppConstants.difficulties['easy']!;
-  int questionsPerSession = AppConstants.defaultQuestionsPerSession;
-  AudioEngine? audioEngine;
+  TrainingAudioPort? audioEngine;
+  AnswerMode answerMode = AnswerMode.exactPosition;
 
-  // === 训练状态 ===
+  int _questionsPerSession = AppConstants.defaultQuestionsPerSession;
+  int get questionsPerSession => _questionsPerSession;
+  set questionsPerSession(int value) {
+    _questionsPerSession = value
+        .clamp(AppConstants.minQuestions, AppConstants.maxQuestions)
+        .toInt();
+  }
+
   TrainingState _state = TrainingState.idle;
   int _currentQuestion = 0;
   int _correctCount = 0;
   int _currentStreak = 0;
   int _bestStreak = 0;
-  int? _rootMidi;
-  int? _targetMidi;
+  FretPosition? _rootPosition;
+  FretPosition? _targetPosition;
+  FretPosition? _userAnswerPosition;
   int? _userAnswerMidi;
   bool _lastAnswerCorrect = false;
-
-  // 已出过的题目（防止重复）
-  final Set<String> _askedQuestions = {};
-
-  // === 计时 ===
   DateTime? _sessionStartTime;
   DateTime? _questionStartTime;
   final List<double> _responseTimes = [];
+  List<TrainingQuestion> _questionPool = [];
+  int _poolIndex = 0;
+  int _sessionQuestionCount = 0;
+  int _generation = 0;
 
-  // === 公开 getters ===
   TrainingState get state => _state;
   int get currentQuestion => _currentQuestion;
   int get correctCount => _correctCount;
   int get currentStreak => _currentStreak;
   int get bestStreak => _bestStreak;
-  int? get rootMidi => _rootMidi;
-  int? get targetMidi => _targetMidi;
+  FretPosition? get rootPosition => _rootPosition;
+  FretPosition? get targetPosition => _targetPosition;
+  FretPosition? get userAnswerPosition => _userAnswerPosition;
+  int? get rootMidi => _rootPosition?.midi;
+  int? get targetMidi => _targetPosition?.midi;
   int? get userAnswerMidi => _userAnswerMidi;
   bool get lastAnswerCorrect => _lastAnswerCorrect;
   bool get isWaitingAnswer => _state == TrainingState.waitingAnswer;
+  int get totalQuestions =>
+      _sessionQuestionCount == 0 ? questionsPerSession : _sessionQuestionCount;
+  double get progress => totalQuestions == 0
+      ? 0
+      : (_currentQuestion / totalQuestions).clamp(0.0, 1.0).toDouble();
+  double get accuracy =>
+      _currentQuestion == 0 ? 0 : _correctCount / _currentQuestion * 100;
+  double get averageResponseTime => _responseTimes.isEmpty
+      ? 0
+      : _responseTimes.reduce((a, b) => a + b) / _responseTimes.length;
+  Duration get sessionDuration => _sessionStartTime == null
+      ? Duration.zero
+      : DateTime.now().difference(_sessionStartTime!);
 
-  int get totalQuestions => questionsPerSession;
-  double get progress => questionsPerSession > 0
-      ? _currentQuestion / questionsPerSession
-      : 0;
-  double get accuracy => _currentQuestion > 0
-      ? _correctCount / _currentQuestion * 100
-      : 0;
-  double get averageResponseTime => _responseTimes.isNotEmpty
-      ? _responseTimes.reduce((a, b) => a + b) / _responseTimes.length
-      : 0;
+  KeySignature get currentKeySignature => KeySignature(
+    NoteName.values.firstWhere(
+      (n) => n.sharpName == currentKey || n.flatName == currentKey,
+      orElse: () => NoteName.c,
+    ),
+    scaleType,
+  );
 
-  Duration get sessionDuration => _sessionStartTime != null
-      ? DateTime.now().difference(_sessionStartTime!)
-      : Duration.zero;
-
-  KeySignature get currentKeySignature =>
-      KeySignature(NoteName.values.firstWhere(
-        (n) => n.sharpName == currentKey || n.flatName == currentKey,
-        orElse: () => NoteName.c,
-      ), scaleType);
-
-  // === 配置 ===
-  void configure({
-    required AudioEngine engine,
-    required Tuning tuning,
-  }) {
+  void configure({required TrainingAudioPort engine, required Tuning tuning}) {
     audioEngine = engine;
     currentTuning = tuning;
   }
 
-  // === 开始训练 ===
   Future<void> start() async {
-    if (audioEngine == null || !audioEngine!.isReady) return;
-
+    final engine = audioEngine;
+    if (engine == null || !engine.isReady) return;
+    final token = ++_generation;
     _state = TrainingState.configuring;
     _currentQuestion = 0;
     _correctCount = 0;
     _currentStreak = 0;
     _bestStreak = 0;
-    _askedQuestions.clear();
     _responseTimes.clear();
     _sessionStartTime = DateTime.now();
+    _buildQuestionPool();
     notifyListeners();
-
-    await _nextQuestion();
+    await _nextQuestion(token);
   }
 
-  // === 下一题 ===
-  Future<void> _nextQuestion() async {
-    if (_currentQuestion >= questionsPerSession) {
+  void _buildQuestionPool() {
+    final keySig = currentKeySignature;
+    final positions = <FretPosition>[];
+    for (
+      var string = difficulty.stringRange.$1;
+      string <= difficulty.stringRange.$2;
+      string++
+    ) {
+      for (
+        var fret = difficulty.fretRange.$1;
+        fret <= difficulty.fretRange.$2;
+        fret++
+      ) {
+        positions.add(
+          FretPosition.fromTuning(
+            tuning: currentTuning,
+            stringIndex: string,
+            fret: fret,
+          ),
+        );
+      }
+    }
+
+    final roots = positions
+        .where((position) => GuitarMath.isInKey(position.midi, keySig))
+        .toList();
+    final targets = roots;
+    final pool = <TrainingQuestion>[];
+    final allowed = difficulty.allowedIntervals.toSet();
+    for (final root in roots) {
+      for (final target in targets) {
+        if (root == target) continue;
+        final interval = ((target.midi - root.midi) % 12 + 12) % 12;
+        if (allowed.contains(interval) && interval != 0) {
+          pool.add(
+            TrainingQuestion(
+              root: root,
+              target: target,
+              intervalSemitones: interval,
+            ),
+          );
+        }
+      }
+    }
+
+    if (pool.isEmpty && roots.length >= 2) {
+      for (var i = 0; i < roots.length; i++) {
+        final target = roots[(i + 1) % roots.length];
+        pool.add(
+          TrainingQuestion(
+            root: roots[i],
+            target: target,
+            intervalSemitones: ((target.midi - roots[i].midi) % 12 + 12) % 12,
+          ),
+        );
+      }
+    }
+
+    pool.shuffle(_random);
+    _questionPool = pool;
+    _poolIndex = 0;
+    // A session keeps its requested length. Once the finite pool is
+    // exhausted, _nextQuestion cycles through the same shuffled order.
+    _sessionQuestionCount = questionsPerSession;
+  }
+
+  Future<void> _nextQuestion(int token) async {
+    if (!_isCurrent(token)) return;
+    if (_currentQuestion >= totalQuestions || _questionPool.isEmpty) {
       _state = TrainingState.completed;
       notifyListeners();
       return;
     }
 
-    _state = TrainingState.playingRoot;
-    notifyListeners();
-
-    // 生成题目
-    final keySig = currentKeySignature;
-    final scaleNotes = keySig.notesInKey();
-
-    // 选择基准音（在指定品位范围内）
-    _rootMidi = _pickRootNote(scaleNotes);
-    // 选择目标音（不同音程）
-    _targetMidi = _pickTargetNote(_rootMidi!, scaleNotes);
-
-    // 防止重复出题
-    final questionKey = '${_rootMidi}_${_targetMidi}';
-    if (_askedQuestions.contains(questionKey)) {
-      await _nextQuestion(); // 重新生成
-      return;
-    }
-    _askedQuestions.add(questionKey);
-
+    final question = _questionPool[_poolIndex % _questionPool.length];
+    _poolIndex++;
+    _rootPosition = question.root;
+    _targetPosition = question.target;
+    _userAnswerPosition = null;
     _userAnswerMidi = null;
     _lastAnswerCorrect = false;
     _questionStartTime = DateTime.now();
+    _state = TrainingState.playingRoot;
+    notifyListeners();
 
-    // 播放基准音
-    await audioEngine!.playNote(_rootMidi!);
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    // 播放目标音
-    await audioEngine!.playNote(_targetMidi!);
-    await Future.delayed(const Duration(milliseconds: 400));
-
-    // 等待用户回答
+    await audioEngine!.playNote(question.root.midi);
+    if (!_isCurrent(token)) return;
+    await _delay(const Duration(milliseconds: 600));
+    if (!_isCurrent(token)) return;
+    await audioEngine!.playNote(question.target.midi);
+    if (!_isCurrent(token)) return;
+    await _delay(const Duration(milliseconds: 400));
+    if (!_isCurrent(token)) return;
     _state = TrainingState.waitingAnswer;
     notifyListeners();
   }
 
-  /// 在调内选择一个基准音
-  int _pickRootNote(List<int> scaleNotes) {
-    final validNotes = scaleNotes.where((n) {
-      // 必须在吉他范围内
-      if (n < AppConstants.guitarLowestMidi ||
-          n > AppConstants.guitarHighestMidi) {
-        return false;
-      }
-      // 必须在难度指定的品位范围内有指板位置
-      final positions = GuitarMath.findNoteOnFretboard(n, currentTuning);
-      return positions.any((p) =>
-          p.$2 >= difficulty.fretRange.$1 &&
-          p.$2 <= difficulty.fretRange.$2);
-    }).toList();
+  /// Accepts a concrete [FretPosition]. The integer form is retained for
+  /// service-level callers and tests; it intentionally uses pitch-class mode.
+  Future<void> submitAnswer(Object answer) async {
+    if (_state != TrainingState.waitingAnswer || _targetPosition == null) {
+      return;
+    }
+    if (answer is! FretPosition && answer is! int) return;
 
-    if (validNotes.isEmpty) return scaleNotes.first;
-    return validNotes[_random.nextInt(validNotes.length)];
-  }
+    final target = _targetPosition!;
+    final FretPosition? position = answer is FretPosition ? answer : null;
+    final midi = answer is int ? answer : position!.midi;
+    _userAnswerPosition = position;
+    _userAnswerMidi = midi;
+    final isCorrect = answer is int
+        ? midi % 12 == target.midi % 12
+        : answerMode == AnswerMode.exactPosition
+        ? position != null && position == target
+        : midi % 12 == target.midi % 12;
+    _lastAnswerCorrect = isCorrect;
 
-  /// 选择目标音（与基准音不同音程）
-  int _pickTargetNote(int root, List<int> scaleNotes) {
-    final semitonesInKey = scaleNotes
-        .map((n) => ((n - root) % 12 + 12) % 12)
-        .toSet()
-        .toList()
-      ..sort();
-
-    // 过滤允许的音程
-    final allowed = semitonesInKey
-        .where((s) => difficulty.allowedIntervals.contains(s) && s != 0)
-        .toList();
-
-    if (allowed.isEmpty) return root + 7; // fallback: P5
-
-    final semitone = allowed[_random.nextInt(allowed.length)];
-    return root + semitone;
-  }
-
-  // === 用户回答 ===
-  Future<void> submitAnswer(int answerMidi) async {
-    if (_state != TrainingState.waitingAnswer) return;
-    if (_targetMidi == null) return;
-
-    _userAnswerMidi = answerMidi;
-    _lastAnswerCorrect = (answerMidi % 12) == (_targetMidi! % 12);
-
-    // 记录响应时间
     if (_questionStartTime != null) {
       _responseTimes.add(
-        DateTime.now().difference(_questionStartTime!).inMilliseconds / 1000.0,
+        DateTime.now().difference(_questionStartTime!).inMilliseconds / 1000,
       );
     }
-
-    if (_lastAnswerCorrect) {
+    if (isCorrect) {
       _correctCount++;
       _currentStreak++;
-      if (_currentStreak > _bestStreak) {
-        _bestStreak = _currentStreak;
-      }
+      _bestStreak = max(_bestStreak, _currentStreak);
     } else {
       _currentStreak = 0;
     }
-
     _currentQuestion++;
+    final token = _generation;
     _state = TrainingState.showingResult;
     notifyListeners();
-
-    // 短暂显示结果后进入下一题
-    await Future.delayed(const Duration(milliseconds: 1200));
-    await _nextQuestion();
+    await _delay(const Duration(milliseconds: 1200));
+    await _nextQuestion(token);
   }
 
-  /// 重播当前基准音
   Future<void> replayRoot() async {
-    if (_rootMidi != null && audioEngine != null) {
-      await audioEngine!.playNote(_rootMidi!);
-    }
+    final midi = _rootPosition?.midi;
+    if (midi != null) await audioEngine?.playNote(midi);
   }
 
-  /// 重播当前目标音
   Future<void> replayTarget() async {
-    if (_targetMidi != null && audioEngine != null) {
-      await audioEngine!.playNote(_targetMidi!);
-    }
+    final midi = _targetPosition?.midi;
+    if (midi != null) await audioEngine?.playNote(midi);
   }
 
-  // === 重置 ===
   void reset() {
+    _generation++;
     _state = TrainingState.idle;
     _currentQuestion = 0;
+    _sessionQuestionCount = 0;
     _correctCount = 0;
     _currentStreak = 0;
     _bestStreak = 0;
-    _rootMidi = null;
-    _targetMidi = null;
+    _rootPosition = null;
+    _targetPosition = null;
+    _userAnswerPosition = null;
     _userAnswerMidi = null;
-    _askedQuestions.clear();
+    _questionPool = [];
+    _poolIndex = 0;
     _responseTimes.clear();
     _sessionStartTime = null;
     _questionStartTime = null;
     notifyListeners();
+  }
+
+  bool _isCurrent(int token) => token == _generation && !isDisposed;
+  bool isDisposed = false;
+
+  @override
+  void dispose() {
+    isDisposed = true;
+    _generation++;
+    super.dispose();
   }
 }

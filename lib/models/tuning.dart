@@ -1,4 +1,3 @@
-
 /// 吉他调弦配置
 class Tuning {
   final String name;
@@ -24,7 +23,14 @@ class Tuning {
   /// Open G
   static const openG = Tuning('Open G', [64, 60, 55, 50, 43, 38]);
 
-  static const all = [standard, halfStepDown, fullStepDown, dropD, dadgad, openG];
+  static const all = [
+    standard,
+    halfStepDown,
+    fullStepDown,
+    dropD,
+    dadgad,
+    openG,
+  ];
 
   int get stringCount => openStringNotes.length;
 
