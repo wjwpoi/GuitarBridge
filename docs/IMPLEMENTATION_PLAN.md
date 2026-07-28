@@ -73,7 +73,7 @@
 ### P2：质量与发布
 
 - [x] 为数学、题目池、FSM 取消、持久化、采样映射、关键 Widget 增加回归测试。
-- [ ] 修复训练测试对 `AudioEngine` 具体类的继承依赖，使纯 Dart/Flutter 单元测试不加载 SoLoud 动态库；不得通过跳过测试或修改 runner 环境掩盖问题。
+- [x] 修复训练测试对 `AudioEngine` 具体类的继承依赖，使纯 Dart/Flutter 单元测试不加载 SoLoud 动态库；不得通过跳过测试或修改 runner 环境掩盖问题。
 - [ ] 发布工作流复用已通过 CI 门禁的构建定义，上传带平台/架构标识的制品和 SHA256 校验文件（当前未在 CI runner 上完成闭环）。
 - [ ] 明确尚未迁移的 Swift 功能：调音器、节拍器、日志、分享、录音、Watch/Widget。
 
