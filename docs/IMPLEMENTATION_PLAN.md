@@ -17,6 +17,7 @@
 - Release 不得公开上传 debug 签名 APK；没有正式签名密钥时只能生成 CI 验证制品，不能伪装成可发布安装包。
 - iOS CI 构建保持 `--no-codesign`，产物必须明确标注为 unsigned，不能宣称可直接安装。
 - 发布制品必须来自与 CI 相同的质量门禁和构建定义；禁止 Release workflow 偷换 Flutter 版本、跳过测试或使用 `continue-on-error`。
+- Workflow action 依赖必须固定到完整 commit SHA，并用行尾注释保留对应 major tag；禁止直接依赖可移动的 `@v2`、`@v4`、`@v5`。
 
 ## 当前风险基线
 
@@ -138,7 +139,7 @@
 ### 下一提交门禁：流水线与依赖
 
 - 变更范围：CI/release 工作流、Android release signing 的最小配置、制品打包/校验和本文档；不修改 `lib/`。
-- 必须满足：Flutter 版本固定为 3.32.8；CI 与 Release 共用一份质量/构建定义；六平台构建失败阻断；所有构建制品可下载；Release 生成带平台/架构标识的压缩包和 SHA256 文件；无正式 Android signing secrets 时不得创建公开 Release。
+- 必须满足：Flutter 版本固定为 3.32.8；CI 与 Release 共用一份质量/构建定义；action 固定完整 commit SHA；六平台构建失败阻断；所有构建制品可下载；Release 生成带平台/架构标识的压缩包和 SHA256 文件；无正式 Android signing secrets 时不得创建公开 Release。
 - 验收命令：本地执行 YAML 语法检查、`dart format --output=none --set-exit-if-changed .`、`flutter analyze`、`flutter test`；GitHub runner 实际执行六平台 release matrix 和 tag release dry-run/发布流程。
 - 产物契约：Android 为正式签名的 ABI APK；iOS 为明确标注的 unsigned `.app` 压缩包；macOS/Windows/Linux 为可运行目录的压缩包；Web 为静态部署 zip；每个制品旁边有同名 `.sha256`。
 - 签名契约：Android 使用 `ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD` 四个 GitHub Actions secrets；签名密钥不进入仓库、日志或 artifact；CI 普通分支只验证构建，不发布签名包。
