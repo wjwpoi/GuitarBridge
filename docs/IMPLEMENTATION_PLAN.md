@@ -127,3 +127,9 @@
 - 必须满足：依赖版本与固定 Flutter 3.32.8 可解析；SoLoud 的异步 `play` 句柄被正确等待和释放；采样缺失时仍可合成音；所有音色模式都能走同一播放接口。
 - 验收命令：`flutter pub get`、`flutter analyze`、`flutter test test/sample_config_test.dart`；至少执行一个桌面或 Web 构建确认插件注册。
 - 兼容性决策：`flutter_soloud 4.x` 要求 Flutter 3.41+，本阶段固定使用 API 兼容且要求 Flutter >=3.3 的 `3.4.0`，后续升级 SDK 时单独评估。
+
+### 下一提交门禁：数据、设置与统计
+
+- 变更范围：`PracticeRecord`、`StorageService`、`StreakManager`、Home/Settings/Stats 页面和应用生命周期。
+- 必须满足：旧 JSON 缺失新增字段时使用稳定默认值；同一当地日期只计一次 streak 但保留历史日期；清除统计同时清除 records/streaks 和内存缓存；设置变更立即影响训练并可在重启后恢复。
+- 验收命令：`flutter test test/storage_service_test.dart`、`flutter analyze`；手动检查完成训练后 Stats 页面即时刷新。
