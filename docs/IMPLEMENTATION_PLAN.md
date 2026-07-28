@@ -82,7 +82,7 @@
 以下任务不属于本轮 CI/Release 修改范围。每项开始前必须先补充目标、影响范围、验收命令和边界，再单独提交代码和文档：
 
 - [ ] 音频：实现真实 active voice crossfade，或删除 crossfade 能力和误导性文案；六平台各做一次可听输出 smoke test。
-- [ ] 音频生命周期：为 reset、重复 start、页面销毁增加停止旧 voice 的接口和回归测试；generation token 只保护状态，不等于停止音频。
+- [x] 音频生命周期：为 reset、重复 start、页面销毁增加停止旧 voice 的接口和回归测试；generation token 只保护状态，不等于停止音频。
 - [ ] 音频错误：初始化失败、采样缺失、题库为空时提供用户可见状态和重试/降级路径。
 - [ ] 数据恢复：手动验收完成训练后 Stats 即时刷新、重启恢复 records/streak/设置、清除后页面和持久化数据均为空。
 - [ ] 数据迁移：为损坏 JSON、缺失字段和未来 schema 版本定义稳定迁移/报错策略；不得静默丢失历史。
@@ -265,3 +265,39 @@ CMake Error at CMakeLists.txt:3 (project):
 
 - 允许修改：`.github/workflows/build.yml` 中 Windows job 的 `runs-on`，本文档。
 - 不允许修改：CMakeLists.txt、Flutter 版本、任何其他文件。
+
+## 当前阶段：音频与数据门禁验证（2026-07-28）
+
+### 音频与 SDK 兼容性 ✅
+
+- `flutter_soloud 3.5.4` 满足 `^3.4.0`，与 Flutter 3.32.8 可解析。
+- `_playSample` 和 `_playSynthesized` 均在 `finally` 块中停止和释放 handle/source。
+- `playNote` 采样缺失时回退到 `_playSynthesized`。
+- 所有音色模式通过同一 `playNote` 接口。
+- `sample_config_test.dart` 3 项通过。
+
+### 数据、设置与统计 ✅
+
+- `UserPreferences.fromJson` 对每个字段使用 `?? defaultValue`。
+- `addStreak` 通过 `_localDay` 按本地日期去重；UTC/local 同一日期正确去重。
+- `clearRecords` 和 `clearStreaks` 同时清除持久化和缓存。
+- `storage_service_test.dart` 7 项通过。
+
+### 全量测试
+
+- 全量 88 项通过。
+
+### 下一提交：音频生命周期
+
+- 目标：`reset`、重复 `start`、页面 `dispose` 时停止当前播放中的旧 voice。
+- 当前问题：`TrainingEngine` 的 `start()` 不做停止；`AudioEngine.playNote()` 内部延时 800ms，quick reset 会导致旧回调与新 play 重叠。
+- 允许修改：`lib/engine/training_audio_port.dart`、`lib/engine/audio_engine.dart`、`lib/engine/training_engine.dart`、`test/training_engine_test.dart`、本文档。
+- 端口需新增 `Future<void> stopAll()`。
+- 验收：`flutter analyze`、`flutter test test/training_engine_test.dart`、全量 88+ 项通过。
+
+### 下一提交：数据迁移与错误恢复
+
+- 目标：损坏 JSON、缺失字段时返回安全默认值，不崩溃、不静默丢失。
+- 允许修改：`lib/services/storage_service.dart`、`lib/models/practice_record.dart`、`test/storage_service_test.dart`、本文档。
+- 策略：`jsonDecode` 包在 try-catch 中；`fromMap` 使用安全转换和默认值；新增 `schemaVersion` 字段。
+- 验收：`flutter test test/storage_service_test.dart` 新增损坏数据恢复用例。

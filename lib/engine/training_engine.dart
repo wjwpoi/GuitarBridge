@@ -110,6 +110,7 @@ class TrainingEngine extends ChangeNotifier {
 
   Future<void> start() async {
     final engine = audioEngine;
+    await engine?.stopAll();
     if (engine == null || !engine.isReady) return;
     final token = ++_generation;
     _state = TrainingState.configuring;

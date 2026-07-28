@@ -6,4 +6,8 @@
 abstract class TrainingAudioPort {
   bool get isReady;
   Future<void> playNote(int midiNote);
+
+  /// Stop all currently playing voices. Callers must be able to invoke
+  /// this safely even when nothing is playing.
+  Future<void> stopAll();
 }

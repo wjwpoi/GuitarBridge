@@ -4,6 +4,7 @@ import '../models/practice_record.dart';
 
 /// 本地持久化服务（对应原 Swift CloudStore / SwiftData）
 class StorageService {
+  static const int schemaVersion = 1;
   static const _recordsKey = 'practice_records';
   static const _streaksKey = 'practice_streaks';
   static const _prefsKey = 'user_preferences';
@@ -17,10 +18,14 @@ class StorageService {
   Future<List<PracticeRecord>> getRecords() async {
     final json = _prefs.getString(_recordsKey);
     if (json == null) return [];
-    final list = jsonDecode(json) as List;
-    return list
-        .map((e) => PracticeRecord.fromMap(e as Map<String, dynamic>))
-        .toList();
+    try {
+      final list = jsonDecode(json) as List;
+      return list
+          .map((e) => PracticeRecord.fromMap(e as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      return [];
+    }
   }
 
   Future<void> saveRecord(PracticeRecord record) async {
@@ -45,10 +50,14 @@ class StorageService {
   Future<List<PracticeStreak>> getStreaks() async {
     final json = _prefs.getString(_streaksKey);
     if (json == null) return [];
-    final list = jsonDecode(json) as List;
-    return list
-        .map((e) => PracticeStreak.fromMap(e as Map<String, dynamic>))
-        .toList();
+    try {
+      final list = jsonDecode(json) as List;
+      return list
+          .map((e) => PracticeStreak.fromMap(e as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      return [];
+    }
   }
 
   Future<void> addStreak(PracticeStreak streak) async {
@@ -74,7 +83,11 @@ class StorageService {
   Future<UserPreferences> getPreferences() async {
     final json = _prefs.getString(_prefsKey);
     if (json == null) return UserPreferences();
-    return UserPreferences.fromJson(jsonDecode(json) as Map<String, dynamic>);
+    try {
+      return UserPreferences.fromJson(jsonDecode(json) as Map<String, dynamic>);
+    } catch (_) {
+      return UserPreferences();
+    }
   }
 
   Future<void> savePreferences(UserPreferences prefs) async {
