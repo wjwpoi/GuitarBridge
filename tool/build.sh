@@ -21,7 +21,15 @@ build_platform() {
 }
 
 if [[ "$PLATFORM" == "all" ]]; then
-    for p in android ios macos web windows; do
+    case "$(uname -s)" in
+        Darwin) platforms=(android ios macos web) ;;
+        Linux) platforms=(android linux web) ;;
+        *)
+            echo "Unsupported host for all-platform build: $(uname -s)" >&2
+            exit 2
+            ;;
+    esac
+    for p in "${platforms[@]}"; do
         build_platform "$p"
     done
 else

@@ -23,7 +23,7 @@ function Build-Platform($p) {
 flutter pub get
 flutter analyze
 
-$platforms = if ($Platform -eq "all") { @("android", "ios", "windows", "macos", "web") } else { @($Platform) }
+$platforms = if ($Platform -eq "all") { @("android", "windows", "web") } else { @($Platform) }
 
 foreach ($p in $platforms) {
     Build-Platform $p
