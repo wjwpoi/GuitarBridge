@@ -51,7 +51,7 @@ const toneParams = {
 void main() {
   final baseDir = Directory('assets/samples');
   if (!baseDir.existsSync()) {
-    print('Error: Run from project root (GuitarBridge_Flutter/)');
+    stderr.writeln('Error: Run from project root (GuitarBridge/)');
     return;
   }
 
@@ -67,10 +67,10 @@ void main() {
 
       final samples = _generateGuitarTone(freq, tone, duration: 2.0);
       _writeWav(path, samples);
-      print('Generated: $path (${freq.toStringAsFixed(1)} Hz)');
+      stdout.writeln('Generated: $path (${freq.toStringAsFixed(1)} Hz)');
     }
   }
-  print('\nDone! 36 WAV files generated.');
+  stdout.writeln('\nDone! 36 WAV files generated.');
 }
 
 List<int> _generateGuitarTone(
@@ -85,7 +85,7 @@ List<int> _generateGuitarTone(
   // ADSR
   final attackSamples = (sampleRate * 0.01).toInt();
   final decaySamples = (sampleRate * 0.15).toInt();
-  final sustainLevel = 0.7;
+  const sustainLevel = 0.7;
   final releaseStart = totalSamples - (sampleRate * 0.3).toInt();
 
   for (int i = 0; i < totalSamples; i++) {

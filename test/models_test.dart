@@ -106,7 +106,7 @@ void main() {
 
   group('KeySignature', () {
     test('degreeOf returns correct degrees for C major', () {
-      final cMajor = KeySignature(NoteName.c, ScaleType.major);
+      const cMajor = KeySignature(NoteName.c, ScaleType.major);
       expect(cMajor.degreeOf(60), 1); // C = I
       expect(cMajor.degreeOf(62), 2); // D = II
       expect(cMajor.degreeOf(64), 3); // E = III
@@ -117,7 +117,7 @@ void main() {
     });
 
     test('degreeOf returns null for chromatic notes in C major', () {
-      final cMajor = KeySignature(NoteName.c, ScaleType.major);
+      const cMajor = KeySignature(NoteName.c, ScaleType.major);
       expect(cMajor.degreeOf(61), null); // C#
       expect(cMajor.degreeOf(63), null); // D#
       expect(cMajor.degreeOf(66), null); // F#
@@ -126,7 +126,7 @@ void main() {
     });
 
     test('degreeOf works for A minor (C major relative)', () {
-      final aMinor = KeySignature(NoteName.a, ScaleType.naturalMinor);
+      const aMinor = KeySignature(NoteName.a, ScaleType.naturalMinor);
       expect(aMinor.degreeOf(69), 1); // A = I
       expect(aMinor.degreeOf(71), 2); // B = II
       expect(aMinor.degreeOf(60), 3); // C = III
@@ -137,7 +137,7 @@ void main() {
     });
 
     test('degreeOf works for G major', () {
-      final gMajor = KeySignature(NoteName.g, ScaleType.major);
+      const gMajor = KeySignature(NoteName.g, ScaleType.major);
       expect(gMajor.degreeOf(67), 1); // G = I
       expect(gMajor.degreeOf(69), 2); // A = II
       expect(gMajor.degreeOf(71), 3); // B = III
@@ -148,7 +148,7 @@ void main() {
     });
 
     test('degreeOf handles all octaves correctly', () {
-      final cMajor = KeySignature(NoteName.c, ScaleType.major);
+      const cMajor = KeySignature(NoteName.c, ScaleType.major);
       expect(cMajor.degreeOf(48), 1); // C3 = I
       expect(cMajor.degreeOf(60), 1); // C4 = I
       expect(cMajor.degreeOf(72), 1); // C5 = I
@@ -156,14 +156,14 @@ void main() {
     });
 
     test('notesInKey returns correct scale for C major', () {
-      final cMajor = KeySignature(NoteName.c, ScaleType.major);
+      const cMajor = KeySignature(NoteName.c, ScaleType.major);
       final notes = cMajor.notesInKey(octave: 4);
       expect(notes, [60, 62, 64, 65, 67, 69, 71]);
     });
 
     test('pentatonic scales have 5 notes', () {
-      final cMajPent = KeySignature(NoteName.c, ScaleType.majorPentatonic);
-      final cMinPent = KeySignature(NoteName.c, ScaleType.minorPentatonic);
+      const cMajPent = KeySignature(NoteName.c, ScaleType.majorPentatonic);
+      const cMinPent = KeySignature(NoteName.c, ScaleType.minorPentatonic);
       expect(cMajPent.notesInKey().length, 5);
       expect(cMinPent.notesInKey().length, 5);
     });
@@ -199,7 +199,7 @@ void main() {
     });
 
     test('standard open string MIDI values', () {
-      final std = Tuning.standard;
+      const std = Tuning.standard;
       expect(std.noteAt(5, 0), 40); // Low E
       expect(std.noteAt(4, 0), 45); // A
       expect(std.noteAt(3, 0), 50); // D
@@ -209,7 +209,7 @@ void main() {
     });
 
     test('5th fret on each string equals next string open (except G->B)', () {
-      final std = Tuning.standard;
+      const std = Tuning.standard;
       expect(std.noteAt(5, 5), 45); // Low E 5th = A
       expect(std.noteAt(4, 5), 50); // A 5th = D
       expect(std.noteAt(3, 5), 55); // D 5th = G
@@ -218,14 +218,14 @@ void main() {
     });
 
     test('12th fret is one octave above open', () {
-      final std = Tuning.standard;
+      const std = Tuning.standard;
       for (int s = 0; s < 6; s++) {
         expect(std.noteAt(s, 12), std.noteAt(s, 0) + 12);
       }
     });
 
     test('findNotePositions finds E4 in multiple locations', () {
-      final std = Tuning.standard;
+      const std = Tuning.standard;
       final positions = std.findNotePositions(64); // E4
       // 1st string open, 2nd string 5th, 3rd string 9th, 4th string 14th...
       expect(positions, contains((0, 0)));
@@ -234,7 +234,7 @@ void main() {
     });
 
     test('findNotePositions respects maxFret', () {
-      final std = Tuning.standard;
+      const std = Tuning.standard;
       final allPositions = std.findNotePositions(64, maxFret: 22);
       final limitedPositions = std.findNotePositions(64, maxFret: 4);
       expect(limitedPositions.length, lessThan(allPositions.length));
@@ -246,7 +246,7 @@ void main() {
     });
 
     test('DADGAD has open strings forming Dsus4', () {
-      final d = Tuning.dadgad;
+      const d = Tuning.dadgad;
       expect(d.noteAt(5, 0) % 12, NoteName.d.index); // D
       expect(d.noteAt(4, 0) % 12, NoteName.a.index); // A
       expect(d.noteAt(3, 0) % 12, NoteName.d.index); // D
@@ -269,7 +269,7 @@ void main() {
     });
 
     test('isInKey correctly identifies notes in C major', () {
-      final cMajor = KeySignature(NoteName.c, ScaleType.major);
+      const cMajor = KeySignature(NoteName.c, ScaleType.major);
       expect(GuitarMath.isInKey(60, cMajor), true); // C
       expect(GuitarMath.isInKey(62, cMajor), true); // D
       expect(GuitarMath.isInKey(61, cMajor), false); // C#
@@ -277,7 +277,7 @@ void main() {
     });
 
     test('degreeDifference calculates correctly in C major', () {
-      final cMajor = KeySignature(NoteName.c, ScaleType.major);
+      const cMajor = KeySignature(NoteName.c, ScaleType.major);
       expect(GuitarMath.degreeDifference(cMajor, 60, 64), 3); // C->E = 3rd
       expect(GuitarMath.degreeDifference(cMajor, 60, 67), 5); // C->G = 5th
       expect(GuitarMath.degreeDifference(cMajor, 67, 60), 4); // G->C = 4th

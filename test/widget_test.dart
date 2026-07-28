@@ -104,7 +104,7 @@ void main() {
   group('ScaleChartWidget', () {
     testWidgets('renders scale name and note chips', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: ScaleChartWidget(
               selectedKey: 'C',
@@ -120,7 +120,7 @@ void main() {
 
     testWidgets('shows different notes for different scales', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: ScaleChartWidget(
               selectedKey: 'C',
