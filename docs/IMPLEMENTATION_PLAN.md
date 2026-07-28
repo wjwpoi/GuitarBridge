@@ -28,7 +28,7 @@
 - 训练异步任务已加入 generation token，题目池改为有限生成；需要补充页面销毁和重复启动回归验证。
 - 指板绘制与点击已共用品距坐标，并保留同音位置；需要做窄屏和各平台交互检查。
 - 统计、streak、设置已接入持久化；需要验证迁移旧 JSON、重启恢复和清除语义。
-- Flutter 平台目录和 lockfile 已生成；CI 工作流已收紧，六平台真实构建仍需对应 runner 完成。
+- Flutter 平台目录和 lockfile 已生成；CI/Release 已统一到可复用构建定义，六平台真实构建仍需对应 runner 完成。
 
 ## 分阶段 TODO
 
@@ -39,10 +39,10 @@
 - [x] 修复 CI：format、analyze、test 必须阻断；矩阵定义覆盖六个平台。
 - [x] 构建脚本遇到任一平台失败时必须返回非零状态，并按主机选择可执行目标。
 - [x] 真实初始化 SoLoud，加载三种音色采样，缺失时使用可听见的合成回退；Web 产物已确认包含插件 WASM。
-- [ ] 在 GitHub Actions 对 Android、iOS（unsigned）、macOS、Windows、Linux、Web 均完成一次 release build，并记录 run/artifact 结果；本机 Web 通过不等于六平台通过。
-- [ ] Release 调用与 CI 相同的可复用质量/构建定义，失败必须阻断发布，不重复维护一套可能漂移的门禁。
-- [ ] CI 上传六平台可审计制品；Release 打包可分发压缩包并生成 SHA256 校验文件。
-- [ ] Android Release 只有在正式 signing secrets 存在时才允许进入公开 Release；CI 验证制品不得使用 debug key 冒充发布包。
+- [x] 定义 GitHub Actions 六平台 release build 矩阵；实际 runner 结果仍待完成。
+- [x] Release 调用与 CI 相同的可复用质量/构建定义，失败会阻断发布，不重复维护一套门禁。
+- [x] 定义六平台可审计制品、平台/架构命名和 SHA256 校验生成；实际 artifact 下载和 tag 发布仍待 runner 完成。
+- [x] Android Release 只有在正式 signing secrets 存在时才允许进入公开 Release；CI 验证制品明确不是公开发布包。
 
 ### P1：训练正确性
 
@@ -75,7 +75,7 @@
 - [ ] 音频错误：初始化失败、采样缺失、题库为空时提供用户可见状态和重试/降级路径。
 - [ ] 数据恢复：手动验收完成训练后 Stats 即时刷新、重启恢复 records/streak/设置、清除后页面和持久化数据均为空。
 - [ ] 数据迁移：为损坏 JSON、缺失字段和未来 schema 版本定义稳定迁移/报错策略；不得静默丢失历史。
-- [ ] UI/交互：完成窄屏、横竖屏、触摸/鼠标、键盘和可访问性检查；同步 Onboarding、README 的六平台文案。
+- [ ] UI/交互：完成窄屏、横竖屏、触摸/鼠标、键盘和可访问性检查；同步 Onboarding、README 的六平台文案；排查 Web release 的 Cupertino icon 字体告警。
 - [ ] Swift 辅助功能：调音器、节拍器、日志、分享、录音、Watch/Widget；核心闭环和六平台构建稳定前不得插队。
 
 ## 验收标准
@@ -102,7 +102,7 @@
 | 阶段 | 状态 | 说明 |
 | --- | --- | --- |
 | 文档、TODO、验收标准 | 已完成 | 本文档先于代码变更创建 |
-| 平台工程与可复现流水线 | 进行中 | 已固定 SDK/依赖、恢复质量门禁、加入 Linux job、按主机选择构建目标；本轮补齐可复用 CI/Release 定义和制品校验，待 GitHub runner 实际执行 |
+| 平台工程与可复现流水线 | 进行中 | 已固定 SDK/依赖、恢复质量门禁、加入 Linux job、按主机选择构建目标；`d273466` 补齐可复用 CI/Release 定义、签名门禁和制品校验，待 GitHub runner 实际执行 |
 | 音频与训练核心 | 进行中 | 训练题目已改为具体弦位，题库有限生成并支持确定性循环，增加 generation token；SoLoud 3.x 异步句柄已校正，待各平台播放验证 |
 | 持久化、统计、设置 | 进行中 | 已修复 streak 历史/清除、暴露真实 records、设置序列化并接入 Home；单元测试已覆盖，待手动重启恢复检查 |
 | 测试与发布验证 | 进行中 | 训练测试 27 项、全量测试 88 项已通过；各平台 release 构建仍受本机工具链限制 |
@@ -135,6 +135,7 @@
 | 6 | `test/chore:` | 领域模型、采样映射、存储、Widget 回归测试和零 issue lint | `b3e20ac`, `ca87a41` |
 | 7 | `fix/build:` | SDK 验证产生的平台兼容性、无签名构建和脚本入口修复 | `6a2814c`, `70579c9`, `04da3ba` |
 | 8 | `docs:` | 最终进度、真实验证结果和未迁移功能清单 | `f126fae`, `c497719`, `9587036` |
+| 9 | `ci:` | CI/Release 共用六平台构建、签名门禁、制品打包和 SHA256 校验 | `d273466`，待 runner 实际闭环 |
 
 ### 下一提交门禁：流水线与依赖
 
@@ -192,6 +193,8 @@
 - 首次格式化发现并修复指板 Widget 括号错误和测试导入位置错误；训练专项测试当前 27 项通过。
 - `flutter analyze` 已达到 `No issues found`，加入 UTC/local streak 回归后全量测试 88 项通过。
 - `bash -x ./tool/build.sh web --release` 已通过；脚本首字节为标准 shebang，文件 mode 为 `100755`。
+- `actionlint 1.7.12` 和 Ruby YAML 解析均通过三个 workflow；所有外部 action 已固定完整 commit SHA。
+- `flutter build web --release`、Web zip `unzip -t` 和 SHA256 生成/校验已通过；构建仍报告 Cupertino icon 字体告警，留给 UI/资源 TODO 处理。
 
 ### Release 构建记录（2026-07-28）
 
@@ -205,3 +208,5 @@
 | Windows | 未执行 | 需要 Windows 主机或 CI Windows job |
 
 当前代码级门禁通过，Apple/Android/桌面三项仍需在具备对应工具链的 CI runner 上完成；不能把本机环境阻塞误报为平台代码通过。
+
+CI/Release 代码已提交，但不能把本机 actionlint、Web 构建或测试结果当作六平台 runner 通过；下一次 tag 发布前必须保存 GitHub Actions run URL、六个 artifact 名称和最终校验文件结果。
