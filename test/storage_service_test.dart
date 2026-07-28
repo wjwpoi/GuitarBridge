@@ -12,9 +12,7 @@ void main() {
   test('adding a streak preserves previous practice days', () async {
     final yesterday = DateTime.now().subtract(const Duration(days: 1));
     SharedPreferences.setMockInitialValues({
-      'practice_streaks': jsonEncode([
-        PracticeStreak(date: yesterday).toMap(),
-      ]),
+      'practice_streaks': jsonEncode([PracticeStreak(date: yesterday).toMap()]),
     });
     final storage = StorageService(await SharedPreferences.getInstance());
 
