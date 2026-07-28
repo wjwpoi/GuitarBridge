@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 
 import '../core/constants.dart';
+import 'training_audio_port.dart';
 import 'sample_config.dart';
 
 enum AudioEngineState { uninitialized, loading, ready, error }
@@ -12,7 +13,7 @@ enum AudioEngineState { uninitialized, loading, ready, error }
 enum ToneMode { clean, overdrive, distortion }
 
 /// Cross-platform audio service backed by flutter_soloud.
-class AudioEngine extends ChangeNotifier {
+class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   final SoLoud _soloud = SoLoud.instance;
   final Map<ToneMode, Map<int, AudioSource>> _sampleSources = {
     for (final mode in ToneMode.values) mode: <int, AudioSource>{},
@@ -36,6 +37,7 @@ class AudioEngine extends ChangeNotifier {
   ToneMode get currentMode => _currentMode;
   double get volume => _volume;
   bool get isPlaying => _isPlaying;
+  @override
   bool get isReady => _state == AudioEngineState.ready;
   String? get error => _error;
   bool get isCrossfading => _crossfadeTimer?.isActive ?? false;
@@ -79,6 +81,7 @@ class AudioEngine extends ChangeNotifier {
     }
   }
 
+  @override
   Future<void> playNote(int midiNote) async {
     if (!isReady || _disposed) return;
     _isPlaying = true;

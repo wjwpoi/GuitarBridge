@@ -8,7 +8,7 @@ import '../models/note.dart';
 import '../models/scale.dart';
 import '../models/training_question.dart';
 import '../models/tuning.dart';
-import 'audio_engine.dart';
+import 'training_audio_port.dart';
 
 /// Training lifecycle.
 enum TrainingState {
@@ -39,7 +39,7 @@ class TrainingEngine extends ChangeNotifier {
   ScaleType scaleType = ScaleType.major;
   Tuning currentTuning = Tuning.standard;
   DifficultyConfig difficulty = AppConstants.difficulties['easy']!;
-  AudioEngine? audioEngine;
+  TrainingAudioPort? audioEngine;
   AnswerMode answerMode = AnswerMode.exactPosition;
 
   int _questionsPerSession = AppConstants.defaultQuestionsPerSession;
@@ -103,7 +103,7 @@ class TrainingEngine extends ChangeNotifier {
     scaleType,
   );
 
-  void configure({required AudioEngine engine, required Tuning tuning}) {
+  void configure({required TrainingAudioPort engine, required Tuning tuning}) {
     audioEngine = engine;
     currentTuning = tuning;
   }

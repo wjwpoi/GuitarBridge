@@ -5,16 +5,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:guitar_bridge/models/scale.dart';
 import 'package:guitar_bridge/models/tuning.dart';
 import 'package:guitar_bridge/engine/training_engine.dart';
-import 'package:guitar_bridge/engine/audio_engine.dart';
+import 'package:guitar_bridge/engine/training_audio_port.dart';
 import 'package:guitar_bridge/core/constants.dart';
 import 'package:guitar_bridge/models/training_question.dart';
 
-/// Mock AudioEngine that doesn't actually play audio
-class MockAudioEngine extends AudioEngine {
+/// Fake audio port for unit tests — never touches SoLoud.
+class MockAudioEngine implements TrainingAudioPort {
   int playCallCount = 0;
-
-  @override
-  Future<void> initialize() async {}
 
   @override
   bool get isReady => true;
@@ -28,6 +25,16 @@ class MockAudioEngine extends AudioEngine {
 void main() {
   late TrainingEngine engine;
   late MockAudioEngine mockAudio;
+
+  setUp(() {
+    engine = TrainingEngine(delay: (_) async {});
+    mockAudio = MockAudioEngine();
+    engine.configure(engine: mockAudio, tuning: Tuning.standard);
+    engine
+      ..currentKey = 'C'
+      ..scaleType = ScaleType.major
+      ..difficulty = AppConstants.difficulties['easy']!;
+  });
 
   setUp(() {
     engine = TrainingEngine(delay: (_) async {});
