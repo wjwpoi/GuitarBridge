@@ -139,3 +139,9 @@
 - 变更范围：训练 FSM、采样映射、存储设置和关键 Widget 的测试夹具。
 - 必须满足：测试不依赖真实音频设备或固定等待；覆盖精确位置与音高类判定、reset/start 取消、有限题库、样本八度映射、streak 历史/清除和旧偏好默认值。
 - 验收命令：`dart format --output=none --set-exit-if-changed .`、`flutter analyze`、`flutter test --coverage`。
+
+### 下一提交门禁：跨平台构建矩阵修复
+
+- 变更范围：CI Linux 构建 job、macOS/Linux shell 构建脚本和 Windows PowerShell 构建脚本。
+- 必须满足：CI 至少覆盖 Android、iOS（无签名）、macOS、Windows、Linux、Web；本地主机的 `all` 只选择该主机可执行的平台，不把不可能的目标伪装成成功。
+- 验收命令：对应主机运行 `./tool/build.sh all` 或 `./tool/build.ps1 -Platform all`；CI 失败必须阻断合并。
