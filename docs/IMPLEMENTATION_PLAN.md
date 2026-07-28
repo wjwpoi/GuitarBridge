@@ -133,3 +133,9 @@
 - 变更范围：`PracticeRecord`、`StorageService`、`StreakManager`、Home/Settings/Stats 页面和应用生命周期。
 - 必须满足：旧 JSON 缺失新增字段时使用稳定默认值；同一当地日期只计一次 streak 但保留历史日期；清除统计同时清除 records/streaks 和内存缓存；设置变更立即影响训练并可在重启后恢复。
 - 验收命令：`flutter test test/storage_service_test.dart`、`flutter analyze`；手动检查完成训练后 Stats 页面即时刷新。
+
+### 下一提交门禁：回归测试
+
+- 变更范围：训练 FSM、采样映射、存储设置和关键 Widget 的测试夹具。
+- 必须满足：测试不依赖真实音频设备或固定等待；覆盖精确位置与音高类判定、reset/start 取消、有限题库、样本八度映射、streak 历史/清除和旧偏好默认值。
+- 验收命令：`dart format --output=none --set-exit-if-changed .`、`flutter analyze`、`flutter test --coverage`。
