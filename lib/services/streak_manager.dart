@@ -75,5 +75,8 @@ class StreakManager extends ChangeNotifier {
     return dates;
   }
 
-  DateTime _day(DateTime value) => DateTime(value.year, value.month, value.day);
+  DateTime _day(DateTime value) {
+    final local = value.toLocal();
+    return DateTime(local.year, local.month, local.day);
+  }
 }

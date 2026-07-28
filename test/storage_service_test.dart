@@ -35,6 +35,17 @@ void main() {
     expect(await storage.getStreaks(), hasLength(1));
   });
 
+  test('UTC and local timestamps on the same local day are deduplicated', () async {
+    final now = DateTime.now();
+    SharedPreferences.setMockInitialValues({});
+    final storage = StorageService(await SharedPreferences.getInstance());
+
+    await storage.addStreak(PracticeStreak(date: now));
+    await storage.addStreak(PracticeStreak(date: now.toUtc()));
+
+    expect(await storage.getStreaks(), hasLength(1));
+  });
+
   test('manager exposes records and clears all persisted data', () async {
     SharedPreferences.setMockInitialValues({});
     final storage = StorageService(await SharedPreferences.getInstance());

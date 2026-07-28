@@ -53,15 +53,8 @@ class StorageService {
 
   Future<void> addStreak(PracticeStreak streak) async {
     final streaks = await getStreaks();
-    final date = DateTime(streak.date.year, streak.date.month, streak.date.day);
-    final hasDate = streaks.any((existing) {
-      final existingDate = DateTime(
-        existing.date.year,
-        existing.date.month,
-        existing.date.day,
-      );
-      return existingDate == date;
-    });
+    final date = _localDay(streak.date);
+    final hasDate = streaks.any((existing) => _localDay(existing.date) == date);
     if (!hasDate) {
       streaks.add(streak);
     }
@@ -69,6 +62,11 @@ class StorageService {
       _streaksKey,
       jsonEncode(streaks.map((s) => s.toMap()).toList()),
     );
+  }
+
+  DateTime _localDay(DateTime value) {
+    final local = value.toLocal();
+    return DateTime(local.year, local.month, local.day);
   }
 
   // === 用户设置 ===
