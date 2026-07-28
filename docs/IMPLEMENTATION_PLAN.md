@@ -11,11 +11,13 @@
 ## 本轮边界（CI/Release → 音频错误 UI）
 
 > 阶段一（已完成）：收敛 CI/Release 流水线和基础质量门禁。
-> 阶段二（当前）：音频错误 UI —— 确保用户在音频初始化失败、采样缺失时有可见反馈和重试入口。这是 CI/Release 质量的最后一公里：有构建但无声音 = 产品不可用。
+> 阶段二（已完成）：音频错误 UI。
+> 阶段三（当前）：训练试错与答案揭示 —— 答错不推进，允许在指板上多次尝试；达上限后高亮正确位置。
 
 本轮在以下范围工作：
-- 音频错误 UI（P1）：允许修改 `lib/ui/screens/home_screen.dart`、`lib/main.dart`、`test/widget_test.dart` 和本文档。
-- 不允许扩展训练状态机、音频播放算法、持久化模型、指板 UI 或 Swift 功能迁移。
+- 训练试错与答案揭示（P1）：允许修改 `lib/engine/training_engine.dart`、`lib/models/practice_record.dart`、`lib/ui/widgets/fretboard_widget.dart`、`lib/ui/screens/settings_screen.dart`、`lib/ui/screens/home_screen.dart`、`test/training_engine_test.dart` 和本文档。
+- 已完成阶段：CI/Release 流水线、音频错误 UI、键盘快捷键、响应式布局、可访问性语义标签。
+- 不允许扩展音频播放算法或 Swift 功能迁移。
 
 - 允许修改：`.github/workflows/`、Android release signing 接入所需的最小 Gradle 配置、构建/打包辅助脚本和本文档。
 - 不允许顺手修改：`lib/` 训练状态机、音频播放算法、持久化模型、指板 UI、Swift 功能迁移。
@@ -304,18 +306,15 @@ CMake Error at CMakeLists.txt:3 (project):
 
 - `b26ff31`：`jsonDecode` 包在 try-catch 中；损坏 JSON 返回空列表/默认值；+2 项恢复测试。
 
-### 当前阶段：布局响应式适配（2026-07-28）
+### 当前阶段：训练试错与答案揭示 ✅ 已完成（PR #7）
 
-- 目标：窄屏（<360dp）可用，横竖屏切换训练状态不丢失。
-- 允许修改：`lib/ui/screens/home_screen.dart`、`test/widget_test.dart`、本文档。
-- 实现方案：
-  1. `LayoutBuilder` 获取可用宽度，动态调整 padding 和间距；
-  2. 窄屏模式（width < 360）：`EdgeInsets.symmetric(horizontal: 8, vertical: 6)`，减小 `SizedBox` 间距；
-  3. 横竖屏：Flutter State 生命周期天然保持训练状态，`SingleChildScrollView` 确保内容可滚动。
-- 验收：
-  - `dart analyze lib/` 零新增 issue；
-  - `flutter test --coverage` 全量 90+ 项通过；
-  - 手动：窄屏布局不溢出；旋转设备训练状态保留。
+- `maxFailedAttempts` 设置（0=永不揭示，1–5），默认 3；答错保持 `waitingAnswer` 允许多次尝试；达上限金色高亮正确位置后推进。
+- 验收：99 项测试通过（新增 9 项试错回归），六平台构建全绿。
+
+### 当前阶段：布局响应式适配 ✅ 已完成（PR #6）
+
+- `MediaQuery` 检测窄屏（<360dp），动态 `contentPadding` 和 `gapSize`；`SingleChildScrollView` 保证横竖屏可滚动。
+- 验收：90 项测试通过，六平台构建全绿。
 
 ### 当前阶段：音频错误 UI（2026-07-28）
 

@@ -67,6 +67,9 @@ class TrainingEngine extends ChangeNotifier {
   int _poolIndex = 0;
   int _sessionQuestionCount = 0;
   int _generation = 0;
+  int _failedAttempts = 0;
+  bool _showCorrectPosition = false;
+  int maxFailedAttempts = 3;
 
   TrainingState get state => _state;
   int get currentQuestion => _currentQuestion;
@@ -81,6 +84,8 @@ class TrainingEngine extends ChangeNotifier {
   int? get userAnswerMidi => _userAnswerMidi;
   bool get lastAnswerCorrect => _lastAnswerCorrect;
   bool get isWaitingAnswer => _state == TrainingState.waitingAnswer;
+  bool get showCorrectPosition => _showCorrectPosition;
+  int get failedAttempts => _failedAttempts;
   int get totalQuestions =>
       _sessionQuestionCount == 0 ? questionsPerSession : _sessionQuestionCount;
   double get progress => totalQuestions == 0
@@ -206,6 +211,8 @@ class TrainingEngine extends ChangeNotifier {
     _userAnswerPosition = null;
     _userAnswerMidi = null;
     _lastAnswerCorrect = false;
+    _failedAttempts = 0;
+    _showCorrectPosition = false;
     _questionStartTime = DateTime.now();
     _state = TrainingState.playingRoot;
     notifyListeners();
@@ -222,8 +229,13 @@ class TrainingEngine extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Accepts a concrete [FretPosition]. The integer form is retained for
-  /// service-level callers and tests; it intentionally uses pitch-class mode.
+  /// Accepts a concrete [FretPosition] or an int (MIDI) for pitch-class mode.
+  ///
+  /// Wrong answers keep the engine in [TrainingState.waitingAnswer] so the
+  /// user can retry, up to [maxFailedAttempts] per question.  Once the limit
+  /// is reached the correct position is revealed, the question is marked
+  /// wrong, and the engine advances automatically.  Set [maxFailedAttempts]
+  /// to 0 for the legacy one-shot behaviour.
   Future<void> submitAnswer(Object answer) async {
     if (_state != TrainingState.waitingAnswer || _targetPosition == null) {
       return;
@@ -247,19 +259,46 @@ class TrainingEngine extends ChangeNotifier {
         DateTime.now().difference(_questionStartTime!).inMilliseconds / 1000,
       );
     }
+
     if (isCorrect) {
       _correctCount++;
       _currentStreak++;
       _bestStreak = max(_bestStreak, _currentStreak);
-    } else {
-      _currentStreak = 0;
+      _failedAttempts = 0;
+      _currentQuestion++;
+      final token = _generation;
+      _state = TrainingState.showingResult;
+      notifyListeners();
+      await _delay(const Duration(milliseconds: 1200));
+      await _nextQuestion(token);
+      return;
     }
-    _currentQuestion++;
-    final token = _generation;
-    _state = TrainingState.showingResult;
-    notifyListeners();
-    await _delay(const Duration(milliseconds: 1200));
-    await _nextQuestion(token);
+
+    // Wrong answer
+    _currentStreak = 0;
+    _failedAttempts++;
+
+    if (maxFailedAttempts == 0) {
+      // Legacy: advance immediately, never reveal.
+      _currentQuestion++;
+      final token = _generation;
+      _state = TrainingState.showingResult;
+      notifyListeners();
+      await _delay(const Duration(milliseconds: 1200));
+      await _nextQuestion(token);
+    } else if (_failedAttempts >= maxFailedAttempts) {
+      // Reveal the correct position and advance.
+      _showCorrectPosition = true;
+      _currentQuestion++;
+      final token = _generation;
+      _state = TrainingState.showingResult;
+      notifyListeners();
+      await _delay(const Duration(milliseconds: 2000));
+      await _nextQuestion(token);
+    } else {
+      // Stay on the same question – user can try again.
+      notifyListeners();
+    }
   }
 
   Future<void> replayRoot() async {
@@ -287,6 +326,8 @@ class TrainingEngine extends ChangeNotifier {
     _questionPool = [];
     _poolIndex = 0;
     _responseTimes.clear();
+    _failedAttempts = 0;
+    _showCorrectPosition = false;
     _sessionStartTime = null;
     _questionStartTime = null;
     notifyListeners();

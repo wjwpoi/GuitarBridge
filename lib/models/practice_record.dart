@@ -78,6 +78,9 @@ class UserPreferences {
   String toneMode;
   bool hasCompletedOnboarding;
 
+  /// 0 = never reveal, 1-5 = max wrong attempts before showing correct answer.
+  int maxFailedAttempts;
+
   UserPreferences({
     this.showNoteNames = true,
     this.showFretNumbers = true,
@@ -90,6 +93,7 @@ class UserPreferences {
     this.audioVolume = 0.8,
     this.toneMode = 'clean',
     this.hasCompletedOnboarding = false,
+    this.maxFailedAttempts = 3,
   });
 
   Map<String, dynamic> toJson() => {
@@ -104,6 +108,7 @@ class UserPreferences {
     'audioVolume': audioVolume,
     'toneMode': toneMode,
     'hasCompletedOnboarding': hasCompletedOnboarding,
+    'maxFailedAttempts': maxFailedAttempts,
   };
 
   factory UserPreferences.fromJson(
@@ -120,5 +125,6 @@ class UserPreferences {
     audioVolume: (json['audioVolume'] as num?)?.toDouble() ?? 0.8,
     toneMode: json['toneMode'] as String? ?? 'clean',
     hasCompletedOnboarding: json['hasCompletedOnboarding'] as bool? ?? false,
+    maxFailedAttempts: (json['maxFailedAttempts'] as num?)?.toInt() ?? 3,
   );
 }
