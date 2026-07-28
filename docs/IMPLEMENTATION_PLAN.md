@@ -235,3 +235,33 @@
 当前代码级门禁通过，Apple/Android/桌面三项仍需在具备对应工具链的 CI runner 上完成；不能把本机环境阻塞误报为平台代码通过。
 
 CI/Release 代码已提交，但不能把本机 actionlint、Web 构建或测试结果当作六平台 runner 通过；下一次 tag 发布前必须保存 GitHub Actions run URL、六个 artifact 名称和最终校验文件结果。
+
+## CI 验证记录（2026-07-28，提交 `fd482aa`）
+
+[CI run 30338274483](https://github.com/wjwpoi/GuitarBridge/actions/runs/30338274483)
+
+| 阶段 | 结果 | 耗时 |
+| --- | --- | --- |
+| Quality gates | ✅ pass | 1m53s |
+| Build Linux | ✅ pass | 1m39s |
+| Build iOS (unsigned) | ✅ pass | 3m42s |
+| Build macOS (unsigned) | ✅ pass | 4m21s |
+| Build Android APKs | ✅ pass | — |
+| Build Windows | ❌ fail | 2m33s |
+| Build Web | ✅ pass | 50s |
+
+### Windows 失败根因
+
+`windows-latest` 当前解析为 `windows-2025`（Windows Server 2025，含 VS2026）。Flutter 3.32.8 生成的 Windows CMake 工程期望 Visual Studio 16 2019，但该 runner 不含该版本。
+
+```
+CMake Error at CMakeLists.txt:3 (project):
+  Generator Visual Studio 16 2019 could not find any instance of Visual Studio.
+```
+
+修复方向：将 Windows runner 固定为 `windows-2022` 或 `windows-2019`，待后续升级 Flutter SDK 时重新生成工程以适配新版 Visual Studio。
+
+### 修复边界
+
+- 允许修改：`.github/workflows/build.yml` 中 Windows job 的 `runs-on`，本文档。
+- 不允许修改：CMakeLists.txt、Flutter 版本、任何其他文件。
