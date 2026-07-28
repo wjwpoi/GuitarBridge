@@ -146,6 +146,7 @@
 - 变更范围：CI Linux 构建 job、macOS/Linux shell 构建脚本和 Windows PowerShell 构建脚本。
 - 必须满足：CI 至少覆盖 Android、iOS（无签名）、macOS、Windows、Linux、Web；本地主机的 `all` 只选择该主机可执行的平台，不把不可能的目标伪装成成功。
 - 脚本约定：本地 iOS 构建默认使用 `--no-codesign`，签名由发布流程另行处理。
+- Shell 入口必须保留可执行权限（`tool/build.sh` mode `100755`），可直接从仓库根目录调用。
 - 验收命令：对应主机运行 `./tool/build.sh all` 或 `./tool/build.ps1 -Platform all`；CI 失败必须阻断合并。
 
 ### 下一提交门禁：平台工程基线
