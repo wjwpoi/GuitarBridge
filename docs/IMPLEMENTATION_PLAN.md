@@ -120,3 +120,10 @@
 - 变更范围：`TrainingQuestion`、`TrainingEngine`、指板点击/绘制和 Home 训练回调。
 - 必须满足：题量超过有限题库时按已打乱的题库循环但不递归；非法服务调用不会崩溃；精确弦位模式与显式音高类兼容模式均有测试；generation token 能阻止 reset/start 后旧异步任务回写。
 - 验收命令：`dart format --output=none --set-exit-if-changed .`、`flutter analyze`、`flutter test test/training_engine_test.dart`。
+
+### 下一提交门禁：音频与 SDK 兼容性
+
+- 变更范围：`AudioEngine`、采样映射和 `flutter_soloud` 版本约束。
+- 必须满足：依赖版本与固定 Flutter 3.32.8 可解析；SoLoud 的异步 `play` 句柄被正确等待和释放；采样缺失时仍可合成音；所有音色模式都能走同一播放接口。
+- 验收命令：`flutter pub get`、`flutter analyze`、`flutter test test/sample_config_test.dart`；至少执行一个桌面或 Web 构建确认插件注册。
+- 兼容性决策：`flutter_soloud 4.x` 要求 Flutter 3.41+，本阶段固定使用 API 兼容且要求 Flutter >=3.3 的 `3.4.0`，后续升级 SDK 时单独评估。

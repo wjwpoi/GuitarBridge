@@ -8,7 +8,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_soloud: ^4.0.13
+  flutter_soloud: ^3.4.0
   shared_preferences: ^2.5.3
 
 dev_dependencies:

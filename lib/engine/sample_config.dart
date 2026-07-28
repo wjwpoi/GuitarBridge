@@ -8,6 +8,7 @@ class SampleConfig {
   /// 按八度折叠后只需 12 个采样（一个八度内的所有半音）
   static const int sampleCount = 12; // 一个八度内的12个半音
   static const int sampleOctave = 4; // 采样八度（C4-B4）
+  static const int firstSampleMidi = (sampleOctave + 1) * 12;
 
   /// 每种音色模式需要的采样文件列表
   static List<String> requiredSamples(ToneMode mode) {
@@ -18,8 +19,9 @@ class SampleConfig {
   /// 检查采样是否存在（运行时由 flutter_soloud 或 AssetBundle 处理）
   static String samplePath(ToneMode mode, int midiNote) {
     final noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    final semitone = midiNote % 12;
-    final octave = midiNote ~/ 12 - 1;
+    final sampleMidi = nearestSampleMidi(midiNote);
+    final semitone = sampleMidi % 12;
+    final octave = sampleMidi ~/ 12 - 1;
     return 'assets/samples/${mode.name}/${noteNames[semitone]}$octave.wav';
   }
 
@@ -29,11 +31,11 @@ class SampleConfig {
   /// E6(88) -> 找 E4.wav 并升调播放
   static int nearestSampleMidi(int targetMidi) {
     final semitone = targetMidi % 12;
-    return sampleOctave * 12 + semitone; // 折叠到采样八度
+    return firstSampleMidi + semitone; // 折叠到采样八度
   }
 
   /// 从目标 MIDI 到采样 MIDI 的八度偏移
   static int octaveShift(int targetMidi) {
-    return (targetMidi ~/ 12) - sampleOctave;
+    return (targetMidi - nearestSampleMidi(targetMidi)) ~/ 12;
   }
 }
