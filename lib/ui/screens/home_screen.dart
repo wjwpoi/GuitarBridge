@@ -55,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _audioEngine = widget.audioEngine;
+    _audioEngine.addListener(_onAudioStateChange);
     _trainingEngine = TrainingEngine();
     final prefs = widget.initialPreferences;
     _selectedKey = prefs.selectedKey;
@@ -100,6 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    _audioEngine.removeListener(_onAudioStateChange);
     _trainingEngine.removeListener(_checkCompletion);
     _trainingEngine.reset();
     _trainingEngine.dispose();
@@ -136,6 +138,25 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      if (_audioEngine.state == AudioEngineState.error)
+                        MaterialBanner(
+                          backgroundColor: Colors.red.shade900,
+                          content: Text(
+                            _audioEngine.error ?? 'Unknown audio error',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => _audioEngine.initialize(),
+                              child: const Text(
+                                'Retry',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                      if (_audioEngine.state == AudioEngineState.loading)
+                        const LinearProgressIndicator(),
                       Semantics(
                         label: 'Training options',
                         child: TrainingOptionsWidget(
@@ -282,6 +303,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _onAudioStateChange() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
   void _switchToneMode(ToneMode mode) {
     if (mode == _currentToneMode) return;
     setState(() => _currentToneMode = mode);
@@ -290,6 +316,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onStartTraining() async {
+    if (!_audioEngine.isReady) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Audio engine is not ready. Check the banner above and retry.',
+            ),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
     HapticManager.medium();
     if (_trainingEngine.state == TrainingState.completed) {
       _trainingEngine.reset();
