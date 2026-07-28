@@ -81,7 +81,7 @@
 
 以下任务不属于本轮 CI/Release 修改范围。每项开始前必须先补充目标、影响范围、验收命令和边界，再单独提交代码和文档：
 
-- [ ] 音频：实现真实 active voice crossfade，或删除 crossfade 能力和误导性文案；六平台各做一次可听输出 smoke test。
+- [x] 音频：删除虚假 crossfade timer 占位；switchToneMode 即时切换，不再宣传不存在的交叉淡化。
 - [x] 音频生命周期：为 reset、重复 start、页面销毁增加停止旧 voice 的接口和回归测试；generation token 只保护状态，不等于停止音频。
 - [ ] 音频错误：初始化失败、采样缺失、题库为空时提供用户可见状态和重试/降级路径。
 - [ ] 数据恢复：手动验收完成训练后 Stats 即时刷新、重启恢复 records/streak/设置、清除后页面和持久化数据均为空。

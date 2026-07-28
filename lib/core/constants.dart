@@ -19,8 +19,6 @@ class AppConstants {
 
   // === 音频配置 ===
   static const double defaultVolume = 0.8;
-  static const int crossfadeSteps = 30;
-  static const Duration crossfadeDuration = Duration(milliseconds: 150);
 
   // === MIDI 范围 ===
   /// 标准吉他最低音 E2
