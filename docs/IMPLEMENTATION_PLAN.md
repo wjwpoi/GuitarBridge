@@ -78,7 +78,7 @@
 | 平台工程与可复现流水线 | 进行中 | 已固定 SDK/依赖、恢复质量门禁、加入 Linux job、按主机选择构建目标；六个平台工程和 lockfile 已生成，待 release 构建 |
 | 音频与训练核心 | 进行中 | 训练题目已改为具体弦位，题库有限生成并支持确定性循环，增加 generation token；SoLoud 3.x 异步句柄已校正，待各平台播放验证 |
 | 持久化、统计、设置 | 进行中 | 已修复 streak 历史/清除、暴露真实 records、设置序列化并接入 Home；单元测试已覆盖，待手动重启恢复检查 |
-| 测试与发布验证 | 进行中 | 训练测试 27 项已通过；全量测试、静态分析和各平台 release 构建待完成 |
+| 测试与发布验证 | 进行中 | 训练测试 27 项、全量测试 88 项已通过；各平台 release 构建仍受本机工具链限制 |
 
 ## 本轮不做
 
@@ -133,6 +133,7 @@
 - 变更范围：`PracticeRecord`、`StorageService`、`StreakManager`、Home/Settings/Stats 页面和应用生命周期。
 - 必须满足：旧 JSON 缺失新增字段时使用稳定默认值；同一当地日期只计一次 streak 但保留历史日期；清除统计同时清除 records/streaks 和内存缓存；设置变更立即影响训练并可在重启后恢复。
 - 验收命令：`flutter test test/storage_service_test.dart`、`flutter analyze`；手动检查完成训练后 Stats 页面即时刷新。
+- 日期契约补充：所有 streak 日期比较先转换到本地时区再截断到日，不能直接使用 UTC 字符串的年月日字段。
 
 ### 下一提交门禁：回归测试
 
@@ -157,7 +158,7 @@
 - Flutter 3.32.8 / Dart 3.8.1 已安装到工作区临时 SDK。
 - `flutter pub get` 成功，lockfile 当前解析 `flutter_soloud 3.5.4`（满足 `^3.4.0` 且仍兼容 Flutter 3.32）；Web 产物包含 `worker.dart.js`、插件 JS 和 WASM 资源。
 - 首次格式化发现并修复指板 Widget 括号错误和测试导入位置错误；训练专项测试当前 27 项通过。
-- `flutter analyze` 已达到 `No issues found`，全量测试 87 项通过。
+- `flutter analyze` 已达到 `No issues found`，加入 UTC/local streak 回归后全量测试 88 项通过。
 
 ### Release 构建记录（2026-07-28）
 
