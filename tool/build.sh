@@ -22,7 +22,7 @@ build_platform() {
 
 if [[ "$PLATFORM" == "all" ]]; then
     for p in android ios macos web windows; do
-        build_platform "$p" || echo -e "\033[31m  [FAIL] $p\033[0m"
+        build_platform "$p"
     done
 else
     build_platform "$PLATFORM"

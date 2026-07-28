@@ -21,7 +21,7 @@
 
 ### 前置条件
 
-1. 安装 Flutter SDK 3.9+
+1. 安装 Flutter SDK 3.32.8（Dart 3.8+）
    ```bash
    # macOS
    brew install flutter
@@ -39,10 +39,7 @@
 ### 启动
 
 ```bash
-cd GuitarBridge_Flutter
-
-# 生成平台文件（首次运行）
-flutter create --project-name guitar_bridge .
+cd GuitarBridge
 
 # 安装依赖
 flutter pub get
@@ -121,10 +118,14 @@ idle → playingRoot → waitingAnswer → showingResult → playingRoot → ...
 ## 技术亮点
 
 - **17.817 品距公式** — 物理准确的指板比例绘制
-- **Sine curve crossfade** — 30步平滑音色切换，防爆音
-- **Sampling fallback** — 采样缺失时自动合成正弦波
+- **SoLoud audio backend** — 三种音色采样，缺失采样时自动合成正弦波
+- **Position-aware answers** — 精确到弦和品的寻址判定
 - **Duplicate prevention** — 同一音程组合不会重复出题
 - **6-state FSM** — 完整的训练生命周期管理
+
+## 实施文档
+
+当前 TODO、验收标准和实施进度见 [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)。代码变更必须先更新该文档。
 
 
 ## License

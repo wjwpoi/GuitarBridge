@@ -11,29 +11,35 @@ jobs:
     name: Test & Analyze
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.x'
+          flutter-version: '3.32.8'
           channel: stable
           cache: true
 
       - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed .
       - run: flutter analyze
-        continue-on-error: true
       - run: flutter test --coverage
+      - name: Validate bundled samples
+        run: |
+          test "$(find assets/samples -type f -name '*.wav' | wc -l)" -eq 36
+          for mode in clean overdrive distortion; do
+            test "$(find "assets/samples/$mode" -type f -name '*.wav' | wc -l)" -eq 12
+          done
 
   build-android:
     name: Build Android (APK)
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.x'
+          flutter-version: '3.32.8'
           cache: true
 
       - run: flutter pub get
@@ -49,11 +55,11 @@ jobs:
     needs: test
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.x'
+          flutter-version: '3.32.8'
           cache: true
 
       - run: flutter pub get
@@ -65,11 +71,11 @@ jobs:
     needs: test
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.x'
+          flutter-version: '3.32.8'
           cache: true
 
       - run: flutter pub get
@@ -85,11 +91,11 @@ jobs:
     needs: test
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.x'
+          flutter-version: '3.32.8'
           cache: true
 
       - run: flutter pub get
@@ -100,11 +106,11 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.x'
+          flutter-version: '3.32.8'
           cache: true
 
       - run: flutter pub get

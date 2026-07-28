@@ -12,14 +12,17 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.x'
+          flutter-version: '3.32.8'
           cache: true
 
       - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed .
+      - run: flutter analyze
+      - run: flutter test
 
       # Android
       - name: Build Android APK
@@ -28,6 +31,11 @@ jobs:
       # Web
       - name: Build Web
         run: flutter build web --release
+
+      - name: Package Web
+        run: |
+          cd build
+          zip -qr web-build.zip web
 
       # Create Release
       - name: Create Release
@@ -48,9 +56,10 @@ jobs:
             2. Web: 解压 web-build.zip 部署到任意静态服务器
           files: |
             build/app/outputs/flutter-apk/*.apk
+            build/web-build.zip
 
       - name: Upload Web Artifact
         uses: actions/upload-artifact@v4
         with:
           name: web-build
-          path: build/web/
+          path: build/web-build.zip

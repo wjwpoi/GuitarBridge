@@ -5,7 +5,6 @@ build/
 *.iml
 .idea/
 .vscode/
-*.lock
 
 # Android
 android/.gradle/
@@ -26,10 +25,15 @@ macos/Flutter/Flutter.podspec
 # Windows
 windows/flutter/ephemeral/
 
-# Web
-web/
+# Web build output is generated under build/web; keep web platform sources.
 
 # Misc
 *.swp
 .DS_Store
 *.log
+
+# Flutter generated platform state
+**/Flutter/ephemeral/
+**/Pods/
+**/.symlinks/
+**/DerivedData/
