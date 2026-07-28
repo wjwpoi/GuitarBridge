@@ -304,6 +304,19 @@ CMake Error at CMakeLists.txt:3 (project):
 
 - `b26ff31`：`jsonDecode` 包在 try-catch 中；损坏 JSON 返回空列表/默认值；+2 项恢复测试。
 
+### 当前阶段：布局响应式适配（2026-07-28）
+
+- 目标：窄屏（<360dp）可用，横竖屏切换训练状态不丢失。
+- 允许修改：`lib/ui/screens/home_screen.dart`、`test/widget_test.dart`、本文档。
+- 实现方案：
+  1. `LayoutBuilder` 获取可用宽度，动态调整 padding 和间距；
+  2. 窄屏模式（width < 360）：`EdgeInsets.symmetric(horizontal: 8, vertical: 6)`，减小 `SizedBox` 间距；
+  3. 横竖屏：Flutter State 生命周期天然保持训练状态，`SingleChildScrollView` 确保内容可滚动。
+- 验收：
+  - `dart analyze lib/` 零新增 issue；
+  - `flutter test --coverage` 全量 90+ 项通过；
+  - 手动：窄屏布局不溢出；旋转设备训练状态保留。
+
 ### 当前阶段：音频错误 UI（2026-07-28）
 
 - 目标：AudioEngine 初始化失败或采样缺失时，HomeScreen 给用户可见反馈和重试入口。当前引擎已有 `state`/`error`/`isReady`，但 HomeScreen 完全未使用——无声 = 静默失败。
