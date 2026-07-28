@@ -17,7 +17,11 @@ flutter analyze
 
 build_platform() {
     echo -e "\n\033[32m--- Building $1 ($MODE) ---\033[0m"
-    flutter build "$1" --"$MODE"
+    if [[ "$1" == "ios" ]]; then
+        flutter build ios --"$MODE" --no-codesign
+    else
+        flutter build "$1" --"$MODE"
+    fi
 }
 
 if [[ "$PLATFORM" == "all" ]]; then
@@ -41,4 +45,5 @@ echo -e "\033[33mArtifacts:\033[0m"
 [[ "$PLATFORM" =~ "android" ]] && echo "  Android: build/app/outputs/flutter-apk/*.apk"
 [[ "$PLATFORM" =~ "macos" ]]   && echo "  macOS:   build/macos/Build/Products/Release/"
 [[ "$PLATFORM" =~ "windows" ]] && echo "  Windows: build/windows/x64/runner/Release/"
+[[ "$PLATFORM" =~ "linux" ]]   && echo "  Linux:   build/linux/x64/release/bundle/"
 [[ "$PLATFORM" =~ "web" ]]     && echo "  Web:     build/web/"
