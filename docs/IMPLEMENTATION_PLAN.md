@@ -157,4 +157,4 @@
 - Flutter 3.32.8 / Dart 3.8.1 已安装到工作区临时 SDK。
 - `flutter pub get` 成功，lockfile 当前解析 `flutter_soloud 3.5.4`（满足 `^3.4.0` 且仍兼容 Flutter 3.32）。
 - 首次格式化发现并修复指板 Widget 括号错误和测试导入位置错误；训练专项测试当前 27 项通过。
-- `flutter analyze` 无 error/warning，仍有 32 条 info 级 lint，后续可单独清理，不阻断当前门禁。
+- `flutter analyze` 无 error/warning；const 建议和脚本输出 lint 已列入当前质量清理，目标是让门禁输出为 0 issues。
