@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # GuitarBridge Build Script (macOS/Linux)
 # Usage: ./tool/build.sh [android|ios|windows|macos|web|all] [--release]
 
