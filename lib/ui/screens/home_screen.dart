@@ -136,53 +136,58 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      TrainingOptionsWidget(
-                        selectedKey: _selectedKey,
-                        selectedScale: _selectedScale,
-                        selectedTuning: _selectedTuning,
-                        selectedDifficulty: _selectedDifficulty,
-                        currentToneMode: _currentToneMode,
-                        showDegrees: _showDegrees,
-                        showNoteNames: _showNoteNames,
-                        showFretNumbers: _showFretNumbers,
-                        onKeyChanged: (v) {
-                          setState(() => _selectedKey = v);
-                          _trainingEngine.currentKey = v;
-                          _persistCurrentPreferences();
-                        },
-                        onScaleChanged: (v) {
-                          setState(() => _selectedScale = v);
-                          _trainingEngine.scaleType = _scaleTypeFromName(v);
-                          _persistCurrentPreferences();
-                        },
-                        onTuningChanged: (v) {
-                          setState(() => _selectedTuning = v);
-                          _configureEngine();
-                          _persistCurrentPreferences();
-                        },
-                        onDifficultyChanged: (v) {
-                          setState(() => _selectedDifficulty = v);
-                          _trainingEngine.difficulty =
-                              AppConstants.difficulties[v]!;
-                          _persistCurrentPreferences();
-                        },
-                        onToneModeChanged: (mode) {
-                          _audioEngine.switchToneMode(mode);
-                          setState(() => _currentToneMode = mode);
-                          _persistCurrentPreferences();
-                        },
-                        onToggleDegrees: () {
-                          setState(() => _showDegrees = !_showDegrees);
-                          _persistCurrentPreferences();
-                        },
-                        onToggleNoteNames: () {
-                          setState(() => _showNoteNames = !_showNoteNames);
-                          _persistCurrentPreferences();
-                        },
-                        onToggleFretNumbers: () {
-                          setState(() => _showFretNumbers = !_showFretNumbers);
-                          _persistCurrentPreferences();
-                        },
+                      Semantics(
+                        label: 'Training options',
+                        child: TrainingOptionsWidget(
+                          selectedKey: _selectedKey,
+                          selectedScale: _selectedScale,
+                          selectedTuning: _selectedTuning,
+                          selectedDifficulty: _selectedDifficulty,
+                          currentToneMode: _currentToneMode,
+                          showDegrees: _showDegrees,
+                          showNoteNames: _showNoteNames,
+                          showFretNumbers: _showFretNumbers,
+                          onKeyChanged: (v) {
+                            setState(() => _selectedKey = v);
+                            _trainingEngine.currentKey = v;
+                            _persistCurrentPreferences();
+                          },
+                          onScaleChanged: (v) {
+                            setState(() => _selectedScale = v);
+                            _trainingEngine.scaleType = _scaleTypeFromName(v);
+                            _persistCurrentPreferences();
+                          },
+                          onTuningChanged: (v) {
+                            setState(() => _selectedTuning = v);
+                            _configureEngine();
+                            _persistCurrentPreferences();
+                          },
+                          onDifficultyChanged: (v) {
+                            setState(() => _selectedDifficulty = v);
+                            _trainingEngine.difficulty =
+                                AppConstants.difficulties[v]!;
+                            _persistCurrentPreferences();
+                          },
+                          onToneModeChanged: (mode) {
+                            _audioEngine.switchToneMode(mode);
+                            setState(() => _currentToneMode = mode);
+                            _persistCurrentPreferences();
+                          },
+                          onToggleDegrees: () {
+                            setState(() => _showDegrees = !_showDegrees);
+                            _persistCurrentPreferences();
+                          },
+                          onToggleNoteNames: () {
+                            setState(() => _showNoteNames = !_showNoteNames);
+                            _persistCurrentPreferences();
+                          },
+                          onToggleFretNumbers: () {
+                            setState(
+                              () => _showFretNumbers = !_showFretNumbers,
+                            );
+                            _persistCurrentPreferences();
+                          },
+                        ),
                       ),
                       const SizedBox(height: 12),
                       ScaleChartWidget(
@@ -190,25 +195,31 @@ class _HomeScreenState extends State<HomeScreen> {
                         scaleType: _scaleTypeFromName(_selectedScale),
                       ),
                       const SizedBox(height: 12),
-                      FretboardWidget(
-                        trainingEngine: _trainingEngine,
-                        tuning: Tuning.all.firstWhere(
-                          (t) => t.name == _selectedTuning,
-                          orElse: () => Tuning.standard,
+                      Semantics(
+                        label: 'Guitar fretboard',
+                        child: FretboardWidget(
+                          trainingEngine: _trainingEngine,
+                          tuning: Tuning.all.firstWhere(
+                            (t) => t.name == _selectedTuning,
+                            orElse: () => Tuning.standard,
+                          ),
+                          scaleType: _scaleTypeFromName(_selectedScale),
+                          selectedKey: _selectedKey,
+                          showDegrees: _showDegrees,
+                          showNoteNames: _showNoteNames,
+                          showFretNumbers: _showFretNumbers,
+                          onFretTapped: _onFretTapped,
                         ),
-                        scaleType: _scaleTypeFromName(_selectedScale),
-                        selectedKey: _selectedKey,
-                        showDegrees: _showDegrees,
-                        showNoteNames: _showNoteNames,
-                        showFretNumbers: _showFretNumbers,
-                        onFretTapped: _onFretTapped,
                       ),
                       const SizedBox(height: 12),
-                      TrainingStatusWidget(
-                        engine: _trainingEngine,
-                        onStart: _onStartTraining,
-                        onReplayRoot: _trainingEngine.replayRoot,
-                        onReplayTarget: _trainingEngine.replayTarget,
+                      Semantics(
+                        label: 'Training controls',
+                        child: TrainingStatusWidget(
+                          engine: _trainingEngine,
+                          onStart: _onStartTraining,
+                          onReplayRoot: _trainingEngine.replayRoot,
+                          onReplayTarget: _trainingEngine.replayTarget,
+                        ),
                       ),
                     ],
                   ),
