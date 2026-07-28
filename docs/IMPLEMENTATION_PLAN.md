@@ -76,7 +76,7 @@
 | --- | --- | --- |
 | 文档、TODO、验收标准 | 已完成 | 本文档先于代码变更创建 |
 | 平台工程与可复现流水线 | 进行中 | 已固定 SDK/依赖、恢复质量门禁并修复构建脚本；平台目录和 lockfile 待生成 |
-| 音频与训练核心 | 进行中 | 已接入 SoLoud 采样/合成回退，题目改为具体弦位，增加 generation token；待 SDK 验证和测试补齐 |
+| 音频与训练核心 | 进行中 | 训练题目已改为具体弦位，题库有限生成并支持确定性循环，增加 generation token；训练提交安全性待 SDK 验证，音频另行提交 |
 | 持久化、统计、设置 | 进行中 | 已修复 streak 历史/清除、暴露真实 records、设置序列化并接入 Home；待 SDK 验证和测试补齐 |
 | 测试与发布验证 | 进行中 | 已增加题目、采样映射、存储回归测试；等待临时 Flutter SDK 完成安装后执行 |
 
@@ -114,3 +114,9 @@
 - 变更范围：CI/release 工作流、`.gitignore`、`pubspec.yaml`、跨平台构建脚本和 README 启动说明。
 - 必须满足：Flutter 版本固定为 3.32.8；`pubspec.lock` 不再被忽略；format、analyze、test 和资源数量检查会阻断流水线；构建脚本遇到失败返回非零状态。
 - 验收命令：`dart format --output=none --set-exit-if-changed .`、`flutter analyze`、`flutter test`；平台目录生成后追加各平台 release/debug 构建。
+
+### 下一提交门禁：训练核心
+
+- 变更范围：`TrainingQuestion`、`TrainingEngine`、指板点击/绘制和 Home 训练回调。
+- 必须满足：题量超过有限题库时按已打乱的题库循环但不递归；非法服务调用不会崩溃；精确弦位模式与显式音高类兼容模式均有测试；generation token 能阻止 reset/start 后旧异步任务回写。
+- 验收命令：`dart format --output=none --set-exit-if-changed .`、`flutter analyze`、`flutter test test/training_engine_test.dart`。
