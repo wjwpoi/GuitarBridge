@@ -8,9 +8,14 @@
 - 不再进行第二次全量重写；保留现有 UI 与基础模型，对核心闭环做定向重构。
 - 发布前必须同时满足：可构建、可听见、可交互、可恢复、可测试。
 
-## 本轮边界（CI/Release）
+## 本轮边界（CI/Release → 音频错误 UI）
 
-本轮只收敛文档契约和 CI/Release 流水线，不扩展训练、音频或 UI 功能。后续协作者必须先完成本文档对应门禁，再处理其他 TODO。
+> 阶段一（已完成）：收敛 CI/Release 流水线和基础质量门禁。
+> 阶段二（当前）：音频错误 UI —— 确保用户在音频初始化失败、采样缺失时有可见反馈和重试入口。这是 CI/Release 质量的最后一公里：有构建但无声音 = 产品不可用。
+
+本轮在以下范围工作：
+- 音频错误 UI（P1）：允许修改 `lib/ui/screens/home_screen.dart`、`lib/main.dart`、`test/widget_test.dart` 和本文档。
+- 不允许扩展训练状态机、音频播放算法、持久化模型、指板 UI 或 Swift 功能迁移。
 
 - 允许修改：`.github/workflows/`、Android release signing 接入所需的最小 Gradle 配置、构建/打包辅助脚本和本文档。
 - 不允许顺手修改：`lib/` 训练状态机、音频播放算法、持久化模型、指板 UI、Swift 功能迁移。
@@ -295,9 +300,77 @@ CMake Error at CMakeLists.txt:3 (project):
 - 端口需新增 `Future<void> stopAll()`。
 - 验收：`flutter analyze`、`flutter test test/training_engine_test.dart`、全量 88+ 项通过。
 
-### 下一提交：数据迁移与错误恢复
+### 下一提交：数据迁移与错误恢复 ✅ 已完成（PR #2）
 
-- 目标：损坏 JSON、缺失字段时返回安全默认值，不崩溃、不静默丢失。
-- 允许修改：`lib/services/storage_service.dart`、`lib/models/practice_record.dart`、`test/storage_service_test.dart`、本文档。
-- 策略：`jsonDecode` 包在 try-catch 中；`fromMap` 使用安全转换和默认值；新增 `schemaVersion` 字段。
-- 验收：`flutter test test/storage_service_test.dart` 新增损坏数据恢复用例。
+- `b26ff31`：`jsonDecode` 包在 try-catch 中；损坏 JSON 返回空列表/默认值；+2 项恢复测试。
+
+### 当前阶段：音频错误 UI（2026-07-28）
+
+- 目标：AudioEngine 初始化失败或采样缺失时，HomeScreen 给用户可见反馈和重试入口。当前引擎已有 `state`/`error`/`isReady`，但 HomeScreen 完全未使用——无声 = 静默失败。
+- 允许修改：`lib/ui/screens/home_screen.dart`、`lib/main.dart`、`test/widget_test.dart`、本文档。
+- 实现方案：
+  1. HomeScreen 在 `initState` 中添加 `_audioEngine.addListener(_onAudioStateChange)`；
+  2. `build()` 的 `SafeArea` 顶部添加：
+     - `_audioEngine.state == AudioEngineState.error` → MaterialBanner（红色，显示 `error` 文本，带"重试"按钮调用 `_audioEngine.initialize()`）；
+     - `_audioEngine.state == AudioEngineState.loading` → 小型 LinearProgressIndicator；
+  3. `_onStartTraining()` 开头检查 `_audioEngine.isReady`，未就绪时显示 SnackBar 提示；
+  4. 重试成功后自动消除横幅。
+- 验收：
+  - `flutter analyze lib/ui/screens/home_screen.dart` 无 issue；
+  - `flutter test --coverage` 全量 90+ 项通过；
+  - 手动验证：断开网络/删除采样后启动 App，应看到红色错误横幅和重试按钮。
+
+
+---
+
+## 后续 TODO（供低等模型接管）
+
+以下任务已明确边界和验收标准，后续协作者按顺序逐项完成，每项一个独立 PR。
+
+### P1：数据恢复手动验收
+
+- 目标：确认持久化恢复逻辑在真机/模拟器上正确运行。
+- 无代码修改，纯手动验证：
+  1. 完成一次训练 → Stats 页面即时刷新；
+  2. 杀掉 App 重启 → records、streak、设置完整恢复；
+  3. 设置 → 清除数据 → 页面为空；
+  4. 手动损坏 `shared_preferences` 中的 JSON → App 不崩溃，显示空状态。
+- 验证结果回写到本文档。
+
+### P2：Swift 功能清单
+
+- 目标：列出原始 Swift 版本中尚未迁移到 Flutter 的功能，评估优先级。
+- 修改：本文档新增表格列出调音器、节拍器、日志、分享、录音、Watch/Widget 等。
+- 不允许修改 Flutter 代码。
+
+### P2：Release 签名与分发
+
+- 当前 Release workflow 代码已完整（`release.yml` + `build.yml`），制品自动上传到 GitHub Release。
+- 待完成（需人工操作，不在此模型范围）：
+  - 配置 Android release keystore secrets；
+  - Apple 分发签名和公证；
+  - Windows 代码签名。
+- 待有签名密钥后可直接打 tag 触发发布。
+
+### P2：UI/交互改进
+
+- 窄屏适配（<360dp 宽度）；
+- 横竖屏切换保留训练状态；
+- 键盘快捷键（Space 开始、数字键选音色）；
+- 可访问性（Semantics label）；
+- Web Cupertino icon 字体告警（非阻塞，仅构建日志）。
+
+### 提交时间线（已完成部分）
+
+| 顺序 | 提交类型 | 内容 | 状态 |
+| --- | --- | --- |
+| 1 | `docs:` | 建立架构决策、TODO、验收标准和协作规则 | ✅ |
+| 2 | `build:` | 固定 SDK/依赖、恢复 CI 门禁、生成平台工程 | ✅ |
+| 3-4 | `feat/fix:` | 位置感知题目、SoLoud 采样、合成回退 | ✅ |
+| 5-6 | `feat/fix/test:` | 设置/记录/streak 持久化、领域模型测试 | ✅ |
+| 7 | `fix/build:` | 平台兼容性、无签名构建、脚本入口修复 | ✅ |
+| 8-9 | `docs/ci:` | 进度记录、六平台 CI/Release 流水线 | ✅ |
+| 10 | PR #1 | `TrainingAudioPort` 接口隔离、CI 首次全通过 | ✅ |
+| 11 | PR #2 | `stopAll()` 生命周期、JSON 损坏恢复 | ✅ |
+| 12 | PR #3 | 移除伪 crossfade | 🔄 |
+| 13 | PR #4 | 音频错误 UI | ⬜ 当前
