@@ -12,11 +12,12 @@
 
 > 阶段一（已完成）：收敛 CI/Release 流水线和基础质量门禁。
 > 阶段二（已完成）：音频错误 UI。
-> 阶段三（当前）：训练试错与答案揭示。 —— 确保用户在音频初始化失败、采样缺失时有可见反馈和重试入口。这是 CI/Release 质量的最后一公里：有构建但无声音 = 产品不可用。
+> 阶段三（当前）：训练试错与答案揭示 —— 答错不推进，允许在指板上多次尝试；达上限后高亮正确位置。
 
 本轮在以下范围工作：
-- 音频错误 UI（P1）：允许修改 `lib/ui/screens/home_screen.dart`、`lib/main.dart`、`test/widget_test.dart` 和本文档。
-- 不允许扩展训练状态机、音频播放算法、持久化模型、指板 UI 或 Swift 功能迁移。
+- 训练试错与答案揭示（P1）：允许修改 `lib/engine/training_engine.dart`、`lib/models/practice_record.dart`、`lib/ui/widgets/fretboard_widget.dart`、`lib/ui/screens/settings_screen.dart`、`lib/ui/screens/home_screen.dart`、`test/training_engine_test.dart` 和本文档。
+- 已完成阶段：CI/Release 流水线、音频错误 UI、键盘快捷键、响应式布局、可访问性语义标签。
+- 不允许扩展音频播放算法或 Swift 功能迁移。
 
 - 允许修改：`.github/workflows/`、Android release signing 接入所需的最小 Gradle 配置、构建/打包辅助脚本和本文档。
 - 不允许顺手修改：`lib/` 训练状态机、音频播放算法、持久化模型、指板 UI、Swift 功能迁移。
@@ -314,7 +315,7 @@ CMake Error at CMakeLists.txt:3 (project):
   2. `TrainingEngine.submitAnswer()` 重写错误分支：未达上限保持 `waitingAnswer`，达上限揭示答案后推进；
   3. `FretboardWidget`：答题阶段保留根音标记；揭示答案时高亮 target；
   4. 设置页新增选项（永不、1、2、3、4、5）。
-- 验收：`dart analyze lib/` 零新增 issue；`flutter test --coverage` 新增试错测试；手动验证错误不计入推进。
+- 验收：`dart analyze lib/` 零新增 issue；`flutter test --coverage` 99 项通过（新增 9 项试错回归测试）；手动验证答错不推进、达上限揭示答案。
 
 ### 当前阶段：音频错误 UI（2026-07-28）
 
