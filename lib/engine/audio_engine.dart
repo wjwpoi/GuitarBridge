@@ -1,5 +1,5 @@
-import 'dart:async';
 import 'dart:math';
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
@@ -29,8 +29,6 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   double _volume = AppConstants.defaultVolume;
   bool _isPlaying = false;
   String? _error;
-  Timer? _crossfadeTimer;
-  int _crossfadeStep = 0;
   bool _disposed = false;
   SoundHandle? _activeHandle;
 
@@ -41,7 +39,6 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   @override
   bool get isReady => _state == AudioEngineState.ready;
   String? get error => _error;
-  bool get isCrossfading => _crossfadeTimer?.isActive ?? false;
 
   bool hasSamples(ToneMode mode) => _sampleSources[mode]?.isNotEmpty ?? false;
 
@@ -170,27 +167,7 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
 
   Future<void> switchToneMode(ToneMode newMode) async {
     if (newMode == _currentMode || _disposed) return;
-    _crossfadeTimer?.cancel();
     _currentMode = newMode;
-    _crossfadeStep = 0;
-    notifyListeners();
-
-    // The mode is applied immediately to the next note. Keep the state
-    // transition observable for UI and future active-voice crossfades.
-    final stepDuration =
-        AppConstants.crossfadeDuration ~/ AppConstants.crossfadeSteps;
-    _crossfadeTimer = Timer.periodic(stepDuration, (timer) {
-      _crossfadeStep++;
-      if (_crossfadeStep >= AppConstants.crossfadeSteps) {
-        timer.cancel();
-        notifyListeners();
-      }
-    });
-  }
-
-  void cancelCrossfade() {
-    _crossfadeTimer?.cancel();
-    _crossfadeStep = AppConstants.crossfadeSteps;
     notifyListeners();
   }
 
@@ -200,7 +177,6 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   }
 
   Future<void> disposeEngine() async {
-    _crossfadeTimer?.cancel();
     if (_soloud.isInitialized) {
       await _soloud.disposeAllSources();
       _soloud.deinit();
