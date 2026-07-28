@@ -1,4 +1,4 @@
-﻿import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:guitar_bridge/models/note.dart';
 import 'package:guitar_bridge/models/scale.dart';
 import 'package:guitar_bridge/models/tuning.dart';
@@ -8,25 +8,13 @@ void main() {
   group('GuitarMath', () {
     test('intervalBetween returns correct intervals', () {
       // C4(60) to E4(64) = Major Third (4 semitones)
-      expect(
-        GuitarMath.intervalBetween(60, 64),
-        IntervalType.majorThird,
-      );
+      expect(GuitarMath.intervalBetween(60, 64), IntervalType.majorThird);
       // C4(60) to G4(67) = Perfect Fifth (7 semitones)
-      expect(
-        GuitarMath.intervalBetween(60, 67),
-        IntervalType.perfectFifth,
-      );
+      expect(GuitarMath.intervalBetween(60, 67), IntervalType.perfectFifth);
       // C4(60) to C5(72) = Octave (12 semitones)
-      expect(
-        GuitarMath.intervalBetween(60, 72),
-        IntervalType.octave,
-      );
+      expect(GuitarMath.intervalBetween(60, 72), IntervalType.octave);
       // C4(60) to C#4(61) = Minor Second (1 semitones)
-      expect(
-        GuitarMath.intervalBetween(60, 61),
-        IntervalType.minorSecond,
-      );
+      expect(GuitarMath.intervalBetween(60, 61), IntervalType.minorSecond);
     });
 
     test('semitonesBetween returns absolute difference', () {
@@ -43,9 +31,9 @@ void main() {
     });
 
     test('noteNameAt returns correct note names', () {
-      expect(GuitarMath.noteNameAt(60), NoteName.c);    // C4
-      expect(GuitarMath.noteNameAt(64), NoteName.e);    // E4
-      expect(GuitarMath.noteNameAt(67), NoteName.g);    // G4
+      expect(GuitarMath.noteNameAt(60), NoteName.c); // C4
+      expect(GuitarMath.noteNameAt(64), NoteName.e); // E4
+      expect(GuitarMath.noteNameAt(67), NoteName.g); // G4
       expect(GuitarMath.noteNameAt(61), NoteName.cSharp); // C#4
     });
   });

@@ -38,7 +38,8 @@ class FretPosition {
   int get hashCode => Object.hash(stringIndex, fret, midi);
 
   @override
-  String toString() => 'FretPosition(string=$stringIndex, fret=$fret, midi=$midi)';
+  String toString() =>
+      'FretPosition(string=$stringIndex, fret=$fret, midi=$midi)';
 }
 
 /// One immutable training prompt.

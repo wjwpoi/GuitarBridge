@@ -1,4 +1,3 @@
-
 /// 全局常量（对应原 Swift Constants.swift）
 class AppConstants {
   AppConstants._();
@@ -26,6 +25,7 @@ class AppConstants {
   // === MIDI 范围 ===
   /// 标准吉他最低音 E2
   static const int guitarLowestMidi = 40;
+
   /// 标准吉他最高音 (24品 1弦) E6
   static const int guitarHighestMidi = 88;
 

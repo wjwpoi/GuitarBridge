@@ -25,12 +25,17 @@ class StatsScreen extends StatelessWidget {
     final totalSessions = records.length;
     final totalCorrect = records.fold<int>(0, (s, r) => s + r.correctAnswers);
     final totalAttempts = records.fold<int>(0, (s, r) => s + r.totalAttempts);
-    final overallAccuracy =
-        totalAttempts > 0 ? totalCorrect / totalAttempts * 100 : 0.0;
+    final overallAccuracy = totalAttempts > 0
+        ? totalCorrect / totalAttempts * 100
+        : 0.0;
     final totalDuration = records.fold<double>(
-        0, (s, r) => s + r.durationSeconds);
+      0,
+      (s, r) => s + r.durationSeconds,
+    );
     final globalBestStreak = records.fold<int>(
-        0, (s, r) => s > r.bestStreak ? s : r.bestStreak);
+      0,
+      (s, r) => s > r.bestStreak ? s : r.bestStreak,
+    );
 
     // This week
     final now = DateTime.now();
@@ -52,8 +57,11 @@ class StatsScreen extends StatelessWidget {
       ),
       body: records.isEmpty
           ? const Center(
-              child: Text('暂无练习记录',
-                  style: TextStyle(color: Colors.grey, fontSize: 16)))
+              child: Text(
+                '暂无练习记录',
+                style: TextStyle(color: Colors.grey, fontSize: 16),
+              ),
+            )
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
@@ -67,11 +75,14 @@ class StatsScreen extends StatelessWidget {
                   globalBestStreak,
                 ),
                 const SizedBox(height: 16),
-                const Text('最近记录',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white)),
+                const Text(
+                  '最近记录',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 ...records.reversed.take(20).map((r) => _buildRecordTile(r)),
               ],
@@ -95,12 +106,20 @@ class StatsScreen extends StatelessWidget {
           children: [
             _buildStatRow('总练习次数', '$totalSessions', Icons.fitness_center),
             _buildStatRow('本周练习', '$sessionsThisWeek', Icons.calendar_today),
-            _buildStatRow('总准确率', '${accuracy.toStringAsFixed(1)}%', Icons.pie_chart),
+            _buildStatRow(
+              '总准确率',
+              '${accuracy.toStringAsFixed(1)}%',
+              Icons.pie_chart,
+            ),
             _buildStatRow('总答题数', '$totalAttempts', Icons.quiz),
             _buildStatRow('正确数', '$totalCorrect', Icons.check_circle),
             _buildStatRow('总练习时长', _formatDuration(duration), Icons.timer),
             _buildStatRow('最佳连击', '$bestStreak', Icons.local_fire_department),
-            _buildStatRow('连续天数', '${streakManager.currentStreak}', Icons.local_fire_department),
+            _buildStatRow(
+              '连续天数',
+              '${streakManager.currentStreak}',
+              Icons.local_fire_department,
+            ),
           ],
         ),
       ),
@@ -114,13 +133,19 @@ class StatsScreen extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: Colors.cyan),
           const SizedBox(width: 8),
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 14)),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
+          ),
           const Spacer(),
-          Text(value,
-              style: const TextStyle(
-                  color: Colors.cyan,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15)),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.cyan,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
+          ),
         ],
       ),
     );
@@ -133,10 +158,12 @@ class StatsScreen extends StatelessWidget {
           backgroundColor: record.accuracy >= 80
               ? Colors.green
               : record.accuracy >= 60
-                  ? Colors.orange
-                  : Colors.red,
-          child: Text('${record.accuracy.toStringAsFixed(0)}%',
-              style: const TextStyle(fontSize: 11, color: Colors.white)),
+              ? Colors.orange
+              : Colors.red,
+          child: Text(
+            '${record.accuracy.toStringAsFixed(0)}%',
+            style: const TextStyle(fontSize: 11, color: Colors.white),
+          ),
         ),
         title: Text(
           '${record.keySignature} ${record.scaleType}',
@@ -172,7 +199,9 @@ class StatsScreen extends StatelessWidget {
         content: const Text('此操作将永久删除你的练习历史，无法撤销。'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('取消'),
+          ),
           TextButton(
             onPressed: () {
               streakManager.clearAll();

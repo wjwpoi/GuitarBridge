@@ -1,4 +1,4 @@
-﻿/// 练习记录（对应原 Swift 的 PracticeRecord）
+/// 练习记录（对应原 Swift 的 PracticeRecord）
 class PracticeRecord {
   final int? id;
   final DateTime date;
@@ -24,26 +24,26 @@ class PracticeRecord {
       totalAttempts > 0 ? correctAnswers / totalAttempts * 100 : 0;
 
   Map<String, dynamic> toMap() => {
-        if (id != null) 'id': id,
-        'date': date.toIso8601String(),
-        'totalAttempts': totalAttempts,
-        'correctAnswers': correctAnswers,
-        'durationSeconds': durationSeconds,
-        'keySignature': keySignature,
-        'scaleType': scaleType,
-        'bestStreak': bestStreak,
-      };
+    if (id != null) 'id': id,
+    'date': date.toIso8601String(),
+    'totalAttempts': totalAttempts,
+    'correctAnswers': correctAnswers,
+    'durationSeconds': durationSeconds,
+    'keySignature': keySignature,
+    'scaleType': scaleType,
+    'bestStreak': bestStreak,
+  };
 
   factory PracticeRecord.fromMap(Map<String, dynamic> map) => PracticeRecord(
-        id: map['id'] as int?,
-        date: DateTime.parse(map['date'] as String),
-        totalAttempts: map['totalAttempts'] as int,
-        correctAnswers: map['correctAnswers'] as int,
-        durationSeconds: (map['durationSeconds'] as num).toDouble(),
-        keySignature: map['keySignature'] as String,
-        scaleType: map['scaleType'] as String,
-        bestStreak: map['bestStreak'] as int,
-      );
+    id: map['id'] as int?,
+    date: DateTime.parse(map['date'] as String),
+    totalAttempts: map['totalAttempts'] as int,
+    correctAnswers: map['correctAnswers'] as int,
+    durationSeconds: (map['durationSeconds'] as num).toDouble(),
+    keySignature: map['keySignature'] as String,
+    scaleType: map['scaleType'] as String,
+    bestStreak: map['bestStreak'] as int,
+  );
 }
 
 /// 连续练习（对应原 Swift 的 PracticeStreak）
@@ -54,14 +54,14 @@ class PracticeStreak {
   const PracticeStreak({this.id, required this.date});
 
   Map<String, dynamic> toMap() => {
-        if (id != null) 'id': id,
-        'date': date.toIso8601String(),
-      };
+    if (id != null) 'id': id,
+    'date': date.toIso8601String(),
+  };
 
   factory PracticeStreak.fromMap(Map<String, dynamic> map) => PracticeStreak(
-        id: map['id'] as int?,
-        date: DateTime.parse(map['date'] as String),
-      );
+    id: map['id'] as int?,
+    date: DateTime.parse(map['date'] as String),
+  );
 }
 
 /// 用户偏好设置
@@ -93,32 +93,32 @@ class UserPreferences {
   });
 
   Map<String, dynamic> toJson() => {
-        'showNoteNames': showNoteNames,
-        'showFretNumbers': showFretNumbers,
-        'showDegrees': showDegrees,
-        'selectedTuning': selectedTuning,
-        'selectedKey': selectedKey,
-        'selectedScale': selectedScale,
-        'difficulty': difficulty,
-        'questionsPerSession': questionsPerSession,
-        'audioVolume': audioVolume,
-        'toneMode': toneMode,
-        'hasCompletedOnboarding': hasCompletedOnboarding,
-      };
+    'showNoteNames': showNoteNames,
+    'showFretNumbers': showFretNumbers,
+    'showDegrees': showDegrees,
+    'selectedTuning': selectedTuning,
+    'selectedKey': selectedKey,
+    'selectedScale': selectedScale,
+    'difficulty': difficulty,
+    'questionsPerSession': questionsPerSession,
+    'audioVolume': audioVolume,
+    'toneMode': toneMode,
+    'hasCompletedOnboarding': hasCompletedOnboarding,
+  };
 
-  factory UserPreferences.fromJson(Map<String, dynamic> json) =>
-      UserPreferences(
-        showNoteNames: json['showNoteNames'] as bool? ?? true,
-        showFretNumbers: json['showFretNumbers'] as bool? ?? true,
-        showDegrees: json['showDegrees'] as bool? ?? false,
-        selectedTuning: json['selectedTuning'] as String? ?? '标准 (EADGBE)',
-        selectedKey: json['selectedKey'] as String? ?? 'C',
-        selectedScale: json['selectedScale'] as String? ?? '自然大调',
-        difficulty: json['difficulty'] as String? ?? 'easy',
-        questionsPerSession: (json['questionsPerSession'] as num?)?.toInt() ?? 10,
-        audioVolume: (json['audioVolume'] as num?)?.toDouble() ?? 0.8,
-        toneMode: json['toneMode'] as String? ?? 'clean',
-        hasCompletedOnboarding:
-            json['hasCompletedOnboarding'] as bool? ?? false,
-      );
+  factory UserPreferences.fromJson(
+    Map<String, dynamic> json,
+  ) => UserPreferences(
+    showNoteNames: json['showNoteNames'] as bool? ?? true,
+    showFretNumbers: json['showFretNumbers'] as bool? ?? true,
+    showDegrees: json['showDegrees'] as bool? ?? false,
+    selectedTuning: json['selectedTuning'] as String? ?? '标准 (EADGBE)',
+    selectedKey: json['selectedKey'] as String? ?? 'C',
+    selectedScale: json['selectedScale'] as String? ?? '自然大调',
+    difficulty: json['difficulty'] as String? ?? 'easy',
+    questionsPerSession: (json['questionsPerSession'] as num?)?.toInt() ?? 10,
+    audioVolume: (json['audioVolume'] as num?)?.toDouble() ?? 0.8,
+    toneMode: json['toneMode'] as String? ?? 'clean',
+    hasCompletedOnboarding: json['hasCompletedOnboarding'] as bool? ?? false,
+  );
 }

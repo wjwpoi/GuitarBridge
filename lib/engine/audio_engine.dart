@@ -84,8 +84,10 @@ class AudioEngine extends ChangeNotifier {
     _isPlaying = true;
     notifyListeners();
     try {
-      final sample = _sampleSources[_currentMode]?
-          [SampleConfig.nearestSampleMidi(midiNote)];
+      final sample =
+          _sampleSources[_currentMode]?[SampleConfig.nearestSampleMidi(
+            midiNote,
+          )];
       if (sample != null) {
         await _playSample(sample, midiNote);
       } else {
@@ -157,7 +159,8 @@ class AudioEngine extends ChangeNotifier {
 
     // The mode is applied immediately to the next note. Keep the state
     // transition observable for UI and future active-voice crossfades.
-    final stepDuration = AppConstants.crossfadeDuration ~/ AppConstants.crossfadeSteps;
+    final stepDuration =
+        AppConstants.crossfadeDuration ~/ AppConstants.crossfadeSteps;
     _crossfadeTimer = Timer.periodic(stepDuration, (timer) {
       _crossfadeStep++;
       if (_crossfadeStep >= AppConstants.crossfadeSteps) {

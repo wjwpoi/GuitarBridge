@@ -1,15 +1,53 @@
 /// 音符模型 - 完整的音名、半音索引、音高映射
 enum NoteName {
-  c, cSharp, d, dSharp, e, f, fSharp, g, gSharp, a, aSharp, b;
+  c,
+  cSharp,
+  d,
+  dSharp,
+  e,
+  f,
+  fSharp,
+  g,
+  gSharp,
+  a,
+  aSharp,
+  b;
 
-  static const _sharpNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  static const _flatNames  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+  static const _sharpNames = [
+    'C',
+    'C#',
+    'D',
+    'D#',
+    'E',
+    'F',
+    'F#',
+    'G',
+    'G#',
+    'A',
+    'A#',
+    'B',
+  ];
+  static const _flatNames = [
+    'C',
+    'Db',
+    'D',
+    'Eb',
+    'E',
+    'F',
+    'Gb',
+    'G',
+    'Ab',
+    'A',
+    'Bb',
+    'B',
+  ];
 
   String get sharpName => _sharpNames[index];
   String get flatName => _flatNames[index];
 
   /// 显示名：默认用升号，C大调/A小调上下文可切换为降号
-  String displayName({bool useFlats = false}) => useFlats ? flatName : sharpName;
+  String displayName({bool useFlats = false}) =>
+      useFlats ? flatName : sharpName;
 
   /// 半音索引 (0=C, 1=C#, ..., 11=B)
   int get semitoneIndex => index;

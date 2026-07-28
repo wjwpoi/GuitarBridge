@@ -12,13 +12,41 @@ class SampleConfig {
 
   /// 每种音色模式需要的采样文件列表
   static List<String> requiredSamples(ToneMode mode) {
-    final noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    return noteNames.map((n) => 'assets/samples/${mode.name}/$n$sampleOctave.wav').toList();
+    final noteNames = [
+      'C',
+      'C#',
+      'D',
+      'D#',
+      'E',
+      'F',
+      'F#',
+      'G',
+      'G#',
+      'A',
+      'A#',
+      'B',
+    ];
+    return noteNames
+        .map((n) => 'assets/samples/${mode.name}/$n$sampleOctave.wav')
+        .toList();
   }
 
   /// 检查采样是否存在（运行时由 flutter_soloud 或 AssetBundle 处理）
   static String samplePath(ToneMode mode, int midiNote) {
-    final noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    final noteNames = [
+      'C',
+      'C#',
+      'D',
+      'D#',
+      'E',
+      'F',
+      'F#',
+      'G',
+      'G#',
+      'A',
+      'A#',
+      'B',
+    ];
     final sampleMidi = nearestSampleMidi(midiNote);
     final semitone = sampleMidi % 12;
     final octave = sampleMidi ~/ 12 - 1;

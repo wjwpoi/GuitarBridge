@@ -23,12 +23,14 @@ void main() async {
 
   final userPrefs = await storage.getPreferences();
 
-  runApp(GuitarBridgeApp(
-    audioEngine: audioEngine,
-    storage: storage,
-    streakManager: streakManager,
-    userPreferences: userPrefs,
-  ));
+  runApp(
+    GuitarBridgeApp(
+      audioEngine: audioEngine,
+      storage: storage,
+      streakManager: streakManager,
+      userPreferences: userPrefs,
+    ),
+  );
 }
 
 class GuitarBridgeApp extends StatefulWidget {

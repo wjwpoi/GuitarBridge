@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/practice_record.dart';
 
@@ -18,13 +18,18 @@ class StorageService {
     final json = _prefs.getString(_recordsKey);
     if (json == null) return [];
     final list = jsonDecode(json) as List;
-    return list.map((e) => PracticeRecord.fromMap(e as Map<String, dynamic>)).toList();
+    return list
+        .map((e) => PracticeRecord.fromMap(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<void> saveRecord(PracticeRecord record) async {
     final records = await getRecords();
     records.add(record);
-    await _prefs.setString(_recordsKey, jsonEncode(records.map((r) => r.toMap()).toList()));
+    await _prefs.setString(
+      _recordsKey,
+      jsonEncode(records.map((r) => r.toMap()).toList()),
+    );
   }
 
   Future<void> clearRecords() async {
@@ -41,7 +46,9 @@ class StorageService {
     final json = _prefs.getString(_streaksKey);
     if (json == null) return [];
     final list = jsonDecode(json) as List;
-    return list.map((e) => PracticeStreak.fromMap(e as Map<String, dynamic>)).toList();
+    return list
+        .map((e) => PracticeStreak.fromMap(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<void> addStreak(PracticeStreak streak) async {
@@ -58,7 +65,10 @@ class StorageService {
     if (!hasDate) {
       streaks.add(streak);
     }
-    await _prefs.setString(_streaksKey, jsonEncode(streaks.map((s) => s.toMap()).toList()));
+    await _prefs.setString(
+      _streaksKey,
+      jsonEncode(streaks.map((s) => s.toMap()).toList()),
+    );
   }
 
   // === 用户设置 ===

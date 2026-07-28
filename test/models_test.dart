@@ -1,4 +1,4 @@
-﻿import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:guitar_bridge/models/note.dart';
 import 'package:guitar_bridge/models/scale.dart';
 import 'package:guitar_bridge/models/tuning.dart';
@@ -63,7 +63,10 @@ void main() {
     test('frequencyToMidi rounds correctly', () {
       expect(GuitarMath.frequencyToMidi(440.0), 69);
       expect(GuitarMath.frequencyToMidi(880.0), 81);
-      expect(GuitarMath.frequencyToMidi(261.63), closeTo(60, 1)); // slightly off due to rounding
+      expect(
+        GuitarMath.frequencyToMidi(261.63),
+        closeTo(60, 1),
+      ); // slightly off due to rounding
     });
 
     test('noteNameAt returns correct note names for all 12 semitones', () {
@@ -169,8 +172,16 @@ void main() {
       for (final scale in ScaleType.values) {
         final ks = KeySignature(NoteName.c, scale);
         final notes = ks.notesInKey();
-        expect(notes.isNotEmpty, true, reason: '${scale.chineseName} should have notes');
-        expect(notes.first % 12, NoteName.c.index, reason: '${scale.chineseName} should start with C');
+        expect(
+          notes.isNotEmpty,
+          true,
+          reason: '${scale.chineseName} should have notes',
+        );
+        expect(
+          notes.first % 12,
+          NoteName.c.index,
+          reason: '${scale.chineseName} should start with C',
+        );
       }
     });
   });
@@ -259,8 +270,8 @@ void main() {
 
     test('isInKey correctly identifies notes in C major', () {
       final cMajor = KeySignature(NoteName.c, ScaleType.major);
-      expect(GuitarMath.isInKey(60, cMajor), true);  // C
-      expect(GuitarMath.isInKey(62, cMajor), true);  // D
+      expect(GuitarMath.isInKey(60, cMajor), true); // C
+      expect(GuitarMath.isInKey(62, cMajor), true); // D
       expect(GuitarMath.isInKey(61, cMajor), false); // C#
       expect(GuitarMath.isInKey(66, cMajor), false); // F#
     });

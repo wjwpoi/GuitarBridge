@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../engine/training_engine.dart';
 
 /// 训练状态面板（对应原 Swift TrainingStatusView.swift）
@@ -39,7 +39,10 @@ class TrainingStatusWidget extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildStat('进度', '${engine.currentQuestion}/${engine.totalQuestions}'),
+                    _buildStat(
+                      '进度',
+                      '${engine.currentQuestion}/${engine.totalQuestions}',
+                    ),
                     _buildStat('正确', '${engine.correctCount}'),
                     _buildStat(
                       '准确率',
@@ -58,17 +61,35 @@ class TrainingStatusWidget extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (state == TrainingState.idle)
-                      _buildActionButton('开始训练', Icons.play_arrow, onStart, isPrimary: true),
+                      _buildActionButton(
+                        '开始训练',
+                        Icons.play_arrow,
+                        onStart,
+                        isPrimary: true,
+                      ),
 
                     if (state == TrainingState.completed)
-                      _buildActionButton('再来一轮', Icons.refresh, onStart, isPrimary: true),
+                      _buildActionButton(
+                        '再来一轮',
+                        Icons.refresh,
+                        onStart,
+                        isPrimary: true,
+                      ),
 
                     if (state == TrainingState.waitingAnswer) ...[
-                      _buildActionButton(null, Icons.replay, onReplayRoot,
-                          tooltip: '重播基准音'),
+                      _buildActionButton(
+                        null,
+                        Icons.replay,
+                        onReplayRoot,
+                        tooltip: '重播基准音',
+                      ),
                       const SizedBox(width: 12),
-                      _buildActionButton(null, Icons.volume_up, onReplayTarget,
-                          tooltip: '重播目标音'),
+                      _buildActionButton(
+                        null,
+                        Icons.volume_up,
+                        onReplayTarget,
+                        tooltip: '重播目标音',
+                      ),
                     ],
                   ],
                 ),
@@ -94,10 +115,7 @@ class TrainingStatusWidget extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       '训练完成！最佳连击: ${engine.bestStreak}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.cyan,
-                      ),
+                      style: const TextStyle(fontSize: 14, color: Colors.cyan),
                     ),
                   ),
               ],
@@ -131,10 +149,7 @@ class TrainingStatusWidget extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11, color: Colors.grey),
-        ),
+        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
       ],
     );
   }

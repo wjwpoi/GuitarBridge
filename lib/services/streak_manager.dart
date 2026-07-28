@@ -61,10 +61,7 @@ class StreakManager extends ChangeNotifier {
   }
 
   Future<void> clearAll() async {
-    await Future.wait([
-      _storage.clearRecords(),
-      _storage.clearStreaks(),
-    ]);
+    await Future.wait([_storage.clearRecords(), _storage.clearStreaks()]);
     _streaks = [];
     _records = [];
     notifyListeners();

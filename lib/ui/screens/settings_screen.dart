@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../engine/audio_engine.dart';
 import '../../models/practice_record.dart';
 
@@ -46,8 +46,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('音量',
-                      style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  const Text(
+                    '音量',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
                   Slider(
                     value: _volume,
                     min: 0,
@@ -74,8 +76,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('每轮题目数',
-                      style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  const Text(
+                    '每轮题目数',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -104,8 +108,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 children: [
                   SwitchListTile(
-                    title: const Text('显示音名',
-                        style: TextStyle(color: Colors.white, fontSize: 14)),
+                    title: const Text(
+                      '显示音名',
+                      style: TextStyle(color: Colors.white, fontSize: 14),
+                    ),
                     value: prefs.showNoteNames,
                     activeColor: Colors.cyan,
                     onChanged: (v) {
@@ -114,8 +120,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                   SwitchListTile(
-                    title: const Text('显示品号',
-                        style: TextStyle(color: Colors.white, fontSize: 14)),
+                    title: const Text(
+                      '显示品号',
+                      style: TextStyle(color: Colors.white, fontSize: 14),
+                    ),
                     value: prefs.showFretNumbers,
                     activeColor: Colors.cyan,
                     onChanged: (v) {
@@ -124,8 +132,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                   SwitchListTile(
-                    title: const Text('显示级数',
-                        style: TextStyle(color: Colors.white, fontSize: 14)),
+                    title: const Text(
+                      '显示级数',
+                      style: TextStyle(color: Colors.white, fontSize: 14),
+                    ),
                     value: prefs.showDegrees,
                     activeColor: Colors.cyan,
                     onChanged: (v) {
@@ -147,11 +157,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('GuitarBridge v3.0.0',
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    'GuitarBridge v3.0.0',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   SizedBox(height: 4),
-                  Text('相对音准训练工具 - Flutter 跨平台版',
-                      style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  Text(
+                    '相对音准训练工具 - Flutter 跨平台版',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
                   SizedBox(height: 8),
                   Text(
                     '核心逻辑：调性建立 → 物理锚点 → 听觉挑战 → 寻址判定\n'

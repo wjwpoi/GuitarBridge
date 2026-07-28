@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../engine/audio_engine.dart';
 
 /// 训练选项面板（对应原 Swift TrainingOptionsView.swift）
@@ -43,14 +43,26 @@ class TrainingOptionsWidget extends StatelessWidget {
 
   static const keys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
   static const scales = [
-    '自然大调', '自然小调', '和声小调', '旋律小调',
-    '大调五声', '小调五声', '蓝调音阶',
-    '多利亚调式', '弗里吉亚调式', '利底亚调式',
-    '混合利底亚', '洛克里亚调式',
+    '自然大调',
+    '自然小调',
+    '和声小调',
+    '旋律小调',
+    '大调五声',
+    '小调五声',
+    '蓝调音阶',
+    '多利亚调式',
+    '弗里吉亚调式',
+    '利底亚调式',
+    '混合利底亚',
+    '洛克里亚调式',
   ];
   static const tunings = [
-    '标准 (EADGBE)', '降半音 (Eb)', '降全音 (D)',
-    'Drop D', 'DADGAD', 'Open G',
+    '标准 (EADGBE)',
+    '降半音 (Eb)',
+    '降全音 (D)',
+    'Drop D',
+    'DADGAD',
+    'Open G',
   ];
   static const difficulties = ['easy', 'medium', 'hard'];
 
@@ -126,7 +138,10 @@ class TrainingOptionsWidget extends StatelessWidget {
             // 第四行：音色切换
             Row(
               children: [
-                const Text('音色', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                const Text(
+                  '音色',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
                 const SizedBox(width: 8),
                 _buildToneButton(ToneMode.clean, '清音'),
                 _buildToneButton(ToneMode.overdrive, '过载'),
@@ -171,11 +186,13 @@ class TrainingOptionsWidget extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label,
-              style: TextStyle(
-                fontSize: 12,
-                color: value ? Colors.cyan : Colors.grey,
-              )),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: value ? Colors.cyan : Colors.grey,
+            ),
+          ),
           Switch(
             value: value,
             onChanged: (_) => onTap(),

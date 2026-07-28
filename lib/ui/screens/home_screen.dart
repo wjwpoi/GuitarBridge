@@ -79,7 +79,8 @@ class _HomeScreenState extends State<HomeScreen> {
       orElse: () => Tuning.standard,
     );
     final scaleType = _scaleTypeFromName(_selectedScale);
-    final difficulty = AppConstants.difficulties[_selectedDifficulty] ??
+    final difficulty =
+        AppConstants.difficulties[_selectedDifficulty] ??
         AppConstants.difficulties['easy']!;
     _trainingEngine
       ..configure(engine: _audioEngine, tuning: tuning)
@@ -143,7 +144,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     onDifficultyChanged: (v) {
                       setState(() => _selectedDifficulty = v);
-                      _trainingEngine.difficulty = AppConstants.difficulties[v]!;
+                      _trainingEngine.difficulty =
+                          AppConstants.difficulties[v]!;
                       _persistCurrentPreferences();
                     },
                     onToneModeChanged: (mode) {
