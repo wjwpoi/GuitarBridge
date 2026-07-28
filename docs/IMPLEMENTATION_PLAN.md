@@ -8,6 +8,16 @@
 - 不再进行第二次全量重写；保留现有 UI 与基础模型，对核心闭环做定向重构。
 - 发布前必须同时满足：可构建、可听见、可交互、可恢复、可测试。
 
+## 本轮边界（CI/Release）
+
+本轮只收敛文档契约和 CI/Release 流水线，不扩展训练、音频或 UI 功能。后续协作者必须先完成本文档对应门禁，再处理其他 TODO。
+
+- 允许修改：`.github/workflows/`、Android release signing 接入所需的最小 Gradle 配置、构建/打包辅助脚本和本文档。
+- 不允许顺手修改：`lib/` 训练状态机、音频播放算法、持久化模型、指板 UI、Swift 功能迁移。
+- Release 不得公开上传 debug 签名 APK；没有正式签名密钥时只能生成 CI 验证制品，不能伪装成可发布安装包。
+- iOS CI 构建保持 `--no-codesign`，产物必须明确标注为 unsigned，不能宣称可直接安装。
+- 发布制品必须来自与 CI 相同的质量门禁和构建定义；禁止 Release workflow 偷换 Flutter 版本、跳过测试或使用 `continue-on-error`。
+
 ## 当前风险基线
 
 以下项目已经在工作区完成初步实现，但尚未通过固定 Flutter SDK 的完整验证，提交前仍视为风险项：
@@ -28,6 +38,10 @@
 - [x] 修复 CI：format、analyze、test 必须阻断；矩阵定义覆盖六个平台。
 - [x] 构建脚本遇到任一平台失败时必须返回非零状态，并按主机选择可执行目标。
 - [x] 真实初始化 SoLoud，加载三种音色采样，缺失时使用可听见的合成回退；Web 产物已确认包含插件 WASM。
+- [ ] 在 GitHub Actions 对 Android、iOS（unsigned）、macOS、Windows、Linux、Web 均完成一次 release build，并记录 run/artifact 结果；本机 Web 通过不等于六平台通过。
+- [ ] Release 调用与 CI 相同的可复用质量/构建定义，失败必须阻断发布，不重复维护一套可能漂移的门禁。
+- [ ] CI 上传六平台可审计制品；Release 打包可分发压缩包并生成 SHA256 校验文件。
+- [ ] Android Release 只有在正式 signing secrets 存在时才允许进入公开 Release；CI 验证制品不得使用 debug key 冒充发布包。
 
 ### P1：训练正确性
 
@@ -48,13 +62,25 @@
 ### P2：质量与发布
 
 - [x] 为数学、题目池、FSM 取消、持久化、采样映射、关键 Widget 增加回归测试。
-- [ ] 发布工作流复用已通过 CI 的构建，上传 APK、Web 压缩包和校验文件（当前未在 CI runner 上完成闭环）。
+- [ ] 发布工作流复用已通过 CI 门禁的构建定义，上传带平台/架构标识的制品和 SHA256 校验文件（当前未在 CI runner 上完成闭环）。
 - [ ] 明确尚未迁移的 Swift 功能：调音器、节拍器、日志、分享、录音、Watch/Widget。
+
+### P1：交给后续协作者的功能 TODO
+
+以下任务不属于本轮 CI/Release 修改范围。每项开始前必须先补充目标、影响范围、验收命令和边界，再单独提交代码和文档：
+
+- [ ] 音频：实现真实 active voice crossfade，或删除 crossfade 能力和误导性文案；六平台各做一次可听输出 smoke test。
+- [ ] 音频生命周期：为 reset、重复 start、页面销毁增加停止旧 voice 的接口和回归测试；generation token 只保护状态，不等于停止音频。
+- [ ] 音频错误：初始化失败、采样缺失、题库为空时提供用户可见状态和重试/降级路径。
+- [ ] 数据恢复：手动验收完成训练后 Stats 即时刷新、重启恢复 records/streak/设置、清除后页面和持久化数据均为空。
+- [ ] 数据迁移：为损坏 JSON、缺失字段和未来 schema 版本定义稳定迁移/报错策略；不得静默丢失历史。
+- [ ] UI/交互：完成窄屏、横竖屏、触摸/鼠标、键盘和可访问性检查；同步 Onboarding、README 的六平台文案。
+- [ ] Swift 辅助功能：调音器、节拍器、日志、分享、录音、Watch/Widget；核心闭环和六平台构建稳定前不得插队。
 
 ## 验收标准
 
 1. `dart format --set-exit-if-changed .`、`flutter analyze`、`flutter test --coverage` 全部通过。
-2. Android、Web、macOS、Windows 至少能完成 release build；iOS/Linux 工程能完成依赖解析和 debug build。
+2. Android、iOS（unsigned）、macOS、Windows、Linux、Web 均能在对应 CI runner 完成 release build；iOS 产物必须明确 unsigned，不能作为可安装发布包。
 3. 首次启动可播放根音和目标音；clean、overdrive、distortion 均有可听见输出或明确错误状态。
 4. 点击错误弦位/品位不会判对；点击正确目标位置会进入下一题；等待回答界面不泄露答案。
 5. 训练中 reset、重复 start、离开页面不会出现旧音频任务改变当前状态。
@@ -75,7 +101,7 @@
 | 阶段 | 状态 | 说明 |
 | --- | --- | --- |
 | 文档、TODO、验收标准 | 已完成 | 本文档先于代码变更创建 |
-| 平台工程与可复现流水线 | 进行中 | 已固定 SDK/依赖、恢复质量门禁、加入 Linux job、按主机选择构建目标；六个平台工程和 lockfile 已生成，待 release 构建 |
+| 平台工程与可复现流水线 | 进行中 | 已固定 SDK/依赖、恢复质量门禁、加入 Linux job、按主机选择构建目标；本轮补齐可复用 CI/Release 定义和制品校验，待 GitHub runner 实际执行 |
 | 音频与训练核心 | 进行中 | 训练题目已改为具体弦位，题库有限生成并支持确定性循环，增加 generation token；SoLoud 3.x 异步句柄已校正，待各平台播放验证 |
 | 持久化、统计、设置 | 进行中 | 已修复 streak 历史/清除、暴露真实 records、设置序列化并接入 Home；单元测试已覆盖，待手动重启恢复检查 |
 | 测试与发布验证 | 进行中 | 训练测试 27 项、全量测试 88 项已通过；各平台 release 构建仍受本机工具链限制 |
@@ -111,9 +137,11 @@
 
 ### 下一提交门禁：流水线与依赖
 
-- 变更范围：CI/release 工作流、`.gitignore`、`pubspec.yaml`、跨平台构建脚本和 README 启动说明。
-- 必须满足：Flutter 版本固定为 3.32.8；`pubspec.lock` 不再被忽略；format、analyze、test 和资源数量检查会阻断流水线；构建脚本遇到失败返回非零状态。
-- 验收命令：`dart format --output=none --set-exit-if-changed .`、`flutter analyze`、`flutter test`；平台目录生成后追加各平台 release/debug 构建。
+- 变更范围：CI/release 工作流、Android release signing 的最小配置、制品打包/校验和本文档；不修改 `lib/`。
+- 必须满足：Flutter 版本固定为 3.32.8；CI 与 Release 共用一份质量/构建定义；六平台构建失败阻断；所有构建制品可下载；Release 生成带平台/架构标识的压缩包和 SHA256 文件；无正式 Android signing secrets 时不得创建公开 Release。
+- 验收命令：本地执行 YAML 语法检查、`dart format --output=none --set-exit-if-changed .`、`flutter analyze`、`flutter test`；GitHub runner 实际执行六平台 release matrix 和 tag release dry-run/发布流程。
+- 产物契约：Android 为正式签名的 ABI APK；iOS 为明确标注的 unsigned `.app` 压缩包；macOS/Windows/Linux 为可运行目录的压缩包；Web 为静态部署 zip；每个制品旁边有同名 `.sha256`。
+- 签名契约：签名密钥只来自 GitHub Actions secrets，不进入仓库、日志或 artifact；CI 普通分支只验证构建，不发布签名包。
 
 ### 下一提交门禁：训练核心
 
