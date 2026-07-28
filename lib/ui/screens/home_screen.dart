@@ -86,6 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
         AppConstants.difficulties['easy']!;
     _trainingEngine
       ..configure(engine: _audioEngine, tuning: tuning)
+      ..maxFailedAttempts = widget.initialPreferences.maxFailedAttempts
       ..currentKey = _selectedKey
       ..scaleType = scaleType
       ..difficulty = difficulty

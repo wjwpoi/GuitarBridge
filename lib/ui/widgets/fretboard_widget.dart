@@ -169,10 +169,16 @@ class FretboardWidget extends StatelessWidget {
   }
 
   Color _borderColor(FretPosition position) {
-    // The target is intentionally never shown while the user is answering.
-    if (trainingEngine.state == TrainingState.playingRoot &&
+    // Show root marker during playback AND while the user is answering.
+    if ((trainingEngine.state == TrainingState.playingRoot ||
+            trainingEngine.state == TrainingState.waitingAnswer) &&
         trainingEngine.rootPosition == position) {
       return AppTheme.accentColor;
+    }
+    // Highlight the correct target when the answer is revealed.
+    if (trainingEngine.showCorrectPosition &&
+        trainingEngine.targetPosition == position) {
+      return Colors.amber;
     }
     return Colors.transparent;
   }

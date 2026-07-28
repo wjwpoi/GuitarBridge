@@ -101,6 +101,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
 
+          // 最大容错次数
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '答错几次后显示答案',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [0, 1, 2, 3, 4, 5].map((n) {
+                      final label = n == 0 ? '永不' : '$n';
+                      return ChoiceChip(
+                        label: Text(label),
+                        selected: prefs.maxFailedAttempts == n,
+                        onSelected: (_) {
+                          setState(() => prefs.maxFailedAttempts = n);
+                          widget.onPreferencesChanged(prefs);
+                        },
+                        selectedColor: Colors.cyan.withAlpha(100),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           // 显示选项
           Card(
             child: Padding(
