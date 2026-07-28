@@ -265,3 +265,32 @@ CMake Error at CMakeLists.txt:3 (project):
 
 - 允许修改：`.github/workflows/build.yml` 中 Windows job 的 `runs-on`，本文档。
 - 不允许修改：CMakeLists.txt、Flutter 版本、任何其他文件。
+
+## 当前阶段：音频与数据门禁验证（2026-07-28）
+
+### 音频与 SDK 兼容性 ✅
+
+- `flutter_soloud 3.5.4` 满足 `^3.4.0`，与 Flutter 3.32.8 可解析。
+- `_playSample` 和 `_playSynthesized` 均在 `finally` 块中停止和释放 handle/source。
+- `playNote` 采样缺失时回退到 `_playSynthesized`。
+- 所有音色模式通过同一 `playNote` 接口。
+- `sample_config_test.dart` 3 项通过。
+
+### 数据、设置与统计 ✅
+
+- `UserPreferences.fromJson` 对每个字段使用 `?? defaultValue`。
+- `addStreak` 通过 `_localDay` 按本地日期去重；UTC/local 同一日期正确去重。
+- `clearRecords` 和 `clearStreaks` 同时清除持久化和缓存。
+- `storage_service_test.dart` 7 项通过。
+
+### 全量测试
+
+- 全量 88 项通过。
+
+### 下一提交：音频生命周期
+
+- 目标：`reset`、重复 `start`、页面 `dispose` 时停止当前播放中的旧 voice。
+- 当前问题：`TrainingEngine` 的 `start()` 不做停止；`AudioEngine.playNote()` 内部延时 800ms，quick reset 会导致旧回调与新 play 重叠。
+- 允许修改：`lib/engine/training_audio_port.dart`、`lib/engine/audio_engine.dart`、`lib/engine/training_engine.dart`、`test/training_engine_test.dart`、本文档。
+- 端口需新增 `Future<void> stopAll()`。
+- 验收：`flutter analyze`、`flutter test test/training_engine_test.dart`、全量 88+ 项通过。

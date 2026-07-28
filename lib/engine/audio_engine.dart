@@ -32,6 +32,7 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   Timer? _crossfadeTimer;
   int _crossfadeStep = 0;
   bool _disposed = false;
+  SoundHandle? _activeHandle;
 
   AudioEngineState get state => _state;
   ToneMode get currentMode => _currentMode;
@@ -106,7 +107,7 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
 
   Future<void> _playSample(AudioSource source, int midiNote) async {
     final speed = pow(2.0, SampleConfig.octaveShift(midiNote)).toDouble();
-    final handle = await _soloud.play(
+    final handle = _activeHandle = await _soloud.play(
       source,
       volume: (_volume * (_modeGain[_currentMode] ?? 1.0))
           .clamp(0.0, 1.0)
@@ -117,6 +118,7 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
       final milliseconds = (800 / speed).round().clamp(120, 1800).toInt();
       await Future<void>.delayed(Duration(milliseconds: milliseconds));
     } finally {
+      _activeHandle = null;
       if (_soloud.isInitialized && !handle.isError) {
         try {
           await _soloud.stop(handle);
@@ -131,7 +133,7 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
     final source = await _soloud.loadWaveform(WaveForm.sin, false, 0.25, 1);
     final frequency = 440.0 * pow(2.0, (midiNote - 69) / 12.0);
     _soloud.setWaveformFreq(source, frequency);
-    final handle = await _soloud.play(
+    final handle = _activeHandle = await _soloud.play(
       source,
       volume: (_volume * (_modeGain[_currentMode] ?? 1.0))
           .clamp(0.0, 1.0)
@@ -140,6 +142,7 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
     try {
       await Future<void>.delayed(const Duration(milliseconds: 800));
     } finally {
+      _activeHandle = null;
       if (_soloud.isInitialized && !handle.isError) {
         try {
           await _soloud.stop(handle);
@@ -150,6 +153,18 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
       if (_soloud.isInitialized) {
         await _soloud.disposeSource(source);
       }
+    }
+  }
+
+  @override
+  Future<void> stopAll() async {
+    final handle = _activeHandle;
+    _activeHandle = null;
+    _isPlaying = false;
+    if (handle != null && _soloud.isInitialized && !handle.isError) {
+      try {
+        await _soloud.stop(handle);
+      } catch (_) {}
     }
   }
 

@@ -20,6 +20,9 @@ class MockAudioEngine implements TrainingAudioPort {
   Future<void> playNote(int midiNote) async {
     playCallCount++;
   }
+
+  @override
+  Future<void> stopAll() async {}
 }
 
 void main() {
