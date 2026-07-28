@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../models/note.dart';
-import '../../models/scale.dart';
-import '../../models/tuning.dart';
+
 import '../../core/guitar_math.dart';
 import '../../core/theme.dart';
 import '../../engine/training_engine.dart';
+import '../../models/note.dart';
+import '../../models/scale.dart';
+import '../../models/training_question.dart';
+import '../../models/tuning.dart';
 
-/// 吉他指板组件（对应原 Swift FretboardView.swift）
-/// 可滚动、可点击的完整指板视图
+/// Complete, tappable 0-22 fretboard.
 class FretboardWidget extends StatelessWidget {
   final TrainingEngine trainingEngine;
   final Tuning tuning;
@@ -16,7 +17,7 @@ class FretboardWidget extends StatelessWidget {
   final bool showDegrees;
   final bool showNoteNames;
   final bool showFretNumbers;
-  final void Function(int midiNote) onFretTapped;
+  final ValueChanged<FretPosition> onFretTapped;
   final int startFret;
   final int visibleFrets;
 
@@ -31,7 +32,7 @@ class FretboardWidget extends StatelessWidget {
     this.showFretNumbers = true,
     required this.onFretTapped,
     this.startFret = 0,
-    this.visibleFrets = 12,
+    this.visibleFrets = 23,
   });
 
   @override
@@ -46,132 +47,144 @@ class FretboardWidget extends StatelessWidget {
 
     return ListenableBuilder(
       listenable: trainingEngine,
-      builder: (context, _) {
-        return SizedBox(
-          height: _calculateHeight(),
-          child: CustomPaint(
-            painter: _FretboardPainter(
-              tuning: tuning,
-              keySignature: keySig,
-              showDegrees: showDegrees,
-              showNoteNames: showNoteNames,
-              showFretNumbers: showFretNumbers,
-              startFret: startFret,
-              visibleFrets: visibleFrets,
-              rootMidi: trainingEngine.rootMidi,
-              targetMidi: trainingEngine.targetMidi,
-              userAnswerMidi: trainingEngine.userAnswerMidi,
-              lastAnswerCorrect: trainingEngine.lastAnswerCorrect,
+      builder: (context, _) => LayoutBuilder(
+        builder: (context, constraints) {
+          final boardWidth = constraints.maxWidth > visibleFrets * 56.0
+              ? constraints.maxWidth
+              : visibleFrets * 56.0;
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: boardWidth,
+              height: _calculateHeight(),
+              child: CustomPaint(
+                painter: _FretboardPainter(
+                  tuning: tuning,
+                  keySignature: keySig,
+                  showDegrees: showDegrees,
+                  showNoteNames: showNoteNames,
+                  showFretNumbers: showFretNumbers,
+                  startFret: startFret,
+                  visibleFrets: visibleFrets,
+                  rootPosition: trainingEngine.rootPosition,
+                  targetPosition: trainingEngine.targetPosition,
+                  userAnswerPosition: trainingEngine.userAnswerPosition,
+                  state: trainingEngine.state,
+                  lastAnswerCorrect: trainingEngine.lastAnswerCorrect,
+                ),
+                child: _buildTouchTargets(keySig),
+              ),
             ),
-            child: _buildTouchTargets(keySig),
           ),
-        );
-      },
+        },
+      ),
     );
   }
 
-  double _calculateHeight() {
-    // 弦间距 36px * 6弦 + padding
-    return 36.0 * tuning.stringCount + 40.0;
-  }
+  double _calculateHeight() => 36.0 * tuning.stringCount + 40.0;
 
   Widget _buildTouchTargets(KeySignature keySig) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final height = constraints.maxHeight;
-        final stringSpacing = (height - 20) / (tuning.stringCount - 1);
-
+        final stringSpacing =
+            (constraints.maxHeight - 20) / (tuning.stringCount - 1);
         return Stack(
           children: [
-            for (int s = 0; s < tuning.stringCount; s++)
-              for (int f = startFret; f < startFret + visibleFrets; f++)
-                _buildFretButton(s, f, width, stringSpacing, keySig),
+            for (var stringIndex = 0;
+                stringIndex < tuning.stringCount;
+                stringIndex++)
+              for (var fret = startFret;
+                  fret < startFret + visibleFrets;
+                  fret++)
+                _buildFretButton(
+                  stringIndex,
+                  fret,
+                  constraints.maxWidth,
+                  stringSpacing,
+                  keySig,
+                ),
           ],
         );
       },
     );
   }
 
-  Widget _buildFretButton(int stringIdx, int fret, double totalWidth,
-      double stringSpacing, KeySignature keySig) {
-    final midiNote = tuning.noteAt(stringIdx, fret);
-    final positions =
-        GuitarMath.findNoteOnFretboard(midiNote, tuning, maxFret: 22);
-
-    // 只响应第一个位置，避免重复
-    if (positions.isNotEmpty && positions.first != (stringIdx, fret)) {
-      return const SizedBox.shrink();
-    }
-
-    final fretWidth = totalWidth / visibleFrets;
-    final x = (fret - startFret) * fretWidth + fretWidth / 2;
-    final y = 10 + stringIdx * stringSpacing;
-
+  Widget _buildFretButton(
+    int stringIndex,
+    int fret,
+    double width,
+    double stringSpacing,
+    KeySignature keySig,
+  ) {
+    final position = FretPosition.fromTuning(
+      tuning: tuning,
+      stringIndex: stringIndex,
+      fret: fret,
+    );
+    final x = _fretCenterX(fret, width);
+    final y = 10 + stringIndex * stringSpacing;
     return Positioned(
       left: x - 16,
       top: y - 16,
       child: GestureDetector(
-        onTap: () => onFretTapped(midiNote),
+        onTap: () => onFretTapped(position),
         child: Container(
           width: 32,
           height: 32,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: _buttonColor(midiNote, keySig),
-            border: Border.all(
-              color: _borderColor(midiNote),
-              width: 1.5,
-            ),
+            color: _buttonColor(position, keySig),
+            border: Border.all(color: _borderColor(position), width: 1.5),
           ),
-          child: Center(
-            child: _buildButtonLabel(midiNote, keySig),
-          ),
+          child: Center(child: _buildButtonLabel(position.midi, keySig)),
         ),
       ),
     );
   }
 
-  Color _buttonColor(int midiNote, KeySignature keySig) {
-    // 用户刚回答的位置
-    if (trainingEngine.userAnswerMidi != null &&
-        midiNote % 12 == trainingEngine.userAnswerMidi! % 12) {
+  double _fretBoundaryX(int fret, double width) {
+    final start = GuitarMath.fretRatio(startFret);
+    final end = GuitarMath.fretRatio(startFret + visibleFrets);
+    final ratio = (GuitarMath.fretRatio(fret) - start) / (end - start);
+    return ratio.clamp(0.0, 1.0).toDouble() * width;
+  }
+
+  double _fretCenterX(int fret, double width) {
+    return (_fretBoundaryX(fret, width) +
+            _fretBoundaryX(fret + 1, width)) /
+        2;
+  }
+
+  Color _buttonColor(FretPosition position, KeySignature keySig) {
+    if (trainingEngine.userAnswerPosition == position) {
       return trainingEngine.lastAnswerCorrect
           ? AppTheme.correctColor.withAlpha(180)
           : AppTheme.wrongColor.withAlpha(180);
     }
-    // 调内音高亮，调外暗色
-    return GuitarMath.isInKey(midiNote, keySig)
+    return GuitarMath.isInKey(position.midi, keySig)
         ? Colors.blueGrey.withAlpha(100)
         : Colors.grey.withAlpha(40);
   }
 
-  Color _borderColor(int midiNote) {
-    // 目标音边框高亮
-    if (trainingEngine.isWaitingAnswer &&
-        trainingEngine.targetMidi != null &&
-        midiNote % 12 == trainingEngine.targetMidi! % 12) {
+  Color _borderColor(FretPosition position) {
+    // The target is intentionally never shown while the user is answering.
+    if (trainingEngine.state == TrainingState.playingRoot &&
+        trainingEngine.rootPosition == position) {
       return AppTheme.accentColor;
     }
     return Colors.transparent;
   }
 
-  Widget? _buildButtonLabel(int midiNote, KeySignature keySig) {
-    final inKey = GuitarMath.isInKey(midiNote, keySig);
+  Widget? _buildButtonLabel(int midi, KeySignature keySig) {
+    final inKey = GuitarMath.isInKey(midi, keySig);
     if (!inKey && !showNoteNames) return null;
-
-    final noteName = GuitarMath.noteNameAt(midiNote);
-    final degree = keySig.degreeOf(midiNote);
-
-    String label;
-    if (showDegrees && degree != null) {
-      label = ScaleDegree.values[degree - 1].roman;
-    } else if (showNoteNames) {
-      label = noteName.sharpName;
-    } else {
-      return null;
-    }
-
+    final degree = keySig.degreeOf(midi);
+    final label = showDegrees && degree != null
+        ? ScaleDegree.values[degree - 1].roman
+        : showNoteNames
+            ? GuitarMath.noteNameAt(midi).sharpName
+            : null;
+    if (label == null) return null;
     return Text(
       label,
       style: TextStyle(
@@ -183,7 +196,6 @@ class FretboardWidget extends StatelessWidget {
   }
 }
 
-/// 指板绘制器 - 使用 CustomPainter 实现物理品格间距
 class _FretboardPainter extends CustomPainter {
   final Tuning tuning;
   final KeySignature keySignature;
@@ -192,9 +204,10 @@ class _FretboardPainter extends CustomPainter {
   final bool showFretNumbers;
   final int startFret;
   final int visibleFrets;
-  final int? rootMidi;
-  final int? targetMidi;
-  final int? userAnswerMidi;
+  final FretPosition? rootPosition;
+  final FretPosition? targetPosition;
+  final FretPosition? userAnswerPosition;
+  final TrainingState state;
   final bool lastAnswerCorrect;
 
   _FretboardPainter({
@@ -205,72 +218,56 @@ class _FretboardPainter extends CustomPainter {
     required this.showFretNumbers,
     required this.startFret,
     required this.visibleFrets,
-    this.rootMidi,
-    this.targetMidi,
-    this.userAnswerMidi,
+    this.rootPosition,
+    this.targetPosition,
+    this.userAnswerPosition,
+    required this.state,
     this.lastAnswerCorrect = false,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    _drawFretboard(canvas, size);
-    _drawStrings(canvas, size);
-    _drawFretMarkers(canvas, size);
-  }
-
-  void _drawFretboard(Canvas canvas, Size size) {
-    final paint = Paint()..color = const Color(0xFF5D4037);
+    final boardPaint = Paint()..color = const Color(0xFF5D4037);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTWH(0, 0, size.width, size.height),
         const Radius.circular(4),
       ),
-      paint,
+      boardPaint,
     );
-  }
 
-  void _drawStrings(Canvas canvas, Size size) {
-    final paint = Paint()
+    final stringPaint = Paint()
       ..color = Colors.grey.shade400
       ..strokeWidth = 1.5;
-
     final stringSpacing = (size.height - 20) / (tuning.stringCount - 1);
-
-    for (int s = 0; s < tuning.stringCount; s++) {
-      final y = 10 + s * stringSpacing;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    for (var stringIndex = 0;
+        stringIndex < tuning.stringCount;
+        stringIndex++) {
+      final y = 10 + stringIndex * stringSpacing;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), stringPaint);
     }
-  }
 
-  void _drawFretMarkers(Canvas canvas, Size size) {
     final fretPaint = Paint()
       ..color = AppTheme.fretMarkerColor
       ..strokeWidth = 1.0;
-
-    for (int f = startFret; f <= startFret + visibleFrets; f++) {
-      final ratio = GuitarMath.fretRatio(f);
-      final x = size.width * ratio;
-
-      // 品丝
+    final start = GuitarMath.fretRatio(startFret);
+    final end = GuitarMath.fretRatio(startFret + visibleFrets);
+    for (var fret = startFret; fret <= startFret + visibleFrets; fret++) {
+      final ratio = (GuitarMath.fretRatio(fret) - start) / (end - start);
+      final x = size.width * ratio.clamp(0.0, 1.0).toDouble();
       canvas.drawLine(
         Offset(x, 10),
         Offset(x, size.height - 10),
         fretPaint,
       );
-
-      // 品数标记
-      if (showFretNumbers && f % 2 == 0) {
+      if (showFretNumbers && fret % 2 == 0) {
         final textPainter = TextPainter(
           text: TextSpan(
-            text: '$f',
-            style: TextStyle(
-              color: Colors.white54,
-              fontSize: 8,
-            ),
+            text: '$fret',
+            style: const TextStyle(color: Colors.white54, fontSize: 8),
           ),
           textDirection: TextDirection.ltr,
-        );
-        textPainter.layout();
+        )..layout();
         textPainter.paint(canvas, Offset(x - 4, size.height - 16));
       }
     }
@@ -278,9 +275,17 @@ class _FretboardPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _FretboardPainter oldDelegate) {
-    return rootMidi != oldDelegate.rootMidi ||
-        targetMidi != oldDelegate.targetMidi ||
-        userAnswerMidi != oldDelegate.userAnswerMidi ||
+    return tuning != oldDelegate.tuning ||
+        keySignature != oldDelegate.keySignature ||
+        showDegrees != oldDelegate.showDegrees ||
+        showNoteNames != oldDelegate.showNoteNames ||
+        showFretNumbers != oldDelegate.showFretNumbers ||
+        startFret != oldDelegate.startFret ||
+        visibleFrets != oldDelegate.visibleFrets ||
+        rootPosition != oldDelegate.rootPosition ||
+        targetPosition != oldDelegate.targetPosition ||
+        userAnswerPosition != oldDelegate.userAnswerPosition ||
+        state != oldDelegate.state ||
         lastAnswerCorrect != oldDelegate.lastAnswerCorrect;
   }
 }
