@@ -372,6 +372,61 @@ CMake Error at CMakeLists.txt:3 (project):
 - 可访问性（Semantics label）；
 - Web Cupertino icon 字体告警（非阻塞，仅构建日志）。
 
+## 当前阶段：Training UI V2 与可解题训练闭环（2026-07-30）
+
+### 目标
+
+- 保留 Flutter 跨平台外壳、数据持久化和统计能力，重构训练主界面的视觉层级与核心交互。
+- 所有平台使用同一套 Material 3 视觉语言，不按 Windows、macOS、移动端分别模仿系统控件。
+- 指板改为等宽品格的抽象交互矩阵；不再用 `17.817` 物理品距公式表达低把位宽、高把位窄。
+- 优先保证音高训练题可解：听觉信息不能用于要求用户区分同音高的不同弦位。
+
+### 本轮允许修改
+
+- `lib/core/theme.dart`
+- `lib/ui/screens/home_screen.dart`
+- `lib/ui/screens/onboarding_screen.dart`
+- `lib/ui/screens/settings_screen.dart`
+- `lib/ui/screens/stats_screen.dart`
+- `lib/ui/widgets/fretboard_widget.dart`
+- `lib/ui/widgets/training_options.dart`
+- `lib/ui/widgets/training_status.dart`
+- `lib/ui/widgets/scale_chart.dart`
+- `lib/engine/training_engine.dart`
+- `lib/engine/training_audio_port.dart`
+- `lib/engine/audio_engine.dart`
+- `lib/models/training_question.dart`
+- 对应 Widget/训练回归测试与本实施文档
+
+### 视觉验收
+
+- 桌面宽屏使用有最大内容宽度的双栏训练工作区；窄屏自动折叠为单栏。
+- 面板、按钮、筛选控件、状态色和排版由统一主题 token 驱动，不在组件中散落 cyan/grey 等颜色。
+- 0–22 品等宽，横向滚动时保持每个触控目标至少 44 logical pixels。
+- 指板不绘制木纹、物理品距或拟真金属弦，使用低对比网格、清晰音符节点和统一选中反馈。
+- Windows、macOS、Linux、Android、iOS 与 Web 的信息架构、组件形态和色彩一致。
+
+### 训练语义验收
+
+- 音程以实际有符号 MIDI 差生成，不再用模 12 把任意下降/跨八度音程伪装成上行单音程。
+- 初级题目限制为上行、一个八度内；题目生成不产生无法由听觉唯一判断的“精确弦位”答案。
+- 默认答案按 MIDI 音高判定；同一 MIDI 音高在不同弦位均应视为正确。
+- UI 明确显示当前任务是“听目标音并在任意位置找到同音高”，不暗示声音可以编码弦位。
+
+### 音频基线验收
+
+- V2 基线不再把一个八度的伪吉他 WAV 以 `0.25x–4x` 变速覆盖整个音域。
+- 每个 MIDI 音直接按标准十二平均律频率生成清晰基音，优先保证可辨音高；失真类音色在重新验收前不进入默认训练流程。
+- 播放接口返回成功状态；基准音或目标音播放失败时训练状态机不得进入答题状态。
+- 快速重播或连续点击时，新声音必须安全终止旧句柄，旧异步回调不得停止新声音。
+
+### 验证
+
+- `dart format --output=none --set-exit-if-changed .`
+- `flutter analyze`
+- `flutter test`
+- 至少完成一个 Web 或桌面 Release 构建，并人工检查宽屏、窄屏和横向指板滚动。
+
 ### 提交时间线（已完成部分）
 
 | 顺序 | 提交类型 | 内容 | 状态 |

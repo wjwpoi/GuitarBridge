@@ -12,13 +12,15 @@ import 'package:guitar_bridge/models/training_question.dart';
 /// Fake audio port for unit tests — never touches SoLoud.
 class MockAudioEngine implements TrainingAudioPort {
   int playCallCount = 0;
+  bool playSucceeds = true;
 
   @override
   bool get isReady => true;
 
   @override
-  Future<void> playNote(int midiNote) async {
+  Future<bool> playNote(int midiNote) async {
     playCallCount++;
+    return playSucceeds;
   }
 
   @override
@@ -66,6 +68,13 @@ void main() {
         engine.state,
         anyOf(TrainingState.playingRoot, TrainingState.waitingAnswer),
       );
+    });
+
+    test('failed audio cue never enters answer state', () async {
+      mockAudio.playSucceeds = false;
+      await engine.start();
+      expect(engine.state, TrainingState.audioError);
+      expect(engine.isWaitingAnswer, false);
     });
 
     test('reset returns to idle state', () async {
@@ -123,6 +132,19 @@ void main() {
         expect(keySig.degreeOf(engine.targetMidi!), isNotNull);
       }
     });
+
+    test(
+      'generated interval is ascending and no larger than an octave',
+      () async {
+        await engine.start();
+        expect(engine.targetMidi, isNotNull);
+        expect(engine.rootMidi, isNotNull);
+        final distance = engine.targetMidi! - engine.rootMidi!;
+        expect(distance, greaterThan(0));
+        expect(distance, lessThanOrEqualTo(12));
+        expect(engine.difficulty.allowedIntervals, contains(distance));
+      },
+    );
 
     test('rootMidi respects difficulty fret range', () async {
       engine.difficulty = AppConstants.difficulties['easy']!; // 0-5 frets
@@ -188,6 +210,7 @@ void main() {
     });
 
     test('exact position mode rejects a different fret', () async {
+      engine.answerMode = AnswerMode.exactPosition;
       await engine.start();
       final target = engine.targetPosition!;
       final wrong = FretPosition(
@@ -199,6 +222,39 @@ void main() {
       expect(engine.lastAnswerCorrect, false);
       await submission;
     });
+
+    test(
+      'exact pitch mode accepts another position with the same MIDI',
+      () async {
+        expect(engine.answerMode, AnswerMode.exactPitch);
+        await engine.start();
+        final target = engine.targetPosition!;
+        final answer = FretPosition(
+          stringIndex: (target.stringIndex + 1) % Tuning.standard.stringCount,
+          fret: target.fret,
+          midi: target.midi,
+        );
+        final submission = engine.submitAnswer(answer);
+        expect(engine.lastAnswerCorrect, true);
+        await submission;
+      },
+    );
+
+    test(
+      'exact pitch mode rejects the same pitch class in another octave',
+      () async {
+        await engine.start();
+        final target = engine.targetPosition!;
+        final answer = FretPosition(
+          stringIndex: target.stringIndex,
+          fret: target.fret,
+          midi: target.midi + 12,
+        );
+        final submission = engine.submitAnswer(answer);
+        expect(engine.lastAnswerCorrect, false);
+        await submission;
+      },
+    );
 
     test(
       'pitch class mode accepts another position with the same note',
