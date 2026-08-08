@@ -450,3 +450,11 @@ CMake Error at CMakeLists.txt:3 (project):
 - Android 构建至少生成三个 split-per-ABI APK，并逐个执行 ZIP 完整性校验。
 - PR #8（`9b9b765`）的六个平台构建和质量门全部通过；Windows 包已完成本地启动冒烟测试。
 - 本次后续提交会在同一条流水线中执行上述 smoke 检查，作为新的跨平台功能验收证据。
+
+### 核心闭环补充（2026-08-08）
+
+- 目标：收口已有音色设置和音频错误状态，不增加新的训练模式或业务功能。
+- 影响范围：`AudioEngine` 实际按 `ToneMode` 选择可辨识的合成波形；播放失败切换为可见错误状态；Home/设置控件恢复并持久化用户音色选择。
+- 兼容约束：三种已有音色都保留 MIDI 基频，清晰音色仍为默认值；不恢复未经验证的采样变速逻辑。
+- 验收命令：`dart format --output=none --set-exit-if-changed .`、`flutter analyze`、`flutter test`、`flutter build web --release --no-pub`，并在 Web 预览中切换音色后启动一轮训练。
+- 本地结果：格式化、分析、全量 107 项测试和 Web Release 构建通过；Web 桌面/390px 预览验证三种音色切换、过载训练启动、失真目标音重播以及刷新后的偏好恢复。

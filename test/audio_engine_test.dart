@@ -16,5 +16,11 @@ void main() {
       final upper = AudioEngine.frequencyForMidi(69);
       expect(upper / lower, closeTo(2.0, 0.000001));
     });
+
+    test('tone modes map to pitch-preserving waveforms', () {
+      expect(AudioEngine.waveformForTone(ToneMode.clean).name, 'sin');
+      expect(AudioEngine.waveformForTone(ToneMode.overdrive).name, 'fSaw');
+      expect(AudioEngine.waveformForTone(ToneMode.distortion).name, 'fSquare');
+    });
   });
 }

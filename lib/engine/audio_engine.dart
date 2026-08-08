@@ -9,10 +9,9 @@ import 'training_audio_port.dart';
 
 enum AudioEngineState { uninitialized, loading, ready, error }
 
-/// Tone modes remain in persisted preferences for migration compatibility.
-///
-/// Audio V2 intentionally uses one pitch-first baseline until additional
-/// timbres pass the same acoustic validation.
+/// The three tone modes are the existing user-facing choices. Each one uses
+/// a generated SoLoud waveform so pitch is still derived directly from MIDI;
+/// no octave-shifted sample is used for any mode.
 enum ToneMode { clean, overdrive, distortion }
 
 /// Pitch-first cross-platform audio service.
@@ -48,6 +47,15 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   /// Returns the equal-temperament frequency used by the pitch-first cue.
   static double frequencyForMidi(int midiNote) =>
       440.0 * pow(2.0, (midiNote - 69) / 12.0);
+
+  /// Maps each persisted tone choice to a deterministic pitch-preserving
+  /// waveform. Kept static so pure tests do not construct the native SoLoud
+  /// singleton.
+  static WaveForm waveformForTone(ToneMode mode) => switch (mode) {
+    ToneMode.clean => WaveForm.sin,
+    ToneMode.overdrive => WaveForm.fSaw,
+    ToneMode.distortion => WaveForm.fSquare,
+  };
 
   Future<void> initialize() async {
     if (_state == AudioEngineState.ready || _disposed) return;
@@ -86,8 +94,10 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
       await _playPitchCue(midiNote, generation);
       return generation == _playbackGeneration && !_disposed;
     } catch (error) {
+      _state = AudioEngineState.error;
       _error = '无法播放 MIDI $midiNote：$error';
       debugPrint('[AudioEngine] playback failed: $error');
+      if (!_disposed) notifyListeners();
       return false;
     } finally {
       if (generation == _playbackGeneration) {
@@ -98,7 +108,12 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   }
 
   Future<void> _playPitchCue(int midiNote, int generation) async {
-    final source = await _soloud.loadWaveform(WaveForm.sin, false, 0.25, 1);
+    final source = await _soloud.loadWaveform(
+      waveformForTone(_currentMode),
+      false,
+      0.25,
+      1,
+    );
     final frequency = frequencyForMidi(midiNote);
     _soloud.setWaveformFreq(source, frequency);
     final handle = await _soloud.play(
@@ -152,9 +167,7 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
 
   Future<void> switchToneMode(ToneMode newMode) async {
     if (_disposed) return;
-    // Audio V2 keeps migration compatibility but deliberately normalizes the
-    // active training timbre to the acoustically verified clean baseline.
-    _currentMode = ToneMode.clean;
+    _currentMode = newMode;
     notifyListeners();
   }
 

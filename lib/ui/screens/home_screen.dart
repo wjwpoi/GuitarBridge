@@ -63,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _selectedScale = prefs.selectedScale;
     _selectedTuning = prefs.selectedTuning;
     _selectedDifficulty = prefs.difficulty;
-    _currentToneMode = ToneMode.clean;
+    _currentToneMode = _toneModeFromName(prefs.toneMode);
     _audioEngine.setVolume(prefs.audioVolume);
     _audioEngine.switchToneMode(_currentToneMode);
     _showDegrees = prefs.showDegrees;
@@ -99,6 +99,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return ScaleType.major;
   }
 
+  ToneMode _toneModeFromName(String name) => switch (name) {
+    'overdrive' => ToneMode.overdrive,
+    'distortion' => ToneMode.distortion,
+    _ => ToneMode.clean,
+  };
+
   Tuning get _currentTuning => Tuning.all.firstWhere(
     (candidate) => candidate.name == _selectedTuning,
     orElse: () => Tuning.standard,
@@ -127,6 +133,10 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           const SingleActivator(LogicalKeyboardKey.digit1): () =>
               _switchToneMode(ToneMode.clean),
+          const SingleActivator(LogicalKeyboardKey.digit2): () =>
+              _switchToneMode(ToneMode.overdrive),
+          const SingleActivator(LogicalKeyboardKey.digit3): () =>
+              _switchToneMode(ToneMode.distortion),
         },
         child: Focus(
           autofocus: true,
@@ -556,11 +566,11 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) setState(() {});
   }
 
-  void _switchToneMode(ToneMode _) {
-    if (_currentToneMode != ToneMode.clean) {
-      setState(() => _currentToneMode = ToneMode.clean);
+  void _switchToneMode(ToneMode mode) {
+    if (_currentToneMode != mode) {
+      setState(() => _currentToneMode = mode);
     }
-    _audioEngine.switchToneMode(ToneMode.clean);
+    _audioEngine.switchToneMode(mode);
     _persistCurrentPreferences();
   }
 
@@ -632,7 +642,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _showDegrees = prefs.showDegrees;
       _showNoteNames = prefs.showNoteNames;
       _showFretNumbers = prefs.showFretNumbers;
-      _currentToneMode = ToneMode.clean;
+      _currentToneMode = _toneModeFromName(prefs.toneMode);
     });
     _audioEngine.setVolume(prefs.audioVolume);
     _trainingEngine.questionsPerSession = prefs.questionsPerSession;

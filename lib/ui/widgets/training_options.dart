@@ -176,25 +176,27 @@ class TrainingOptionsWidget extends StatelessWidget {
             const SizedBox(height: 20),
             const Text('音色预设', style: _sectionLabelStyle),
             const SizedBox(height: 10),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
+                _buildToneChip(ToneMode.clean, '清晰', Icons.graphic_eq_rounded),
                 _buildToneChip(
-                  ToneMode.clean,
-                  '清晰基音',
-                  Icons.graphic_eq_rounded,
+                  ToneMode.overdrive,
+                  '过载',
+                  Icons.multitrack_audio_rounded,
                 ),
-                const SizedBox(width: 10),
-                const Expanded(
-                  child: Text(
-                    'V2 暂停未验证的失真音色，优先保证音高可辨。',
-                    style: TextStyle(
-                      color: AppTheme.textMuted,
-                      fontSize: 10,
-                      height: 1.35,
-                    ),
-                  ),
-                ),
+                _buildToneChip(ToneMode.distortion, '失真', Icons.bolt_rounded),
               ],
+            ),
+            const SizedBox(height: 9),
+            const Text(
+              '三种音色都保留清晰基频；数字键 1/2/3 可快速切换。',
+              style: TextStyle(
+                color: AppTheme.textMuted,
+                fontSize: 10,
+                height: 1.35,
+              ),
             ),
           ],
         ),
