@@ -5,22 +5,22 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 
 import '../core/constants.dart';
+import 'sample_config.dart';
 import 'training_audio_port.dart';
 
 enum AudioEngineState { uninitialized, loading, ready, error }
 
-/// The three tone modes are the existing user-facing choices. Each one uses
-/// a generated SoLoud waveform so pitch is still derived directly from MIDI;
-/// no octave-shifted sample is used for any mode.
+/// The three tone modes are the existing user-facing choices. They all start
+/// from the same real electric-guitar recording; overdrive and distortion add
+/// SoLoud's global wave-shaper effect without changing the requested pitch.
 enum ToneMode { clean, overdrive, distortion }
 
 /// Pitch-first cross-platform audio service.
 ///
-/// The former implementation shifted twelve synthetic WAV files across four
-/// octaves, changing pitch, duration, and timbre together. Audio V2 generates
-/// every requested MIDI pitch directly at its twelve-tone equal-temperament
-/// frequency. A stable, simple cue is more useful for ear training than an
-/// unverified guitar imitation.
+/// The engine picks the closest bundled real-guitar root and retunes it by an
+/// exact equal-temperament playback-rate ratio. Keeping the sample root close
+/// to the target avoids the extreme artifacts of folding one octave across
+/// the full guitar range.
 class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   final SoLoud _soloud = SoLoud.instance;
 
@@ -41,21 +41,11 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   bool get isReady => _state == AudioEngineState.ready;
   String? get error => _error;
 
-  /// Kept for source compatibility with the previous UI.
-  bool hasSamples(ToneMode mode) => false;
+  bool hasSamples(ToneMode mode) => SampleConfig.requiredSamples(mode).isNotEmpty;
 
   /// Returns the equal-temperament frequency used by the pitch-first cue.
   static double frequencyForMidi(int midiNote) =>
       440.0 * pow(2.0, (midiNote - 69) / 12.0);
-
-  /// Maps each persisted tone choice to a deterministic pitch-preserving
-  /// waveform. Kept static so pure tests do not construct the native SoLoud
-  /// singleton.
-  static WaveForm waveformForTone(ToneMode mode) => switch (mode) {
-    ToneMode.clean => WaveForm.sin,
-    ToneMode.overdrive => WaveForm.fSaw,
-    ToneMode.distortion => WaveForm.fSquare,
-  };
 
   Future<void> initialize() async {
     if (_state == AudioEngineState.ready || _disposed) return;
@@ -71,6 +61,7 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
           channels: Channels.stereo,
         );
       }
+      await _applyToneModeEffect();
       _state = AudioEngineState.ready;
     } catch (error) {
       _state = AudioEngineState.error;
@@ -108,17 +99,16 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   }
 
   Future<void> _playPitchCue(int midiNote, int generation) async {
-    final source = await _soloud.loadWaveform(
-      waveformForTone(_currentMode),
-      false,
-      0.25,
-      1,
+    final source = await _soloud.loadAsset(
+      SampleConfig.samplePath(_currentMode, midiNote),
     );
-    final frequency = frequencyForMidi(midiNote);
-    _soloud.setWaveformFreq(source, frequency);
     final handle = await _soloud.play(
       source,
       volume: _volume.clamp(0.0, 1.0).toDouble(),
+    );
+    _soloud.setRelativePlaySpeed(
+      handle,
+      SampleConfig.playbackSpeedForMidi(midiNote),
     );
     if (generation == _playbackGeneration) {
       _activeHandle = handle;
@@ -168,7 +158,28 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   Future<void> switchToneMode(ToneMode newMode) async {
     if (_disposed) return;
     _currentMode = newMode;
+    if (_state == AudioEngineState.ready) {
+      await _applyToneModeEffect();
+    }
     notifyListeners();
+  }
+
+  Future<void> _applyToneModeEffect() async {
+    if (!_soloud.isInitialized) return;
+
+    final waveShaper = _soloud.filters.waveShaperFilter;
+    if (waveShaper.isActive) {
+      waveShaper.deactivate();
+    }
+    if (_currentMode == ToneMode.clean) return;
+
+    waveShaper.activate();
+    waveShaper.wet.value = 1.0;
+    waveShaper.amount.value = switch (_currentMode) {
+      ToneMode.overdrive => 0.28,
+      ToneMode.distortion => 0.72,
+      ToneMode.clean => 0.0,
+    };
   }
 
   void setVolume(double value) {
