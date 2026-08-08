@@ -41,16 +41,6 @@ void main() {
       ..difficulty = AppConstants.difficulties['easy']!;
   });
 
-  setUp(() {
-    engine = TrainingEngine(delay: (_) async {});
-    mockAudio = MockAudioEngine();
-    engine.configure(engine: mockAudio, tuning: Tuning.standard);
-    engine
-      ..currentKey = 'C'
-      ..scaleType = ScaleType.major
-      ..difficulty = AppConstants.difficulties['easy']!;
-  });
-
   group('TrainingEngine - State Machine', () {
     test('initial state is idle', () {
       expect(engine.state, TrainingState.idle);
@@ -261,30 +251,36 @@ void main() {
       () async {
         engine.answerMode = AnswerMode.pitchClass;
         engine.difficulty = AppConstants.difficulties['hard']!;
-        await engine.start();
-        final target = engine.targetPosition!;
-        final alternate =
-            [
-              for (
-                var stringIndex = 0;
-                stringIndex < Tuning.standard.stringCount;
-                stringIndex++
-              )
-                FretPosition(
-                  stringIndex: stringIndex,
-                  fret: target.midi - Tuning.standard.noteAt(stringIndex, 0),
-                  midi: target.midi,
-                ),
-            ].firstWhere(
-              (position) =>
-                  position.fret >= 0 &&
-                  position.fret <= AppConstants.maxFret &&
-                  position != target,
+        FretPosition? target;
+        FretPosition? alternate;
+        for (var attempt = 0; attempt < 30; attempt++) {
+          await engine.start();
+          final candidate = engine.targetPosition!;
+          final positions = GuitarMath.findNoteOnFretboard(
+            candidate.midi,
+            Tuning.standard,
+          );
+          final other = positions.where((position) {
+            return position != (candidate.stringIndex, candidate.fret);
+          }).toList();
+          if (other.isNotEmpty) {
+            target = candidate;
+            final (stringIndex, fret) = other.first;
+            alternate = FretPosition(
+              stringIndex: stringIndex,
+              fret: fret,
+              midi: candidate.midi,
             );
+            break;
+          }
+          engine.reset();
+        }
+        expect(target, isNotNull);
+        expect(alternate, isNotNull);
         final answer = FretPosition(
-          stringIndex: alternate.stringIndex,
+          stringIndex: alternate!.stringIndex,
           fret: alternate.fret,
-          midi: target.midi,
+          midi: target!.midi,
         );
         final submission = engine.submitAnswer(answer);
         expect(engine.lastAnswerCorrect, true);

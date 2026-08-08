@@ -441,3 +441,12 @@ CMake Error at CMakeLists.txt:3 (project):
 | 11 | PR #2 | `stopAll()` 生命周期、JSON 损坏恢复 | ✅ |
 | 12 | PR #3 | 移除伪 crossfade | 🔄 |
 | 13 | PR #4 | 音频错误 UI | ⬜ 当前
+
+### CI/CD 与功能验收补充（2026-08-08）
+
+- 六平台 Release 构建必须同时通过质量门：格式化、静态分析、完整测试和资源校验。
+- Windows 构建增加可执行文件启动 smoke test，确认 Release bundle 在 runner 上能启动并保持运行。
+- Web 构建增加静态服务器入口检查，确认 `flutter_bootstrap.js`、SoLoud JS 和 WASM 资源可通过 HTTP 获取。
+- Android 构建至少生成三个 split-per-ABI APK，并逐个执行 ZIP 完整性校验。
+- PR #8（`9b9b765`）的六个平台构建和质量门全部通过；Windows 包已完成本地启动冒烟测试。
+- 本次后续提交会在同一条流水线中执行上述 smoke 检查，作为新的跨平台功能验收证据。

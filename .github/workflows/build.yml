@@ -103,7 +103,9 @@ jobs:
             abi="${filename#app-}"
             abi="${abi%-release.apk}"
             cp "$apk" "build/release-android/guitarbridge-android-${abi}.apk"
+            unzip -tq "$apk"
           done
+          test "${#apks[@]}" -ge 3
       - name: Verify signed Android artifacts
         if: ${{ inputs.require_android_signing }}
         shell: bash
@@ -208,6 +210,24 @@ jobs:
             -Path 'build/windows/x64/runner/Release/*' `
             -DestinationPath 'build/guitarbridge-windows-x64.zip' `
             -Force
+      - name: Smoke test Windows release executable
+        shell: pwsh
+        run: |
+          $exe = (Resolve-Path 'build/windows/x64/runner/Release/guitar_bridge.exe').Path
+          $process = Start-Process -FilePath $exe `
+            -WorkingDirectory (Split-Path -Parent $exe) `
+            -WindowStyle Hidden `
+            -PassThru
+          try {
+            Start-Sleep -Seconds 5
+            if ($process.HasExited) {
+              throw "guitar_bridge.exe exited during the startup smoke test with code $($process.ExitCode)."
+            }
+          } finally {
+            if (-not $process.HasExited) {
+              Stop-Process -Id $process.Id -Force
+            }
+          }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: guitarbridge-windows
@@ -268,6 +288,24 @@ jobs:
         run: |
           test -d build/web
           (cd build && zip -qr guitarbridge-web.zip web)
+      - name: Smoke test Web bundle entrypoint
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory build/web >/tmp/guitarbridge-web.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for _ in {1..10}; do
+            if curl --fail --silent --show-error http://127.0.0.1:4173/ > /tmp/guitarbridge-web-index.html; then
+              break
+            fi
+            sleep 1
+          done
+          test -s /tmp/guitarbridge-web-index.html
+          grep -F 'flutter_bootstrap.js' /tmp/guitarbridge-web-index.html
+          grep -F 'assets/packages/flutter_soloud/web/libflutter_soloud_plugin.js' /tmp/guitarbridge-web-index.html
+          curl --fail --silent --show-error \
+            http://127.0.0.1:4173/assets/packages/flutter_soloud/web/libflutter_soloud_plugin.wasm \
+            -o /dev/null
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: guitarbridge-web

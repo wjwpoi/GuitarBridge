@@ -45,6 +45,10 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   /// Kept for source compatibility with the previous UI.
   bool hasSamples(ToneMode mode) => false;
 
+  /// Returns the equal-temperament frequency used by the pitch-first cue.
+  static double frequencyForMidi(int midiNote) =>
+      440.0 * pow(2.0, (midiNote - 69) / 12.0);
+
   Future<void> initialize() async {
     if (_state == AudioEngineState.ready || _disposed) return;
     _state = AudioEngineState.loading;
@@ -95,7 +99,7 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
 
   Future<void> _playPitchCue(int midiNote, int generation) async {
     final source = await _soloud.loadWaveform(WaveForm.sin, false, 0.25, 1);
-    final frequency = 440.0 * pow(2.0, (midiNote - 69) / 12.0);
+    final frequency = frequencyForMidi(midiNote);
     _soloud.setWaveformFreq(source, frequency);
     final handle = await _soloud.play(
       source,
