@@ -12,14 +12,8 @@ void main() {
 
     test('calculates equal-temperament playback speed', () {
       expect(SampleConfig.playbackSpeedForMidi(64), closeTo(1.0, 0.000001));
-      expect(
-        SampleConfig.playbackSpeedForMidi(52),
-        closeTo(1.0, 0.000001),
-      );
-      expect(
-        SampleConfig.playbackSpeedForMidi(40),
-        closeTo(0.5, 0.000001),
-      );
+      expect(SampleConfig.playbackSpeedForMidi(52), closeTo(1.0, 0.000001));
+      expect(SampleConfig.playbackSpeedForMidi(40), closeTo(0.5, 0.000001));
     });
 
     test('always resolves to a bundled sample path', () {

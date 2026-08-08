@@ -16,6 +16,5 @@ void main() {
       final upper = AudioEngine.frequencyForMidi(69);
       expect(upper / lower, closeTo(2.0, 0.000001));
     });
-
   });
 }

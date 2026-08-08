@@ -41,7 +41,8 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   bool get isReady => _state == AudioEngineState.ready;
   String? get error => _error;
 
-  bool hasSamples(ToneMode mode) => SampleConfig.requiredSamples(mode).isNotEmpty;
+  bool hasSamples(ToneMode mode) =>
+      SampleConfig.requiredSamples(mode).isNotEmpty;
 
   /// Returns the equal-temperament frequency used by the pitch-first cue.
   static double frequencyForMidi(int midiNote) =>
