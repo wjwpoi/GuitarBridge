@@ -7,22 +7,26 @@ import 'package:flutter/material.dart';
 class AppTheme {
   AppTheme._();
 
-  static const Color backgroundColor = Color(0xFF090C12);
-  static const Color surfaceColor = Color(0xFF111722);
-  static const Color raisedSurfaceColor = Color(0xFF171E2B);
-  static const Color subtleSurfaceColor = Color(0xFF0D121B);
-  static const Color primaryColor = Color(0xFF6FE3D0);
-  static const Color secondaryColor = Color(0xFF83A7FF);
-  static const Color accentColor = Color(0xFFFFC866);
-  static const Color correctColor = Color(0xFF58D68D);
-  static const Color wrongColor = Color(0xFFFF7185);
-  static const Color textPrimary = Color(0xFFF4F7FB);
-  static const Color textSecondary = Color(0xFFAAB4C5);
-  static const Color textMuted = Color(0xFF748096);
-  static const Color outlineColor = Color(0xFF283347);
-  static const Color fretboardWood = surfaceColor;
-  static const Color stringColor = Color(0xFF344056);
-  static const Color fretMarkerColor = outlineColor;
+  // A warm, paper-like canvas keeps the training surface calm and lets the
+  // few meaningful colors (root, answer and feedback) carry the hierarchy.
+  // These values intentionally stay platform-neutral so desktop and mobile
+  // share the same visual language.
+  static const Color backgroundColor = Color(0xFFF3F0E9);
+  static const Color surfaceColor = Color(0xFFFFFCF7);
+  static const Color raisedSurfaceColor = Color(0xFFF0ECE4);
+  static const Color subtleSurfaceColor = Color(0xFFF8F5EF);
+  static const Color primaryColor = Color(0xFFD7614D);
+  static const Color secondaryColor = Color(0xFF245C58);
+  static const Color accentColor = Color(0xFFE3A34B);
+  static const Color correctColor = Color(0xFF3D8B67);
+  static const Color wrongColor = Color(0xFFC84E57);
+  static const Color textPrimary = Color(0xFF1D2A2B);
+  static const Color textSecondary = Color(0xFF536365);
+  static const Color textMuted = Color(0xFF7C8989);
+  static const Color outlineColor = Color(0xFFD8D3C8);
+  static const Color fretboardWood = Color(0xFFE8D9C6);
+  static const Color stringColor = Color(0xFF88928F);
+  static const Color fretMarkerColor = Color(0xFFC7B9A5);
 
   static const double contentMaxWidth = 1440;
   static const double panelRadius = 22;
@@ -40,15 +44,15 @@ class AppTheme {
 
   static ThemeData trainingTheme(String toneMode) {
     final tone = toneColor(toneMode);
-    final scheme = ColorScheme.dark(
+    final scheme = ColorScheme.light(
       primary: tone,
-      onPrimary: const Color(0xFF07110F),
+      onPrimary: Colors.white,
       secondary: secondaryColor,
-      onSecondary: const Color(0xFF081022),
+      onSecondary: Colors.white,
       surface: surfaceColor,
       onSurface: textPrimary,
       error: wrongColor,
-      onError: const Color(0xFF23070C),
+      onError: Colors.white,
       outline: outlineColor,
     );
 
@@ -59,7 +63,7 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       colorScheme: scheme,
       scaffoldBackgroundColor: backgroundColor,
       dividerColor: outlineColor,

@@ -122,78 +122,87 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CallbackShortcuts(
-        bindings: <ShortcutActivator, VoidCallback>{
-          const SingleActivator(LogicalKeyboardKey.space): () {
-            if (_trainingEngine.state == TrainingState.idle ||
-                _trainingEngine.state == TrainingState.completed ||
-                _trainingEngine.state == TrainingState.audioError) {
-              _onStartTraining();
-            }
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF8F5EF), AppTheme.backgroundColor],
+            begin: Alignment.topCenter,
+            end: Alignment.center,
+          ),
+        ),
+        child: CallbackShortcuts(
+          bindings: <ShortcutActivator, VoidCallback>{
+            const SingleActivator(LogicalKeyboardKey.space): () {
+              if (_trainingEngine.state == TrainingState.idle ||
+                  _trainingEngine.state == TrainingState.completed ||
+                  _trainingEngine.state == TrainingState.audioError) {
+                _onStartTraining();
+              }
+            },
+            const SingleActivator(LogicalKeyboardKey.digit1): () =>
+                _switchToneMode(ToneMode.clean),
+            const SingleActivator(LogicalKeyboardKey.digit2): () =>
+                _switchToneMode(ToneMode.overdrive),
+            const SingleActivator(LogicalKeyboardKey.digit3): () =>
+                _switchToneMode(ToneMode.distortion),
           },
-          const SingleActivator(LogicalKeyboardKey.digit1): () =>
-              _switchToneMode(ToneMode.clean),
-          const SingleActivator(LogicalKeyboardKey.digit2): () =>
-              _switchToneMode(ToneMode.overdrive),
-          const SingleActivator(LogicalKeyboardKey.digit3): () =>
-              _switchToneMode(ToneMode.distortion),
-        },
-        child: Focus(
-          autofocus: true,
-          child: Stack(
-            children: [
-              SafeArea(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isWide = constraints.maxWidth >= 980;
-                    final horizontalPadding = constraints.maxWidth < 600
-                        ? 14.0
-                        : 28.0;
-                    return SingleChildScrollView(
-                      padding: EdgeInsets.fromLTRB(
-                        horizontalPadding,
-                        18,
-                        horizontalPadding,
-                        36,
-                      ),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: AppTheme.contentMaxWidth,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _buildHeader(context),
-                              if (_audioEngine.state !=
-                                  AudioEngineState.ready) ...[
-                                const SizedBox(height: 16),
-                                _buildAudioNotice(),
+          child: Focus(
+            autofocus: true,
+            child: Stack(
+              children: [
+                SafeArea(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isWide = constraints.maxWidth >= 980;
+                      final horizontalPadding = constraints.maxWidth < 600
+                          ? 14.0
+                          : 28.0;
+                      return SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(
+                          horizontalPadding,
+                          20,
+                          horizontalPadding,
+                          40,
+                        ),
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: AppTheme.contentMaxWidth,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildHeader(context),
+                                if (_audioEngine.state !=
+                                    AudioEngineState.ready) ...[
+                                  const SizedBox(height: 16),
+                                  _buildAudioNotice(),
+                                ],
+                                const SizedBox(height: 26),
+                                if (isWide)
+                                  _buildWideWorkspace()
+                                else
+                                  _buildNarrowWorkspace(),
                               ],
-                              const SizedBox(height: 22),
-                              if (isWide)
-                                _buildWideWorkspace()
-                              else
-                                _buildNarrowWorkspace(),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
-              if (_showCompletion)
-                CompletionAnimationWidget(
-                  correctCount: _trainingEngine.correctCount,
-                  totalQuestions: _trainingEngine.totalQuestions,
-                  streak: _trainingEngine.bestStreak,
-                  onDismiss: () {
-                    setState(() => _showCompletion = false);
-                    _trainingEngine.reset();
-                  },
-                ),
-            ],
+                if (_showCompletion)
+                  CompletionAnimationWidget(
+                    correctCount: _trainingEngine.correctCount,
+                    totalQuestions: _trainingEngine.totalQuestions,
+                    streak: _trainingEngine.bestStreak,
+                    onDismiss: () {
+                      setState(() => _showCompletion = false);
+                      _trainingEngine.reset();
+                    },
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -204,8 +213,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       children: [
         Container(
-          width: 44,
-          height: 44,
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
@@ -216,18 +225,28 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           child: const Icon(
             Icons.music_note_rounded,
-            color: AppTheme.backgroundColor,
-            size: 24,
+            color: Colors.white,
+            size: 25,
           ),
         ),
-        const SizedBox(width: 13),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const Text(
+                'AUDIO · FRETBOARD TRAINING',
+                style: TextStyle(
+                  color: AppTheme.textMuted,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 3),
               Text(
                 'GuitarBridge',
-                style: Theme.of(context).textTheme.titleLarge,
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 2),
               const Text(
@@ -241,6 +260,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+        if (MediaQuery.sizeOf(context).width >= 620) ...[
+          _audioReadyPill(),
+          const SizedBox(width: 10),
+        ],
         _headerAction(
           icon: Icons.insights_rounded,
           tooltip: '练习统计',
@@ -277,6 +300,38 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _audioReadyPill() {
+    final ready = _audioEngine.state == AudioEngineState.ready;
+    final color = ready ? AppTheme.correctColor : AppTheme.accentColor;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withAlpha(16),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: color.withAlpha(65)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 7),
+          Text(
+            ready ? '音频就绪' : '音频准备中',
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _headerAction({
     required IconData icon,
     required String tooltip,
@@ -284,8 +339,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppTheme.surfaceColor,
-        borderRadius: BorderRadius.circular(14),
+        color: AppTheme.surfaceColor.withAlpha(210),
+        borderRadius: BorderRadius.circular(13),
         border: Border.all(color: AppTheme.outlineColor),
       ),
       child: IconButton(
@@ -353,7 +408,7 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: 350,
+          width: 332,
           child: Column(
             children: [
               _buildOptions(),
@@ -362,7 +417,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
-        const SizedBox(width: 18),
+        const SizedBox(width: 20),
         Expanded(child: _buildTrainingWorkspace()),
       ],
     );
@@ -466,34 +521,62 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildFretboardCard() {
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               children: [
-                const Icon(
-                  Icons.grid_view_rounded,
-                  color: AppTheme.primaryColor,
-                  size: 19,
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withAlpha(14),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.grid_view_rounded,
+                    color: AppTheme.primaryColor,
+                    size: 17,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    '等宽指板',
-                    style: Theme.of(context).textTheme.titleLarge,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'FRETBOARD',
+                        style: TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '等宽指板',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ],
                   ),
                 ),
-                const _LegendDot(color: AppTheme.primaryColor, label: '基准'),
-                const SizedBox(width: 10),
-                const _LegendDot(color: AppTheme.accentColor, label: '答案'),
+                const _LegendDot(color: AppTheme.primaryColor, label: '基准音'),
+                const SizedBox(width: 12),
+                const _LegendDot(color: AppTheme.accentColor, label: '目标音'),
               ],
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 8),
             const Text(
-              '每一品保持相同宽度。横向滚动浏览完整指板，同音高的不同位置均可作答。',
-              style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
+              '每一品保持相同宽度，横向滚动浏览完整指板。点击任意音符即可试听或作答。',
+              style: TextStyle(
+                color: AppTheme.textMuted,
+                fontSize: 11,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 16),
             Semantics(
@@ -518,23 +601,33 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildGuideCard() {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.fromLTRB(18, 17, 18, 18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '本轮规则',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-              ),
+            const Row(
+              children: [
+                Icon(
+                  Icons.route_rounded,
+                  size: 17,
+                  color: AppTheme.secondaryColor,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  '本轮规则',
+                  style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             _guideLine(Icons.arrow_upward_rounded, '只生成一个八度内的上行音程'),
-            const SizedBox(height: 9),
-            _guideLine(Icons.alt_route_rounded, '同一音高可在任意弦位作答'),
-            const SizedBox(height: 9),
+            const SizedBox(height: 10),
+            _guideLine(Icons.touch_app_rounded, '每次点击都会播放对应音高'),
+            const SizedBox(height: 10),
             _guideLine(Icons.keyboard_rounded, '按空格即可开始下一轮训练'),
           ],
         ),

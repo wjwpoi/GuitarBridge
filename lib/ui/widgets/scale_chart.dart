@@ -25,18 +25,26 @@ class ScaleChartWidget extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.fromLTRB(20, 17, 20, 19),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                const Icon(
-                  Icons.blur_on_rounded,
-                  size: 18,
-                  color: AppTheme.secondaryColor,
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppTheme.secondaryColor.withAlpha(14),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.music_note_rounded,
+                    size: 17,
+                    color: AppTheme.secondaryColor,
+                  ),
                 ),
-                const SizedBox(width: 9),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     keySig.displayName,
@@ -49,7 +57,7 @@ class ScaleChartWidget extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 15),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -73,16 +81,13 @@ class ScaleChartWidget extends StatelessWidget {
     required String note,
     required bool isTonic,
   }) {
+    final color = isTonic ? AppTheme.primaryColor : AppTheme.secondaryColor;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
       decoration: BoxDecoration(
-        color: isTonic
-            ? AppTheme.primaryColor.withAlpha(22)
-            : AppTheme.subtleSurfaceColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isTonic ? AppTheme.primaryColor : AppTheme.outlineColor,
-        ),
+        color: isTonic ? color.withAlpha(20) : AppTheme.subtleSurfaceColor,
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: isTonic ? color : AppTheme.outlineColor),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -90,8 +95,8 @@ class ScaleChartWidget extends StatelessWidget {
           Text(
             degree,
             style: TextStyle(
-              color: isTonic ? AppTheme.primaryColor : AppTheme.textSecondary,
-              fontSize: 11,
+              color: isTonic ? color : AppTheme.textMuted,
+              fontSize: 10,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -101,7 +106,7 @@ class ScaleChartWidget extends StatelessWidget {
             style: const TextStyle(
               color: AppTheme.textPrimary,
               fontSize: 12,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],

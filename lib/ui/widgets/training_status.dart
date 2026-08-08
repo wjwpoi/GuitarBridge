@@ -23,124 +23,140 @@ class TrainingStatusWidget extends StatelessWidget {
       listenable: engine,
       builder: (context, _) {
         final state = engine.state;
+        final (_, stateColor) = _stateVisuals(state);
         return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(height: 4, color: stateColor),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(22, 20, 22, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildStateIcon(state),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _stateTitle(state),
-                            style: Theme.of(context).textTheme.titleLarge,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildStateIcon(state),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _stateTitle(state),
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.headlineSmall,
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                _stateMessage(state),
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _stateMessage(state),
-                            style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        if (state != TrainingState.idle)
+                          _QuestionCount(
+                            current: engine.currentQuestion,
+                            total: engine.totalQuestions,
                           ),
-                        ],
-                      ),
+                      ],
                     ),
-                    if (state != TrainingState.idle)
-                      Text(
-                        '${engine.currentQuestion}/${engine.totalQuestions}',
-                        style: const TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
+                    if (state != TrainingState.idle) ...[
+                      const SizedBox(height: 18),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: LinearProgressIndicator(
+                          value: engine.progress,
+                          minHeight: 6,
+                          backgroundColor: AppTheme.raisedSurfaceColor,
                         ),
                       ),
+                    ],
+                    const SizedBox(height: 20),
+                    _buildMetrics(state),
+                    const SizedBox(height: 20),
+                    _buildActions(state),
                   ],
                 ),
-                if (state != TrainingState.idle) ...[
-                  const SizedBox(height: 18),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(99),
-                    child: LinearProgressIndicator(
-                      value: engine.progress,
-                      minHeight: 5,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 18),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _metric('正确', '${engine.correctCount}'),
-                    _metric(
-                      '准确率',
-                      state == TrainingState.idle
-                          ? '—'
-                          : '${engine.accuracy.toStringAsFixed(0)}%',
-                    ),
-                    _metric('连击', '${engine.currentStreak}'),
-                    _metric(
-                      '尝试',
-                      state == TrainingState.waitingAnswer
-                          ? '${engine.failedAttempts + 1}'
-                          : '—',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                _buildActions(state),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
     );
   }
 
-  Widget _buildStateIcon(TrainingState state) {
-    final (icon, color) = switch (state) {
-      TrainingState.idle => (Icons.headphones_rounded, AppTheme.primaryColor),
-      TrainingState.configuring => (
-        Icons.tune_rounded,
-        AppTheme.secondaryColor,
-      ),
-      TrainingState.playingRoot => (
-        Icons.radio_button_checked_rounded,
-        AppTheme.primaryColor,
-      ),
-      TrainingState.audioError => (
-        Icons.volume_off_rounded,
-        AppTheme.wrongColor,
-      ),
-      TrainingState.waitingAnswer => (
-        Icons.hearing_rounded,
-        AppTheme.accentColor,
-      ),
-      TrainingState.showingResult =>
-        engine.lastAnswerCorrect
-            ? (Icons.check_rounded, AppTheme.correctColor)
-            : (Icons.close_rounded, AppTheme.wrongColor),
-      TrainingState.completed => (
-        Icons.auto_awesome_rounded,
-        AppTheme.accentColor,
-      ),
-    };
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: color.withAlpha(18),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withAlpha(70)),
-      ),
-      child: Icon(icon, color: color, size: 22),
+  Widget _buildMetrics(TrainingState state) {
+    return Row(
+      children: [
+        Expanded(child: _metric('正确', '${engine.correctCount}')),
+        _metricDivider(),
+        Expanded(
+          child: _metric(
+            '准确率',
+            state == TrainingState.idle
+                ? '—'
+                : '${engine.accuracy.toStringAsFixed(0)}%',
+          ),
+        ),
+        _metricDivider(),
+        Expanded(child: _metric('连击', '${engine.currentStreak}')),
+        _metricDivider(),
+        Expanded(
+          child: _metric(
+            '本题尝试',
+            state == TrainingState.waitingAnswer
+                ? '${engine.failedAttempts + 1}'
+                : '—',
+          ),
+        ),
+      ],
     );
   }
+
+  Widget _metricDivider() {
+    return Container(width: 1, height: 30, color: AppTheme.outlineColor);
+  }
+
+  Widget _buildStateIcon(TrainingState state) {
+    final (icon, color) = _stateVisuals(state);
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: color.withAlpha(18),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: color.withAlpha(80)),
+      ),
+      child: Icon(icon, color: color, size: 23),
+    );
+  }
+
+  (IconData, Color) _stateVisuals(TrainingState state) => switch (state) {
+    TrainingState.idle => (Icons.headphones_rounded, AppTheme.secondaryColor),
+    TrainingState.configuring => (Icons.tune_rounded, AppTheme.secondaryColor),
+    TrainingState.playingRoot => (
+      Icons.radio_button_checked_rounded,
+      AppTheme.primaryColor,
+    ),
+    TrainingState.audioError => (Icons.volume_off_rounded, AppTheme.wrongColor),
+    TrainingState.waitingAnswer => (
+      Icons.hearing_rounded,
+      AppTheme.accentColor,
+    ),
+    TrainingState.showingResult =>
+      engine.lastAnswerCorrect
+          ? (Icons.check_rounded, AppTheme.correctColor)
+          : (Icons.close_rounded, AppTheme.wrongColor),
+    TrainingState.completed => (
+      Icons.auto_awesome_rounded,
+      AppTheme.accentColor,
+    ),
+  };
 
   String _stateTitle(TrainingState state) => switch (state) {
     TrainingState.idle => '准备开始',
@@ -153,48 +169,42 @@ class TrainingStatusWidget extends StatelessWidget {
   };
 
   String _stateMessage(TrainingState state) => switch (state) {
-    TrainingState.idle => '每题依次播放基准音与目标音，建议先使用清晰音色。',
+    TrainingState.idle => '每题依次播放基准音与目标音，准备好后点击开始。',
     TrainingState.configuring => '正在按当前调性生成一个八度内的上行音程。',
     TrainingState.playingRoot => '先记住基准音，目标音会紧接着播放。',
     TrainingState.audioError => '本题已暂停，没有进入答题状态。请检查声音设备后重新开始。',
-    TrainingState.waitingAnswer => '在指板任意位置选择目标音；相同 MIDI 音高都判定为正确。',
+    TrainingState.waitingAnswer => '在指板任意位置选择目标音；每次点击都会播放对应音高。',
     TrainingState.showingResult =>
       engine.lastAnswerCorrect
           ? '很好，保持对两个音之间距离的记忆。'
           : engine.showCorrectPosition
           ? '正确音高已在指板上标出。'
           : '答案未推进，可以重播后继续尝试。',
-    TrainingState.completed => '休息一下，或使用相同设置再练一轮。',
+    TrainingState.completed => '这一轮完成了，休息一下或用相同设置再练一轮。',
   };
 
   Widget _metric(String label, String value) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 74),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppTheme.subtleSurfaceColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.outlineColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(color: AppTheme.textMuted, fontSize: 10),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppTheme.textMuted,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -204,7 +214,7 @@ class TrainingStatusWidget extends StatelessWidget {
         state == TrainingState.audioError) {
       return Align(
         alignment: Alignment.centerLeft,
-        child: ElevatedButton.icon(
+        child: FilledButton.icon(
           onPressed: onStart,
           icon: Icon(
             state == TrainingState.completed
@@ -244,5 +254,34 @@ class TrainingStatusWidget extends StatelessWidget {
     }
 
     return const SizedBox(height: 48);
+  }
+}
+
+class _QuestionCount extends StatelessWidget {
+  final int current;
+  final int total;
+
+  const _QuestionCount({required this.current, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          '${current.clamp(0, total)}/$total',
+          style: const TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 3),
+        const Text(
+          '题目进度',
+          style: TextStyle(color: AppTheme.textMuted, fontSize: 10),
+        ),
+      ],
+    );
   }
 }

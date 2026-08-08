@@ -8,10 +8,10 @@ import '../../models/scale.dart';
 import '../../models/training_question.dart';
 import '../../models/tuning.dart';
 
-/// Equal-width, platform-neutral fretboard interaction matrix.
+/// A clean equal-width note matrix rather than a physical guitar drawing.
 ///
-/// This is intentionally not a physical guitar simulation. Equal columns keep
-/// every note readable and every target comfortably tappable on every device.
+/// Every cell keeps the same width at every fret, so note names stay legible
+/// and touch targets stay predictable on desktop, web and mobile.
 class FretboardWidget extends StatelessWidget {
   final TrainingEngine trainingEngine;
   final Tuning tuning;
@@ -38,9 +38,9 @@ class FretboardWidget extends StatelessWidget {
     this.visibleFrets = 23,
   });
 
-  static const double _cellWidth = 56;
-  static const double _rowHeight = 54;
-  static const double _stringRailWidth = 48;
+  static const double _cellWidth = 58;
+  static const double _rowHeight = 52;
+  static const double _stringRailWidth = 68;
   static const double _headerHeight = 38;
   static const Set<int> _markerFrets = {3, 5, 7, 9, 12, 15, 17, 19, 21};
 
@@ -59,18 +59,18 @@ class FretboardWidget extends StatelessWidget {
       builder: (context, _) {
         return DecoratedBox(
           decoration: BoxDecoration(
-            color: AppTheme.subtleSurfaceColor,
-            borderRadius: BorderRadius.circular(18),
+            color: AppTheme.fretboardWood,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppTheme.outlineColor),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(15),
             child: SizedBox(
               height: _headerHeight + tuning.stringCount * _rowHeight,
               child: Row(
                 children: [
                   _buildStringRail(),
-                  const VerticalDivider(width: 1, thickness: 1),
+                  Container(width: 1, color: AppTheme.outlineColor),
                   Expanded(
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
@@ -111,8 +111,9 @@ class FretboardWidget extends StatelessWidget {
                 '弦',
                 style: TextStyle(
                   color: AppTheme.textMuted,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
@@ -124,29 +125,29 @@ class FretboardWidget extends StatelessWidget {
           )
             SizedBox(
               height: _rowHeight,
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '${stringIndex + 1}',
-                      style: const TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '${stringIndex + 1}',
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
                     ),
-                    Text(
-                      GuitarMath.noteNameAt(
-                        tuning.noteAt(stringIndex, 0),
-                      ).sharpName,
-                      style: const TextStyle(
-                        color: AppTheme.textMuted,
-                        fontSize: 9,
-                      ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    GuitarMath.noteNameAt(
+                      tuning.noteAt(stringIndex, 0),
+                    ).sharpName,
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
         ],
@@ -172,16 +173,16 @@ class FretboardWidget extends StatelessWidget {
                             style: const TextStyle(
                               color: AppTheme.textMuted,
                               fontSize: 10,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                           if (_markerFrets.contains(fret)) ...[
                             const SizedBox(width: 4),
                             Container(
-                              width: fret == 12 ? 8 : 5,
+                              width: fret == 12 ? 7 : 5,
                               height: 5,
                               decoration: const BoxDecoration(
-                                color: AppTheme.secondaryColor,
+                                color: AppTheme.accentColor,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -232,18 +233,21 @@ class FretboardWidget extends StatelessWidget {
     final isRevealedTarget =
         trainingEngine.showCorrectPosition &&
         trainingEngine.targetMidi == position.midi;
-    final nodeColor = _nodeColor(
-      inKey: inKey,
+    final label = _noteLabel(position.midi, keySig, inKey);
+    final stateColor = _stateColor(
       isRoot: isRoot,
       isAnswer: isAnswer,
       isRevealedTarget: isRevealedTarget,
     );
-    final borderColor = isRoot
-        ? AppTheme.primaryColor
+    final cellBackground = isRoot
+        ? AppTheme.primaryColor.withAlpha(20)
+        : isAnswer
+        ? stateColor.withAlpha(20)
         : isRevealedTarget
-        ? AppTheme.accentColor
-        : AppTheme.outlineColor;
-    final label = _noteLabel(position.midi, keySig, inKey);
+        ? AppTheme.accentColor.withAlpha(24)
+        : inKey
+        ? AppTheme.surfaceColor.withAlpha(112)
+        : Colors.transparent;
 
     return Semantics(
       button: true,
@@ -253,80 +257,88 @@ class FretboardWidget extends StatelessWidget {
         width: _cellWidth,
         height: _rowHeight,
         child: Material(
-          color: isRoot
-              ? AppTheme.primaryColor.withAlpha(10)
-              : Colors.transparent,
+          color: cellBackground,
           child: InkWell(
             onTap: () => onFretTapped(position),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border(
-                  right: BorderSide(
-                    color: borderColor,
-                    width: isRoot ? 1.5 : 1,
-                  ),
-                  bottom: const BorderSide(color: AppTheme.outlineColor),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  child: Container(height: 1, color: AppTheme.stringColor),
                 ),
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  const Positioned.fill(
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: Divider(
-                        color: AppTheme.stringColor,
-                        thickness: 1,
-                        height: 1,
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        right: BorderSide(
+                          color: fret == 0
+                              ? AppTheme.secondaryColor.withAlpha(100)
+                              : AppTheme.outlineColor,
+                          width: fret == 0 ? 2 : 1,
+                        ),
+                        bottom: const BorderSide(color: AppTheme.outlineColor),
                       ),
                     ),
                   ),
-                  if (label != null)
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 160),
-                      width: isRoot || isAnswer || isRevealedTarget ? 34 : 30,
-                      height: isRoot || isAnswer || isRevealedTarget ? 34 : 30,
-                      decoration: BoxDecoration(
-                        color: nodeColor,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isRoot || isRevealedTarget
-                              ? borderColor
-                              : AppTheme.outlineColor,
-                          width: isRoot || isRevealedTarget ? 2 : 1,
-                        ),
-                        boxShadow: isRoot || isRevealedTarget
-                            ? [
-                                BoxShadow(
-                                  color: borderColor.withAlpha(42),
-                                  blurRadius: 10,
-                                  spreadRadius: 1,
-                                ),
-                              ]
-                            : null,
+                ),
+                if (label != null)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 160),
+                    width: isRoot || isAnswer || isRevealedTarget ? 38 : 32,
+                    height: isRoot || isAnswer || isRevealedTarget ? 30 : 26,
+                    decoration: BoxDecoration(
+                      color: _nodeColor(
+                        inKey: inKey,
+                        isRoot: isRoot,
+                        isAnswer: isAnswer,
+                        isRevealedTarget: isRevealedTarget,
                       ),
-                      child: Center(
-                        child: Text(
-                          label,
-                          style: TextStyle(
-                            color: _nodeTextColor(
-                              isRoot: isRoot,
-                              isAnswer: isAnswer,
-                              isRevealedTarget: isRevealedTarget,
-                            ),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(
+                        color: isRoot || isAnswer || isRevealedTarget
+                            ? stateColor
+                            : AppTheme.outlineColor.withAlpha(150),
+                        width: isRoot || isAnswer || isRevealedTarget ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          color: _nodeTextColor(
+                            isRoot: isRoot,
+                            isAnswer: isAnswer,
+                            isRevealedTarget: isRevealedTarget,
                           ),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Color _stateColor({
+    required bool isRoot,
+    required bool isAnswer,
+    required bool isRevealedTarget,
+  }) {
+    if (isAnswer) {
+      return trainingEngine.lastAnswerCorrect
+          ? AppTheme.correctColor
+          : AppTheme.wrongColor;
+    }
+    if (isRoot) return AppTheme.primaryColor;
+    if (isRevealedTarget) return AppTheme.accentColor;
+    return AppTheme.secondaryColor;
   }
 
   Color _nodeColor({
@@ -342,7 +354,9 @@ class FretboardWidget extends StatelessWidget {
     }
     if (isRoot) return AppTheme.primaryColor;
     if (isRevealedTarget) return AppTheme.accentColor;
-    return inKey ? AppTheme.raisedSurfaceColor : AppTheme.subtleSurfaceColor;
+    return inKey
+        ? AppTheme.surfaceColor
+        : AppTheme.raisedSurfaceColor.withAlpha(120);
   }
 
   Color _nodeTextColor({
@@ -350,9 +364,7 @@ class FretboardWidget extends StatelessWidget {
     required bool isAnswer,
     required bool isRevealedTarget,
   }) {
-    if (isRoot || isAnswer || isRevealedTarget) {
-      return AppTheme.backgroundColor;
-    }
+    if (isRoot || isAnswer || isRevealedTarget) return Colors.white;
     return AppTheme.textSecondary;
   }
 

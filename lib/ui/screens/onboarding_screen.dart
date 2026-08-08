@@ -86,7 +86,7 @@ class OnboardingScreen extends StatelessWidget {
           ),
           child: const Icon(
             Icons.music_note_rounded,
-            color: AppTheme.backgroundColor,
+            color: Colors.white,
             size: 31,
           ),
         ),
