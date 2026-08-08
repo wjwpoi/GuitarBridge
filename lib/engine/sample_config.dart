@@ -1,69 +1,71 @@
-import '../engine/audio_engine.dart';
+import 'dart:math' as math;
 
-/// 音频采样配置 - 定义需要的采样文件及其元数据
+import 'audio_engine.dart';
+
+/// Real-guitar multisample layout used by the audio engine.
+///
+/// The bundled samples are the CC0 String Studio / Karoryfer electric-guitar
+/// recordings. They are velocity-normalized single-note WAVs whose root notes
+/// are encoded in the file name (MIDI 52 through 88, every two semitones).
 class SampleConfig {
   SampleConfig._();
 
-  /// 吉他标准范围：E2(40) ~ E6(88)，但可以通过八度折叠减少数量
-  /// 按八度折叠后只需 12 个采样（一个八度内的所有半音）
-  static const int sampleCount = 12; // 一个八度内的12个半音
-  static const int sampleOctave = 4; // 采样八度（C4-B4）
-  static const int firstSampleMidi = (sampleOctave + 1) * 12;
+  static const String sampleDirectory = 'assets/samples/guitar';
 
-  /// 每种音色模式需要的采样文件列表
-  static List<String> requiredSamples(ToneMode mode) {
-    final noteNames = [
-      'C',
-      'C#',
-      'D',
-      'D#',
-      'E',
-      'F',
-      'F#',
-      'G',
-      'G#',
-      'A',
-      'A#',
-      'B',
-    ];
-    return noteNames
-        .map((n) => 'assets/samples/${mode.name}/$n$sampleOctave.wav')
-        .toList();
-  }
+  /// Root pitches available in the bundled real-guitar recordings.
+  static const List<int> rootMidis = <int>[
+    52,
+    54,
+    56,
+    58,
+    60,
+    62,
+    64,
+    66,
+    68,
+    70,
+    72,
+    74,
+    76,
+    78,
+    80,
+    82,
+    84,
+    86,
+    88,
+  ];
 
-  /// 检查采样是否存在（运行时由 flutter_soloud 或 AssetBundle 处理）
-  static String samplePath(ToneMode mode, int midiNote) {
-    final noteNames = [
-      'C',
-      'C#',
-      'D',
-      'D#',
-      'E',
-      'F',
-      'F#',
-      'G',
-      'G#',
-      'A',
-      'A#',
-      'B',
-    ];
-    final sampleMidi = nearestSampleMidi(midiNote);
-    final semitone = sampleMidi % 12;
-    final octave = sampleMidi ~/ 12 - 1;
-    return 'assets/samples/${mode.name}/${noteNames[semitone]}$octave.wav';
-  }
+  static List<String> requiredSamples(ToneMode mode) => rootMidis
+      .map((rootMidi) => samplePathForRoot(mode, rootMidi))
+      .toList(growable: false);
 
-  /// 采样回退策略：按八度折叠
-  /// E2(40) -> 找 C4.wav 并降调播放
-  /// E4(64) -> 直接找 E4.wav
-  /// E6(88) -> 找 E4.wav 并升调播放
+  /// Selects the closest recorded root for a target MIDI note.
   static int nearestSampleMidi(int targetMidi) {
-    final semitone = targetMidi % 12;
-    return firstSampleMidi + semitone; // 折叠到采样八度
+    var nearest = rootMidis.first;
+    var nearestDistance = (targetMidi - nearest).abs();
+    for (final rootMidi in rootMidis.skip(1)) {
+      final distance = (targetMidi - rootMidi).abs();
+      if (distance < nearestDistance) {
+        nearest = rootMidi;
+        nearestDistance = distance;
+      }
+    }
+    return nearest;
   }
 
-  /// 从目标 MIDI 到采样 MIDI 的八度偏移
-  static int octaveShift(int targetMidi) {
-    return (targetMidi - nearestSampleMidi(targetMidi)) ~/ 12;
+  static String samplePath(ToneMode mode, int midiNote) =>
+      samplePathForRoot(mode, nearestSampleMidi(midiNote));
+
+  static String samplePathForRoot(ToneMode mode, int rootMidi) =>
+      '$sampleDirectory/${rootMidi}_v100_rr1.wav';
+
+  /// Playback-rate ratio needed to retune a recorded root to the target note.
+  static double playbackSpeedForMidi(int midiNote) {
+    final rootMidi = nearestSampleMidi(midiNote);
+    return math.pow(2.0, (midiNote - rootMidi) / 12.0).toDouble();
   }
+
+  /// Kept for compatibility with the previous octave-folding API.
+  static int octaveShift(int targetMidi) =>
+      (targetMidi - nearestSampleMidi(targetMidi)) ~/ 12;
 }

@@ -48,10 +48,7 @@ jobs:
       - name: Validate bundled samples
         shell: bash
         run: |
-          test "$(find assets/samples -type f -name '*.wav' | wc -l)" -eq 36
-          for mode in clean overdrive distortion; do
-            test "$(find "assets/samples/$mode" -type f -name '*.wav' | wc -l)" -eq 12
-          done
+          test "$(find assets/samples/guitar -type f -name '*.wav' | wc -l)" -eq 19
 
   build-android:
     name: Build Android APKs
@@ -103,7 +100,9 @@ jobs:
             abi="${filename#app-}"
             abi="${abi%-release.apk}"
             cp "$apk" "build/release-android/guitarbridge-android-${abi}.apk"
+            unzip -tq "$apk"
           done
+          test "${#apks[@]}" -ge 3
       - name: Verify signed Android artifacts
         if: ${{ inputs.require_android_signing }}
         shell: bash
@@ -129,7 +128,7 @@ jobs:
     name: Build iOS (unsigned)
     needs: quality
     runs-on: macos-latest
-    timeout-minutes: 35
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
@@ -147,6 +146,41 @@ jobs:
           test -d build/ios/iphoneos/Runner.app
           ditto -c -k --sequesterRsrc --keepParent \
             build/ios/iphoneos/Runner.app build/guitarbridge-ios-unsigned.zip
+
+      - name: Select and boot an iPhone simulator
+        id: simulator
+        shell: bash
+        run: |
+          device_id="$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ {print $2; exit}')"
+          test -n "$device_id"
+          echo "device_id=$device_id" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$device_id" 2>/dev/null || true
+          xcrun simctl bootstatus "$device_id" -b
+
+      - name: Run iOS simulator smoke test
+        shell: bash
+        env:
+          SIMULATOR_DEVICE_ID: ${{ steps.simulator.outputs.device_id }}
+        run: flutter test integration_test/ios_smoke_test.dart -d "$SIMULATOR_DEVICE_ID" --no-pub
+
+      - name: Capture iOS simulator smoke screenshot
+        if: ${{ always() }}
+        shell: bash
+        env:
+          SIMULATOR_DEVICE_ID: ${{ steps.simulator.outputs.device_id }}
+        run: |
+          mkdir -p build/ios-smoke
+          xcrun simctl io "$SIMULATOR_DEVICE_ID" screenshot \
+            build/ios-smoke/ios-simulator.png || true
+          xcrun simctl shutdown "$SIMULATOR_DEVICE_ID" || true
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: ${{ always() }}
+        with:
+          name: guitarbridge-ios-simulator-smoke
+          path: build/ios-smoke/ios-simulator.png
+          if-no-files-found: ignore
+
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: guitarbridge-ios-unsigned
@@ -208,6 +242,24 @@ jobs:
             -Path 'build/windows/x64/runner/Release/*' `
             -DestinationPath 'build/guitarbridge-windows-x64.zip' `
             -Force
+      - name: Smoke test Windows release executable
+        shell: pwsh
+        run: |
+          $exe = (Resolve-Path 'build/windows/x64/runner/Release/guitar_bridge.exe').Path
+          $process = Start-Process -FilePath $exe `
+            -WorkingDirectory (Split-Path -Parent $exe) `
+            -WindowStyle Hidden `
+            -PassThru
+          try {
+            Start-Sleep -Seconds 5
+            if ($process.HasExited) {
+              throw "guitar_bridge.exe exited during the startup smoke test with code $($process.ExitCode)."
+            }
+          } finally {
+            if (-not $process.HasExited) {
+              Stop-Process -Id $process.Id -Force
+            }
+          }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: guitarbridge-windows
@@ -268,6 +320,24 @@ jobs:
         run: |
           test -d build/web
           (cd build && zip -qr guitarbridge-web.zip web)
+      - name: Smoke test Web bundle entrypoint
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory build/web >/tmp/guitarbridge-web.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for _ in {1..10}; do
+            if curl --fail --silent --show-error http://127.0.0.1:4173/ > /tmp/guitarbridge-web-index.html; then
+              break
+            fi
+            sleep 1
+          done
+          test -s /tmp/guitarbridge-web-index.html
+          grep -F 'flutter_bootstrap.js' /tmp/guitarbridge-web-index.html
+          grep -F 'assets/packages/flutter_soloud/web/libflutter_soloud_plugin.js' /tmp/guitarbridge-web-index.html
+          curl --fail --silent --show-error \
+            http://127.0.0.1:4173/assets/packages/flutter_soloud/web/libflutter_soloud_plugin.wasm \
+            -o /dev/null
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: guitarbridge-web

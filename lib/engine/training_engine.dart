@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -15,6 +16,7 @@ enum TrainingState {
   idle,
   configuring,
   playingRoot,
+  audioError,
   waitingAnswer,
   showingResult,
   completed,
@@ -40,7 +42,7 @@ class TrainingEngine extends ChangeNotifier {
   Tuning currentTuning = Tuning.standard;
   DifficultyConfig difficulty = AppConstants.difficulties['easy']!;
   TrainingAudioPort? audioEngine;
-  AnswerMode answerMode = AnswerMode.exactPosition;
+  AnswerMode answerMode = AnswerMode.exactPitch;
 
   int _questionsPerSession = AppConstants.defaultQuestionsPerSession;
   int get questionsPerSession => _questionsPerSession;
@@ -153,17 +155,23 @@ class TrainingEngine extends ChangeNotifier {
       }
     }
 
-    final roots = positions
+    final keyedPositions = positions
         .where((position) => GuitarMath.isInKey(position.midi, keySig))
         .toList();
+    final positionsByMidi = <int, FretPosition>{};
+    for (final position in keyedPositions) {
+      positionsByMidi.putIfAbsent(position.midi, () => position);
+    }
+    final roots = positionsByMidi.values.toList()
+      ..sort((a, b) => a.midi.compareTo(b.midi));
     final targets = roots;
     final pool = <TrainingQuestion>[];
     final allowed = difficulty.allowedIntervals.toSet();
     for (final root in roots) {
       for (final target in targets) {
-        if (root == target) continue;
-        final interval = ((target.midi - root.midi) % 12 + 12) % 12;
-        if (allowed.contains(interval) && interval != 0) {
+        final interval = target.midi - root.midi;
+        if (interval <= 0 || interval > 12) continue;
+        if (allowed.contains(interval)) {
           pool.add(
             TrainingQuestion(
               root: root,
@@ -176,13 +184,15 @@ class TrainingEngine extends ChangeNotifier {
     }
 
     if (pool.isEmpty && roots.length >= 2) {
-      for (var i = 0; i < roots.length; i++) {
-        final target = roots[(i + 1) % roots.length];
+      for (var i = 0; i < roots.length - 1; i++) {
+        final target = roots[i + 1];
+        final interval = target.midi - roots[i].midi;
+        if (interval <= 0 || interval > 12) continue;
         pool.add(
           TrainingQuestion(
             root: roots[i],
             target: target,
-            intervalSemitones: ((target.midi - roots[i].midi) % 12 + 12) % 12,
+            intervalSemitones: interval,
           ),
         );
       }
@@ -217,11 +227,21 @@ class TrainingEngine extends ChangeNotifier {
     _state = TrainingState.playingRoot;
     notifyListeners();
 
-    await audioEngine!.playNote(question.root.midi);
+    final rootPlayed = await audioEngine!.playNote(question.root.midi);
+    if (!rootPlayed) {
+      _state = TrainingState.audioError;
+      notifyListeners();
+      return;
+    }
     if (!_isCurrent(token)) return;
     await _delay(const Duration(milliseconds: 600));
     if (!_isCurrent(token)) return;
-    await audioEngine!.playNote(question.target.midi);
+    final targetPlayed = await audioEngine!.playNote(question.target.midi);
+    if (!targetPlayed) {
+      _state = TrainingState.audioError;
+      notifyListeners();
+      return;
+    }
     if (!_isCurrent(token)) return;
     await _delay(const Duration(milliseconds: 400));
     if (!_isCurrent(token)) return;
@@ -245,13 +265,19 @@ class TrainingEngine extends ChangeNotifier {
     final target = _targetPosition!;
     final FretPosition? position = answer is FretPosition ? answer : null;
     final midi = answer is int ? answer : position!.midi;
+
+    // Every attempted fret should be audible. Start the cue immediately and
+    // keep the existing judgement flow non-blocking so rapid retries remain
+    // responsive; AudioEngine stops the previous cue when a new one begins.
+    unawaited(audioEngine?.playNote(midi));
+
     _userAnswerPosition = position;
     _userAnswerMidi = midi;
-    final isCorrect = answer is int
-        ? midi % 12 == target.midi % 12
-        : answerMode == AnswerMode.exactPosition
-        ? position != null && position == target
-        : midi % 12 == target.midi % 12;
+    final isCorrect = switch (answerMode) {
+      AnswerMode.exactPitch => midi == target.midi,
+      AnswerMode.exactPosition => position != null && position == target,
+      AnswerMode.pitchClass => midi % 12 == target.midi % 12,
+    };
     _lastAnswerCorrect = isCorrect;
 
     if (_questionStartTime != null) {

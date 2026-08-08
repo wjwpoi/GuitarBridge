@@ -372,6 +372,61 @@ CMake Error at CMakeLists.txt:3 (project):
 - 可访问性（Semantics label）；
 - Web Cupertino icon 字体告警（非阻塞，仅构建日志）。
 
+## 当前阶段：Training UI V2 与可解题训练闭环（2026-07-30）
+
+### 目标
+
+- 保留 Flutter 跨平台外壳、数据持久化和统计能力，重构训练主界面的视觉层级与核心交互。
+- 所有平台使用同一套 Material 3 视觉语言，不按 Windows、macOS、移动端分别模仿系统控件。
+- 指板改为等宽品格的抽象交互矩阵；不再用 `17.817` 物理品距公式表达低把位宽、高把位窄。
+- 优先保证音高训练题可解：听觉信息不能用于要求用户区分同音高的不同弦位。
+
+### 本轮允许修改
+
+- `lib/core/theme.dart`
+- `lib/ui/screens/home_screen.dart`
+- `lib/ui/screens/onboarding_screen.dart`
+- `lib/ui/screens/settings_screen.dart`
+- `lib/ui/screens/stats_screen.dart`
+- `lib/ui/widgets/fretboard_widget.dart`
+- `lib/ui/widgets/training_options.dart`
+- `lib/ui/widgets/training_status.dart`
+- `lib/ui/widgets/scale_chart.dart`
+- `lib/engine/training_engine.dart`
+- `lib/engine/training_audio_port.dart`
+- `lib/engine/audio_engine.dart`
+- `lib/models/training_question.dart`
+- 对应 Widget/训练回归测试与本实施文档
+
+### 视觉验收
+
+- 桌面宽屏使用有最大内容宽度的双栏训练工作区；窄屏自动折叠为单栏。
+- 面板、按钮、筛选控件、状态色和排版由统一主题 token 驱动，不在组件中散落 cyan/grey 等颜色。
+- 0–22 品等宽，横向滚动时保持每个触控目标至少 44 logical pixels。
+- 指板不绘制木纹、物理品距或拟真金属弦，使用低对比网格、清晰音符节点和统一选中反馈。
+- Windows、macOS、Linux、Android、iOS 与 Web 的信息架构、组件形态和色彩一致。
+
+### 训练语义验收
+
+- 音程以实际有符号 MIDI 差生成，不再用模 12 把任意下降/跨八度音程伪装成上行单音程。
+- 初级题目限制为上行、一个八度内；题目生成不产生无法由听觉唯一判断的“精确弦位”答案。
+- 默认答案按 MIDI 音高判定；同一 MIDI 音高在不同弦位均应视为正确。
+- UI 明确显示当前任务是“听目标音并在任意位置找到同音高”，不暗示声音可以编码弦位。
+
+### 音频基线验收
+
+- V2 基线不再把一个八度的伪吉他 WAV 以 `0.25x–4x` 变速覆盖整个音域。
+- 每个 MIDI 音直接按标准十二平均律频率生成清晰基音，优先保证可辨音高；失真类音色在重新验收前不进入默认训练流程。
+- 播放接口返回成功状态；基准音或目标音播放失败时训练状态机不得进入答题状态。
+- 快速重播或连续点击时，新声音必须安全终止旧句柄，旧异步回调不得停止新声音。
+
+### 验证
+
+- `dart format --output=none --set-exit-if-changed .`
+- `flutter analyze`
+- `flutter test`
+- 至少完成一个 Web 或桌面 Release 构建，并人工检查宽屏、窄屏和横向指板滚动。
+
 ### 提交时间线（已完成部分）
 
 | 顺序 | 提交类型 | 内容 | 状态 |
@@ -386,3 +441,26 @@ CMake Error at CMakeLists.txt:3 (project):
 | 11 | PR #2 | `stopAll()` 生命周期、JSON 损坏恢复 | ✅ |
 | 12 | PR #3 | 移除伪 crossfade | 🔄 |
 | 13 | PR #4 | 音频错误 UI | ⬜ 当前
+
+### CI/CD 与功能验收补充（2026-08-08）
+
+- 六平台 Release 构建必须同时通过质量门：格式化、静态分析、完整测试和资源校验。
+- Windows 构建增加可执行文件启动 smoke test，确认 Release bundle 在 runner 上能启动并保持运行。
+- Web 构建增加静态服务器入口检查，确认 `flutter_bootstrap.js`、SoLoud JS 和 WASM 资源可通过 HTTP 获取。
+- Android 构建至少生成三个 split-per-ABI APK，并逐个执行 ZIP 完整性校验。
+- PR #8（`9b9b765`）的六个平台构建和质量门全部通过；Windows 包已完成本地启动冒烟测试。
+- 本次后续提交会在同一条流水线中执行上述 smoke 检查，作为新的跨平台功能验收证据。
+
+### 核心闭环补充（2026-08-08）
+
+- 目标：收口已有音色设置和音频错误状态，不增加新的训练模式或业务功能。
+- 影响范围：`AudioEngine` 使用 CC0 真实吉他多采样并按 `ToneMode` 配置已有波形整形效果；播放失败切换为可见错误状态；Home/设置控件恢复并持久化用户音色选择。
+- 兼容约束：三种已有音色都保留 MIDI 基频，清晰音色仍为默认值；仅在已校验的真实采样根音之间做就近半音重调。
+- 验收命令：`dart format --output=none --set-exit-if-changed .`、`flutter analyze`、`flutter test`、`flutter build web --release --no-pub`，并在 Web 预览中切换音色后启动一轮训练。
+- 本地结果：格式化、分析、全量 107 项测试和 Web Release 构建通过；Web 桌面/390px 预览验证三种音色切换、过载训练启动、失真目标音重播以及刷新后的偏好恢复。
+
+### 真实吉他采样补充（2026-08-08）
+
+- 采样来源：CC0-1.0 的 String Studio / Karoryfer Black And Green Guitars；19 个 48 kHz、24-bit 单声道 WAV 根音，逐文件 SHA-256 校验后纳入 `assets/samples/guitar/`。
+- 播放路径：`SoLoud.loadAsset` 加载真实录音，按最近根音计算等律播放速率；清晰、过载、失真继续复用原有三个选择，后两者使用 SoLoud 全局波形整形效果。
+- CI 结果：run [31236555090](https://github.com/wjwpoi/GuitarBridge/actions/runs/31236555090) 的质量门禁及 Android、iOS、macOS、Windows、Linux、Web 构建全部成功。

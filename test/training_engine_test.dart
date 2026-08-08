@@ -12,13 +12,15 @@ import 'package:guitar_bridge/models/training_question.dart';
 /// Fake audio port for unit tests — never touches SoLoud.
 class MockAudioEngine implements TrainingAudioPort {
   int playCallCount = 0;
+  bool playSucceeds = true;
 
   @override
   bool get isReady => true;
 
   @override
-  Future<void> playNote(int midiNote) async {
+  Future<bool> playNote(int midiNote) async {
     playCallCount++;
+    return playSucceeds;
   }
 
   @override
@@ -28,16 +30,6 @@ class MockAudioEngine implements TrainingAudioPort {
 void main() {
   late TrainingEngine engine;
   late MockAudioEngine mockAudio;
-
-  setUp(() {
-    engine = TrainingEngine(delay: (_) async {});
-    mockAudio = MockAudioEngine();
-    engine.configure(engine: mockAudio, tuning: Tuning.standard);
-    engine
-      ..currentKey = 'C'
-      ..scaleType = ScaleType.major
-      ..difficulty = AppConstants.difficulties['easy']!;
-  });
 
   setUp(() {
     engine = TrainingEngine(delay: (_) async {});
@@ -66,6 +58,13 @@ void main() {
         engine.state,
         anyOf(TrainingState.playingRoot, TrainingState.waitingAnswer),
       );
+    });
+
+    test('failed audio cue never enters answer state', () async {
+      mockAudio.playSucceeds = false;
+      await engine.start();
+      expect(engine.state, TrainingState.audioError);
+      expect(engine.isWaitingAnswer, false);
     });
 
     test('reset returns to idle state', () async {
@@ -124,6 +123,19 @@ void main() {
       }
     });
 
+    test(
+      'generated interval is ascending and no larger than an octave',
+      () async {
+        await engine.start();
+        expect(engine.targetMidi, isNotNull);
+        expect(engine.rootMidi, isNotNull);
+        final distance = engine.targetMidi! - engine.rootMidi!;
+        expect(distance, greaterThan(0));
+        expect(distance, lessThanOrEqualTo(12));
+        expect(engine.difficulty.allowedIntervals, contains(distance));
+      },
+    );
+
     test('rootMidi respects difficulty fret range', () async {
       engine.difficulty = AppConstants.difficulties['easy']!; // 0-5 frets
       await engine.start();
@@ -162,6 +174,17 @@ void main() {
       }
     });
 
+    test('plays the attempted fret before evaluating the answer', () async {
+      await engine.start();
+      if (engine.targetMidi != null) {
+        final before = mockAudio.playCallCount;
+
+        await engine.submitAnswer(engine.targetMidi! + 1);
+
+        expect(mockAudio.playCallCount, before + 1);
+      }
+    });
+
     test('submitAnswer ignores calls when not waiting', () async {
       engine.reset();
       await engine.submitAnswer(60); // Should be ignored
@@ -188,6 +211,7 @@ void main() {
     });
 
     test('exact position mode rejects a different fret', () async {
+      engine.answerMode = AnswerMode.exactPosition;
       await engine.start();
       final target = engine.targetPosition!;
       final wrong = FretPosition(
@@ -201,34 +225,73 @@ void main() {
     });
 
     test(
+      'exact pitch mode accepts another position with the same MIDI',
+      () async {
+        expect(engine.answerMode, AnswerMode.exactPitch);
+        await engine.start();
+        final target = engine.targetPosition!;
+        final answer = FretPosition(
+          stringIndex: (target.stringIndex + 1) % Tuning.standard.stringCount,
+          fret: target.fret,
+          midi: target.midi,
+        );
+        final submission = engine.submitAnswer(answer);
+        expect(engine.lastAnswerCorrect, true);
+        await submission;
+      },
+    );
+
+    test(
+      'exact pitch mode rejects the same pitch class in another octave',
+      () async {
+        await engine.start();
+        final target = engine.targetPosition!;
+        final answer = FretPosition(
+          stringIndex: target.stringIndex,
+          fret: target.fret,
+          midi: target.midi + 12,
+        );
+        final submission = engine.submitAnswer(answer);
+        expect(engine.lastAnswerCorrect, false);
+        await submission;
+      },
+    );
+
+    test(
       'pitch class mode accepts another position with the same note',
       () async {
         engine.answerMode = AnswerMode.pitchClass;
         engine.difficulty = AppConstants.difficulties['hard']!;
-        await engine.start();
-        final target = engine.targetPosition!;
-        final alternate =
-            [
-              for (
-                var stringIndex = 0;
-                stringIndex < Tuning.standard.stringCount;
-                stringIndex++
-              )
-                FretPosition(
-                  stringIndex: stringIndex,
-                  fret: target.midi - Tuning.standard.noteAt(stringIndex, 0),
-                  midi: target.midi,
-                ),
-            ].firstWhere(
-              (position) =>
-                  position.fret >= 0 &&
-                  position.fret <= AppConstants.maxFret &&
-                  position != target,
+        FretPosition? target;
+        FretPosition? alternate;
+        for (var attempt = 0; attempt < 30; attempt++) {
+          await engine.start();
+          final candidate = engine.targetPosition!;
+          final positions = GuitarMath.findNoteOnFretboard(
+            candidate.midi,
+            Tuning.standard,
+          );
+          final other = positions.where((position) {
+            return position != (candidate.stringIndex, candidate.fret);
+          }).toList();
+          if (other.isNotEmpty) {
+            target = candidate;
+            final (stringIndex, fret) = other.first;
+            alternate = FretPosition(
+              stringIndex: stringIndex,
+              fret: fret,
+              midi: candidate.midi,
             );
+            break;
+          }
+          engine.reset();
+        }
+        expect(target, isNotNull);
+        expect(alternate, isNotNull);
         final answer = FretPosition(
-          stringIndex: alternate.stringIndex,
+          stringIndex: alternate!.stringIndex,
           fret: alternate.fret,
-          midi: target.midi,
+          midi: target!.midi,
         );
         final submission = engine.submitAnswer(answer);
         expect(engine.lastAnswerCorrect, true);
