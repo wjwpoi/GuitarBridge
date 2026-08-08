@@ -48,10 +48,7 @@ jobs:
       - name: Validate bundled samples
         shell: bash
         run: |
-          test "$(find assets/samples -type f -name '*.wav' | wc -l)" -eq 36
-          for mode in clean overdrive distortion; do
-            test "$(find "assets/samples/$mode" -type f -name '*.wav' | wc -l)" -eq 12
-          done
+          test "$(find assets/samples/guitar -type f -name '*.wav' | wc -l)" -eq 19
 
   build-android:
     name: Build Android APKs
