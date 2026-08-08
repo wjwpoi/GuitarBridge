@@ -458,3 +458,9 @@ CMake Error at CMakeLists.txt:3 (project):
 - 兼容约束：三种已有音色都保留 MIDI 基频，清晰音色仍为默认值；仅在已校验的真实采样根音之间做就近半音重调。
 - 验收命令：`dart format --output=none --set-exit-if-changed .`、`flutter analyze`、`flutter test`、`flutter build web --release --no-pub`，并在 Web 预览中切换音色后启动一轮训练。
 - 本地结果：格式化、分析、全量 107 项测试和 Web Release 构建通过；Web 桌面/390px 预览验证三种音色切换、过载训练启动、失真目标音重播以及刷新后的偏好恢复。
+
+### 真实吉他采样补充（2026-08-08）
+
+- 采样来源：CC0-1.0 的 String Studio / Karoryfer Black And Green Guitars；19 个 48 kHz、24-bit 单声道 WAV 根音，逐文件 SHA-256 校验后纳入 `assets/samples/guitar/`。
+- 播放路径：`SoLoud.loadAsset` 加载真实录音，按最近根音计算等律播放速率；清晰、过载、失真继续复用原有三个选择，后两者使用 SoLoud 全局波形整形效果。
+- CI 结果：run [31236555090](https://github.com/wjwpoi/GuitarBridge/actions/runs/31236555090) 的质量门禁及 Android、iOS、macOS、Windows、Linux、Web 构建全部成功。
