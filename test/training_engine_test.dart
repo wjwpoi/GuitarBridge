@@ -174,6 +174,17 @@ void main() {
       }
     });
 
+    test('plays the attempted fret before evaluating the answer', () async {
+      await engine.start();
+      if (engine.targetMidi != null) {
+        final before = mockAudio.playCallCount;
+
+        await engine.submitAnswer(engine.targetMidi! + 1);
+
+        expect(mockAudio.playCallCount, before + 1);
+      }
+    });
+
     test('submitAnswer ignores calls when not waiting', () async {
       engine.reset();
       await engine.submitAnswer(60); // Should be ignored

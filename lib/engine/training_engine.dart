@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -264,6 +265,12 @@ class TrainingEngine extends ChangeNotifier {
     final target = _targetPosition!;
     final FretPosition? position = answer is FretPosition ? answer : null;
     final midi = answer is int ? answer : position!.midi;
+
+    // Every attempted fret should be audible. Start the cue immediately and
+    // keep the existing judgement flow non-blocking so rapid retries remain
+    // responsive; AudioEngine stops the previous cue when a new one begins.
+    unawaited(audioEngine?.playNote(midi));
+
     _userAnswerPosition = position;
     _userAnswerMidi = midi;
     final isCorrect = switch (answerMode) {
