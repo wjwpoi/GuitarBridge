@@ -6,8 +6,10 @@ import 'package:guitar_bridge/ui/screens/onboarding_screen.dart';
 import 'package:guitar_bridge/ui/widgets/completion_animation.dart';
 import 'package:guitar_bridge/ui/widgets/training_status.dart';
 import 'package:guitar_bridge/ui/widgets/scale_chart.dart';
+import 'package:guitar_bridge/ui/widgets/fretboard_widget.dart';
 import 'package:guitar_bridge/engine/training_engine.dart';
 import 'package:guitar_bridge/models/scale.dart';
+import 'package:guitar_bridge/models/tuning.dart';
 
 void main() {
   group('OnboardingScreen', () {
@@ -160,6 +162,41 @@ void main() {
       );
 
       expect(find.textContaining('五声'), findsOneWidget);
+    });
+  });
+
+  group('FretboardWidget', () {
+    testWidgets('offers explicit controls for moving to higher frets', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final engine = TrainingEngine();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Padding(
+              padding: const EdgeInsets.all(12),
+              child: FretboardWidget(
+                trainingEngine: engine,
+                tuning: Tuning.standard,
+                scaleType: ScaleType.major,
+                selectedKey: 'C',
+                onFretTapped: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('0–4 品'), findsOneWidget);
+      expect(find.byTooltip('向高把位移动'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('向高把位移动'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('4–8 品'), findsOneWidget);
     });
   });
 }

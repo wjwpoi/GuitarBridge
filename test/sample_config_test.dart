@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:guitar_bridge/engine/audio_engine.dart';
 import 'package:guitar_bridge/engine/sample_config.dart';
 
 void main() {
@@ -18,7 +17,7 @@ void main() {
 
     test('always resolves to a bundled sample path', () {
       expect(
-        SampleConfig.samplePath(ToneMode.overdrive, 40),
+        SampleConfig.samplePath(40),
         'assets/samples/guitar/52_v100_rr1.wav',
       );
     });

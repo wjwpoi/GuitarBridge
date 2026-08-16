@@ -10,11 +10,6 @@ import 'training_audio_port.dart';
 
 enum AudioEngineState { uninitialized, loading, ready, error }
 
-/// The three tone modes are the existing user-facing choices. They all start
-/// from the same real electric-guitar recording; overdrive and distortion add
-/// SoLoud's global wave-shaper effect without changing the requested pitch.
-enum ToneMode { clean, overdrive, distortion }
-
 /// Pitch-first cross-platform audio service.
 ///
 /// The engine picks the closest bundled real-guitar root and retunes it by an
@@ -25,7 +20,6 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   final SoLoud _soloud = SoLoud.instance;
 
   AudioEngineState _state = AudioEngineState.uninitialized;
-  ToneMode _currentMode = ToneMode.clean;
   double _volume = AppConstants.defaultVolume;
   bool _isPlaying = false;
   String? _error;
@@ -35,15 +29,11 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   Future<void>? _initialization;
 
   AudioEngineState get state => _state;
-  ToneMode get currentMode => _currentMode;
   double get volume => _volume;
   bool get isPlaying => _isPlaying;
   @override
   bool get isReady => _state == AudioEngineState.ready;
   String? get error => _error;
-
-  bool hasSamples(ToneMode mode) =>
-      SampleConfig.requiredSamples(mode).isNotEmpty;
 
   /// Returns the equal-temperament frequency used by the pitch-first cue.
   static double frequencyForMidi(int midiNote) =>
@@ -78,7 +68,7 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
           channels: Channels.stereo,
         );
       }
-      await _applyToneModeEffect();
+      _ensureCleanTone();
       _state = AudioEngineState.ready;
     } catch (error) {
       _state = AudioEngineState.error;
@@ -116,9 +106,7 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   }
 
   Future<void> _playPitchCue(int midiNote, int generation) async {
-    final source = await _soloud.loadAsset(
-      SampleConfig.samplePath(_currentMode, midiNote),
-    );
+    final source = await _soloud.loadAsset(SampleConfig.samplePath(midiNote));
     final handle = await _soloud.play(
       source,
       volume: _volume.clamp(0.0, 1.0).toDouble(),
@@ -172,31 +160,13 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
     if (!_disposed) notifyListeners();
   }
 
-  Future<void> switchToneMode(ToneMode newMode) async {
-    if (_disposed) return;
-    _currentMode = newMode;
-    if (_state == AudioEngineState.ready) {
-      await _applyToneModeEffect();
-    }
-    notifyListeners();
-  }
-
-  Future<void> _applyToneModeEffect() async {
+  void _ensureCleanTone() {
     if (!_soloud.isInitialized) return;
 
     final waveShaper = _soloud.filters.waveShaperFilter;
     if (waveShaper.isActive) {
       waveShaper.deactivate();
     }
-    if (_currentMode == ToneMode.clean) return;
-
-    waveShaper.activate();
-    waveShaper.wet.value = 1.0;
-    waveShaper.amount.value = switch (_currentMode) {
-      ToneMode.overdrive => 0.28,
-      ToneMode.distortion => 0.72,
-      ToneMode.clean => 0.0,
-    };
   }
 
   void setVolume(double value) {

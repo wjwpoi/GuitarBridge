@@ -98,6 +98,10 @@ class TrainingEngine extends ChangeNotifier {
   double get averageResponseTime => _responseTimes.isEmpty
       ? 0
       : _responseTimes.reduce((a, b) => a + b) / _responseTimes.length;
+  @visibleForTesting
+  List<int> get questionPoolIntervals => List<int>.unmodifiable(
+    _questionPool.map((question) => question.intervalSemitones),
+  );
   Duration get sessionDuration => _sessionStartTime == null
       ? Duration.zero
       : DateTime.now().difference(_sessionStartTime!);
@@ -165,39 +169,62 @@ class TrainingEngine extends ChangeNotifier {
     final roots = positionsByMidi.values.toList()
       ..sort((a, b) => a.midi.compareTo(b.midi));
     final targets = roots;
-    final pool = <TrainingQuestion>[];
+    final questionsByInterval = <int, List<TrainingQuestion>>{};
     final allowed = difficulty.allowedIntervals.toSet();
     for (final root in roots) {
       for (final target in targets) {
         final interval = target.midi - root.midi;
         if (interval <= 0 || interval > 12) continue;
         if (allowed.contains(interval)) {
-          pool.add(
-            TrainingQuestion(
-              root: root,
-              target: target,
-              intervalSemitones: interval,
-            ),
-          );
+          questionsByInterval
+              .putIfAbsent(interval, () => [])
+              .add(
+                TrainingQuestion(
+                  root: root,
+                  target: target,
+                  intervalSemitones: interval,
+                ),
+              );
         }
       }
     }
 
-    if (pool.isEmpty && roots.length >= 2) {
+    if (questionsByInterval.isEmpty && roots.length >= 2) {
       for (var i = 0; i < roots.length - 1; i++) {
         final target = roots[i + 1];
         final interval = target.midi - roots[i].midi;
         if (interval <= 0 || interval > 12) continue;
-        pool.add(
-          TrainingQuestion(
-            root: roots[i],
-            target: target,
-            intervalSemitones: interval,
-          ),
-        );
+        questionsByInterval
+            .putIfAbsent(interval, () => [])
+            .add(
+              TrainingQuestion(
+                root: roots[i],
+                target: target,
+                intervalSemitones: interval,
+              ),
+            );
       }
     }
 
+    // Picking uniformly from every root/target pair biases the session toward
+    // intervals that happen to have more physical placements in the selected
+    // fret range (most visibly perfect fourths and fifths). Build the session
+    // from interval buckets instead: every available interval gets the same
+    // number of questions, with a difference of at most one.
+    final intervals = questionsByInterval.keys.toList()..shuffle(_random);
+    for (final bucket in questionsByInterval.values) {
+      bucket.shuffle(_random);
+    }
+    final bucketOffsets = <int, int>{};
+    final pool = <TrainingQuestion>[];
+    for (var index = 0; index < questionsPerSession; index++) {
+      if (intervals.isEmpty) break;
+      final interval = intervals[index % intervals.length];
+      final bucket = questionsByInterval[interval]!;
+      final offset = bucketOffsets[interval] ?? 0;
+      pool.add(bucket[offset % bucket.length]);
+      bucketOffsets[interval] = offset + 1;
+    }
     pool.shuffle(_random);
     _questionPool = pool;
     _poolIndex = 0;

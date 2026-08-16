@@ -55,7 +55,7 @@
 - [x] 固定 Flutter/Dart 版本和 pub 依赖，提交 `pubspec.lock`。
 - [x] 修复 CI：format、analyze、test 必须阻断；矩阵定义覆盖六个平台。
 - [x] 构建脚本遇到任一平台失败时必须返回非零状态，并按主机选择可执行目标。
-- [x] 真实初始化 SoLoud，加载三种音色采样，缺失时使用可听见的合成回退；Web 产物已确认包含插件 WASM。
+- [x] 真实初始化 SoLoud，加载单一清晰吉他音色；Web 产物已确认包含插件 WASM。
 - [x] 定义 GitHub Actions 六平台 release build 矩阵；实际 runner 结果仍待完成。
 - [x] Release 调用与 CI 相同的可复用质量/构建定义，失败会阻断发布，不重复维护一套门禁。
 - [x] 定义六平台可审计制品、平台/架构命名和 SHA256 校验生成；实际 artifact 下载和 tag 发布仍待 runner 完成。
@@ -498,3 +498,11 @@ CMake Error at CMakeLists.txt:3 (project):
 - `flutter build web --release --no-pub`：通过；产物包含 PWA service worker、SoLoud WebAssembly、19 个真实吉他采样、新 PWA 图标和社交分享图。
 - `pnpm --dir web_host run build`：通过；生成 Sites 所需的 Cloudflare Worker ESM 与静态资源目录。
 - `pnpm --dir web_host test`：通过；验证 HTML 社交图片绝对地址替换与安全响应头。
+
+## Web 训练体验修正（2026-08-16）
+
+- 出题改为先按音程分桶，再按当前可用音程均衡生成整轮题目；任意两个音程的题数相差不超过 1，避免纯四度、纯五度因可组合位置更多而过度出现。
+- 指板提供常显的把位范围、左右移动按钮和可拖动横向滚动条，同时支持触屏与鼠标拖动。
+- 窄屏顺序调整为训练状态、指板、折叠训练设置、折叠音阶信息；设置不再占用首屏主体。
+- 删除音色切换入口、快捷键和波形整形路径，所有平台统一使用真实采样的清晰音色。
+- 新增音程分布和指板高把位移动测试；全量 110 项测试、静态分析、Web Release 构建与托管冒烟测试通过。

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:guitar_bridge/core/guitar_math.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -84,6 +85,31 @@ void main() {
   });
 
   group('TrainingEngine - Question Generation', () {
+    test(
+      'balances available intervals instead of weighting position pairs',
+      () async {
+        final balancedEngine =
+            TrainingEngine(random: Random(7), delay: (_) async {})
+              ..configure(engine: mockAudio, tuning: Tuning.standard)
+              ..currentKey = 'C'
+              ..scaleType = ScaleType.major
+              ..difficulty = AppConstants.difficulties['easy']!
+              ..questionsPerSession = 50;
+
+        await balancedEngine.start();
+
+        final counts = <int, int>{};
+        for (final interval in balancedEngine.questionPoolIntervals) {
+          counts.update(interval, (count) => count + 1, ifAbsent: () => 1);
+        }
+        expect(counts.keys, containsAll(<int>[3, 4, 5, 7]));
+        expect(
+          counts.values.reduce(max) - counts.values.reduce(min),
+          lessThanOrEqualTo(1),
+        );
+      },
+    );
+
     test('rootMidi is set after start', () async {
       await engine.start();
       expect(engine.rootMidi, isNotNull);

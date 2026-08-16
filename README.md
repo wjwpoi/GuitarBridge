@@ -132,10 +132,10 @@ idle → playingRoot → waitingAnswer → showingResult → playingRoot → ...
 
 ## 技术亮点
 
-- **17.817 品距公式** — 物理准确的指板比例绘制
-- **SoLoud audio backend** — CC0 真实吉他多采样，按 MIDI 就近根音重调；过载/失真使用已有波形整形效果
+- **等宽可移动指板** — 手机与桌面均提供拖动、滚动条和把位切换按钮
+- **SoLoud audio backend** — CC0 真实吉他多采样，按 MIDI 就近根音重调并保持单一清晰音色
 - **Position-aware answers** — 精确到弦和品的寻址判定
-- **Duplicate prevention** — 同一音程组合不会重复出题
+- **Balanced interval sampling** — 每轮按音程均衡抽题，不受指板位置组合数量干扰
 - **6-state FSM** — 完整的训练生命周期管理
 
 ## 实施文档

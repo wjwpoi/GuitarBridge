@@ -9,7 +9,7 @@ And Green Guitars** recordings.
 - License: CC0-1.0 (public-domain dedication)
 - Format: mono, 48 kHz, 24-bit PCM WAV; root pitches are encoded in the file names
 
-The application keeps the existing three tone choices. `清晰` plays the raw
-recording, while `过载` and `失真` apply SoLoud's existing global wave-shaper
-effect to that real recording. The nearest bundled root is selected for each
-MIDI note and retuned with an equal-temperament playback-rate ratio.
+The application exposes one consistent clean guitar tone. The nearest bundled
+root is selected for each MIDI note and retuned with an equal-temperament
+playback-rate ratio. Legacy stored tone preferences are ignored so training
+sounds identical across devices and platforms.

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
-import '../../engine/audio_engine.dart';
 
 /// Configuration rail for the training workspace.
 ///
@@ -13,15 +12,14 @@ class TrainingOptionsWidget extends StatelessWidget {
   final String selectedScale;
   final String selectedTuning;
   final String selectedDifficulty;
-  final ToneMode currentToneMode;
   final bool showDegrees;
   final bool showNoteNames;
   final bool showFretNumbers;
+  final bool embedded;
   final ValueChanged<String> onKeyChanged;
   final ValueChanged<String> onScaleChanged;
   final ValueChanged<String> onTuningChanged;
   final ValueChanged<String> onDifficultyChanged;
-  final ValueChanged<ToneMode> onToneModeChanged;
   final VoidCallback onToggleDegrees;
   final VoidCallback onToggleNoteNames;
   final VoidCallback onToggleFretNumbers;
@@ -32,15 +30,14 @@ class TrainingOptionsWidget extends StatelessWidget {
     required this.selectedScale,
     required this.selectedTuning,
     required this.selectedDifficulty,
-    required this.currentToneMode,
     required this.showDegrees,
     required this.showNoteNames,
     required this.showFretNumbers,
+    this.embedded = false,
     required this.onKeyChanged,
     required this.onScaleChanged,
     required this.onTuningChanged,
     required this.onDifficultyChanged,
-    required this.onToneModeChanged,
     required this.onToggleDegrees,
     required this.onToggleNoteNames,
     required this.onToggleFretNumbers,
@@ -73,12 +70,12 @@ class TrainingOptionsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    final content = Padding(
+      padding: EdgeInsets.fromLTRB(20, embedded ? 4 : 18, 20, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!embedded) ...[
             const _PanelHeading(
               icon: Icons.tune_rounded,
               eyebrow: 'WORKSPACE',
@@ -86,124 +83,84 @@ class TrainingOptionsWidget extends StatelessWidget {
               trailing: '即时生效',
             ),
             const SizedBox(height: 18),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final fieldWidth = constraints.maxWidth < 300
-                    ? constraints.maxWidth
-                    : (constraints.maxWidth - 10) / 2;
-                return Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    _buildDropdown(
-                      label: '调性',
-                      value: selectedKey,
-                      items: keys,
-                      width: fieldWidth,
-                      onChanged: onKeyChanged,
-                    ),
-                    _buildDropdown(
-                      label: '音阶',
-                      value: selectedScale,
-                      items: scales,
-                      width: fieldWidth,
-                      onChanged: onScaleChanged,
-                    ),
-                    _buildDropdown(
-                      label: '调弦',
-                      value: selectedTuning,
-                      items: tunings,
-                      width: fieldWidth,
-                      onChanged: onTuningChanged,
-                    ),
-                    _buildDropdown(
-                      label: '难度',
-                      value: selectedDifficulty,
-                      items: difficulties,
-                      labels: const {
-                        'easy': '入门',
-                        'medium': '进阶',
-                        'hard': '完整指板',
-                      },
-                      width: fieldWidth,
-                      onChanged: onDifficultyChanged,
-                    ),
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: 22),
-            const _SectionLabel('指板显示'),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _buildToggleChip(
-                  label: '音名',
-                  icon: Icons.music_note_rounded,
-                  selected: showNoteNames,
-                  onTap: onToggleNoteNames,
-                ),
-                _buildToggleChip(
-                  label: '级数',
-                  icon: Icons.format_list_numbered_rounded,
-                  selected: showDegrees,
-                  onTap: onToggleDegrees,
-                ),
-                _buildToggleChip(
-                  label: '品号',
-                  icon: Icons.grid_4x4_rounded,
-                  selected: showFretNumbers,
-                  onTap: onToggleFretNumbers,
-                ),
-              ],
-            ),
-            const SizedBox(height: 22),
-            const _SectionLabel('反馈音色'),
-            const SizedBox(height: 10),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final width = (constraints.maxWidth - 16) / 3;
-                return Row(
-                  children: [
-                    _buildToneOption(
-                      ToneMode.clean,
-                      '清晰',
-                      Icons.graphic_eq_rounded,
-                      width,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildToneOption(
-                      ToneMode.overdrive,
-                      '过载',
-                      Icons.multitrack_audio_rounded,
-                      width,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildToneOption(
-                      ToneMode.distortion,
-                      '失真',
-                      Icons.bolt_rounded,
-                      width,
-                    ),
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: 9),
-            const Text(
-              '三种音色都保留清晰基频 · 数字键 1/2/3 可快速切换',
-              style: TextStyle(
-                color: AppTheme.textMuted,
-                fontSize: 10,
-                height: 1.35,
-              ),
-            ),
           ],
-        ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final fieldWidth = constraints.maxWidth < 300
+                  ? constraints.maxWidth
+                  : (constraints.maxWidth - 10) / 2;
+              return Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  _buildDropdown(
+                    label: '调性',
+                    value: selectedKey,
+                    items: keys,
+                    width: fieldWidth,
+                    onChanged: onKeyChanged,
+                  ),
+                  _buildDropdown(
+                    label: '音阶',
+                    value: selectedScale,
+                    items: scales,
+                    width: fieldWidth,
+                    onChanged: onScaleChanged,
+                  ),
+                  _buildDropdown(
+                    label: '调弦',
+                    value: selectedTuning,
+                    items: tunings,
+                    width: fieldWidth,
+                    onChanged: onTuningChanged,
+                  ),
+                  _buildDropdown(
+                    label: '难度',
+                    value: selectedDifficulty,
+                    items: difficulties,
+                    labels: const {
+                      'easy': '入门',
+                      'medium': '进阶',
+                      'hard': '完整指板',
+                    },
+                    width: fieldWidth,
+                    onChanged: onDifficultyChanged,
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 22),
+          const _SectionLabel('指板显示'),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildToggleChip(
+                label: '音名',
+                icon: Icons.music_note_rounded,
+                selected: showNoteNames,
+                onTap: onToggleNoteNames,
+              ),
+              _buildToggleChip(
+                label: '级数',
+                icon: Icons.format_list_numbered_rounded,
+                selected: showDegrees,
+                onTap: onToggleDegrees,
+              ),
+              _buildToggleChip(
+                label: '品号',
+                icon: Icons.grid_4x4_rounded,
+                selected: showFretNumbers,
+                onTap: onToggleFretNumbers,
+              ),
+            ],
+          ),
+        ],
       ),
     );
+    return embedded ? content : Card(child: content);
   }
 
   Widget _buildDropdown({
@@ -256,59 +213,6 @@ class TrainingOptionsWidget extends StatelessWidget {
       ),
       label: Text(label),
       onSelected: (_) => onTap(),
-    );
-  }
-
-  Widget _buildToneOption(
-    ToneMode mode,
-    String label,
-    IconData icon,
-    double width,
-  ) {
-    final selected = currentToneMode == mode;
-    final color = AppTheme.toneColor(mode.name);
-    return SizedBox(
-      width: width,
-      child: Material(
-        color: selected ? color.withAlpha(20) : AppTheme.subtleSurfaceColor,
-        borderRadius: BorderRadius.circular(13),
-        child: InkWell(
-          onTap: () => onToneModeChanged(mode),
-          borderRadius: BorderRadius.circular(13),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(13),
-              border: Border.all(
-                color: selected ? color : AppTheme.outlineColor,
-                width: selected ? 1.4 : 1,
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 17,
-                  color: selected ? color : AppTheme.textMuted,
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: selected
-                        ? AppTheme.textPrimary
-                        : AppTheme.textSecondary,
-                    fontSize: 11,
-                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

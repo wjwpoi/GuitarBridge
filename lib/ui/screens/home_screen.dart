@@ -45,7 +45,6 @@ class _HomeScreenState extends State<HomeScreen> {
   late String _selectedScale;
   late String _selectedTuning;
   late String _selectedDifficulty;
-  late ToneMode _currentToneMode;
   late bool _showDegrees;
   late bool _showNoteNames;
   late bool _showFretNumbers;
@@ -63,9 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _selectedScale = prefs.selectedScale;
     _selectedTuning = prefs.selectedTuning;
     _selectedDifficulty = prefs.difficulty;
-    _currentToneMode = _toneModeFromName(prefs.toneMode);
     _audioEngine.setVolume(prefs.audioVolume);
-    _audioEngine.switchToneMode(_currentToneMode);
     _showDegrees = prefs.showDegrees;
     _showNoteNames = prefs.showNoteNames;
     _showFretNumbers = prefs.showFretNumbers;
@@ -98,12 +95,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     return ScaleType.major;
   }
-
-  ToneMode _toneModeFromName(String name) => switch (name) {
-    'overdrive' => ToneMode.overdrive,
-    'distortion' => ToneMode.distortion,
-    _ => ToneMode.clean,
-  };
 
   Tuning get _currentTuning => Tuning.all.firstWhere(
     (candidate) => candidate.name == _selectedTuning,
@@ -139,12 +130,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 _onStartTraining();
               }
             },
-            const SingleActivator(LogicalKeyboardKey.digit1): () =>
-                _switchToneMode(ToneMode.clean),
-            const SingleActivator(LogicalKeyboardKey.digit2): () =>
-                _switchToneMode(ToneMode.overdrive),
-            const SingleActivator(LogicalKeyboardKey.digit3): () =>
-                _switchToneMode(ToneMode.distortion),
           },
           child: Focus(
             autofocus: true,
@@ -430,12 +415,12 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildStatus(),
-        const SizedBox(height: 14),
-        _buildOptions(),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         _buildFretboardCard(),
-        const SizedBox(height: 14),
-        _buildScaleChart(),
+        const SizedBox(height: 10),
+        _buildCollapsedOptions(),
+        const SizedBox(height: 10),
+        _buildCollapsedScaleInfo(),
       ],
     );
   }
@@ -461,7 +446,6 @@ class _HomeScreenState extends State<HomeScreen> {
         selectedScale: _selectedScale,
         selectedTuning: _selectedTuning,
         selectedDifficulty: _selectedDifficulty,
-        currentToneMode: _currentToneMode,
         showDegrees: _showDegrees,
         showNoteNames: _showNoteNames,
         showFretNumbers: _showFretNumbers,
@@ -485,7 +469,6 @@ class _HomeScreenState extends State<HomeScreen> {
           _trainingEngine.difficulty = AppConstants.difficulties[value]!;
           _persistCurrentPreferences();
         },
-        onToneModeChanged: _switchToneMode,
         onToggleDegrees: () {
           setState(() => _showDegrees = !_showDegrees);
           _persistCurrentPreferences();
@@ -501,6 +484,92 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  Widget _buildCollapsedOptions() {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        leading: const Icon(Icons.tune_rounded, color: AppTheme.secondaryColor),
+        title: const Text('训练设置'),
+        subtitle: Text(
+          '$_selectedKey · $_selectedScale · ${_difficultyLabel(_selectedDifficulty)}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        children: [
+          TrainingOptionsWidget(
+            embedded: true,
+            selectedKey: _selectedKey,
+            selectedScale: _selectedScale,
+            selectedTuning: _selectedTuning,
+            selectedDifficulty: _selectedDifficulty,
+            showDegrees: _showDegrees,
+            showNoteNames: _showNoteNames,
+            showFretNumbers: _showFretNumbers,
+            onKeyChanged: (value) {
+              setState(() => _selectedKey = value);
+              _trainingEngine.currentKey = value;
+              _persistCurrentPreferences();
+            },
+            onScaleChanged: (value) {
+              setState(() => _selectedScale = value);
+              _trainingEngine.scaleType = _scaleTypeFromName(value);
+              _persistCurrentPreferences();
+            },
+            onTuningChanged: (value) {
+              setState(() => _selectedTuning = value);
+              _configureEngine();
+              _persistCurrentPreferences();
+            },
+            onDifficultyChanged: (value) {
+              setState(() => _selectedDifficulty = value);
+              _trainingEngine.difficulty = AppConstants.difficulties[value]!;
+              _persistCurrentPreferences();
+            },
+            onToggleDegrees: () {
+              setState(() => _showDegrees = !_showDegrees);
+              _persistCurrentPreferences();
+            },
+            onToggleNoteNames: () {
+              setState(() => _showNoteNames = !_showNoteNames);
+              _persistCurrentPreferences();
+            },
+            onToggleFretNumbers: () {
+              setState(() => _showFretNumbers = !_showFretNumbers);
+              _persistCurrentPreferences();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCollapsedScaleInfo() {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        leading: const Icon(
+          Icons.info_outline_rounded,
+          color: AppTheme.secondaryColor,
+        ),
+        title: const Text('音阶信息'),
+        subtitle: Text('$_selectedKey · $_selectedScale'),
+        children: [
+          ScaleChartWidget(
+            embedded: true,
+            selectedKey: _selectedKey,
+            scaleType: _scaleTypeFromName(_selectedScale),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _difficultyLabel(String value) => switch (value) {
+    'medium' => '进阶',
+    'hard' => '完整指板',
+    _ => '入门',
+  };
 
   Widget _buildStatus() {
     return Semantics(
@@ -522,10 +591,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildFretboardCard() {
+    final isNarrow = MediaQuery.sizeOf(context).width < 600;
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+        padding: EdgeInsets.fromLTRB(
+          isNarrow ? 12 : 20,
+          isNarrow ? 14 : 18,
+          isNarrow ? 12 : 20,
+          isNarrow ? 14 : 20,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -661,14 +736,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) setState(() {});
   }
 
-  void _switchToneMode(ToneMode mode) {
-    if (_currentToneMode != mode) {
-      setState(() => _currentToneMode = mode);
-    }
-    _audioEngine.switchToneMode(mode);
-    _persistCurrentPreferences();
-  }
-
   Future<void> _onStartTraining() async {
     if (!await _ensureAudioReady()) {
       if (mounted) {
@@ -740,8 +807,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ..selectedKey = _selectedKey
       ..selectedScale = _selectedScale
       ..selectedTuning = _selectedTuning
-      ..difficulty = _selectedDifficulty
-      ..toneMode = _currentToneMode.name;
+      ..difficulty = _selectedDifficulty;
     widget.storage.savePreferences(prefs);
   }
 
@@ -751,11 +817,9 @@ class _HomeScreenState extends State<HomeScreen> {
       _showDegrees = prefs.showDegrees;
       _showNoteNames = prefs.showNoteNames;
       _showFretNumbers = prefs.showFretNumbers;
-      _currentToneMode = _toneModeFromName(prefs.toneMode);
     });
     _audioEngine.setVolume(prefs.audioVolume);
     _trainingEngine.questionsPerSession = prefs.questionsPerSession;
-    _audioEngine.switchToneMode(_currentToneMode);
     widget.storage.savePreferences(prefs);
   }
 }

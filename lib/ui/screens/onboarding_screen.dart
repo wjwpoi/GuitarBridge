@@ -153,7 +153,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         Text(
           widget.requiresAudioActivation
               ? '浏览器首次需要一次点击来激活声音；建议佩戴耳机。'
-              : '首次建议佩戴耳机，并使用「清晰」音色。',
+              : '首次建议佩戴耳机，训练全程使用清晰的真实吉他音色。',
           style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
         ),
       ],

@@ -1,7 +1,5 @@
 import 'dart:math' as math;
 
-import 'audio_engine.dart';
-
 /// Real-guitar multisample layout used by the audio engine.
 ///
 /// The bundled samples are the CC0 String Studio / Karoryfer electric-guitar
@@ -35,9 +33,8 @@ class SampleConfig {
     88,
   ];
 
-  static List<String> requiredSamples(ToneMode mode) => rootMidis
-      .map((rootMidi) => samplePathForRoot(mode, rootMidi))
-      .toList(growable: false);
+  static List<String> get requiredSamples =>
+      rootMidis.map(samplePathForRoot).toList(growable: false);
 
   /// Selects the closest recorded root for a target MIDI note.
   static int nearestSampleMidi(int targetMidi) {
@@ -53,10 +50,10 @@ class SampleConfig {
     return nearest;
   }
 
-  static String samplePath(ToneMode mode, int midiNote) =>
-      samplePathForRoot(mode, nearestSampleMidi(midiNote));
+  static String samplePath(int midiNote) =>
+      samplePathForRoot(nearestSampleMidi(midiNote));
 
-  static String samplePathForRoot(ToneMode mode, int rootMidi) =>
+  static String samplePathForRoot(int rootMidi) =>
       '$sampleDirectory/${rootMidi}_v100_rr1.wav';
 
   /// Playback-rate ratio needed to retune a recorded root to the target note.

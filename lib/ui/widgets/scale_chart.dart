@@ -7,11 +7,13 @@ import '../../models/scale.dart';
 class ScaleChartWidget extends StatelessWidget {
   final String selectedKey;
   final ScaleType scaleType;
+  final bool embedded;
 
   const ScaleChartWidget({
     super.key,
     required this.selectedKey,
     required this.scaleType,
+    this.embedded = false,
   });
 
   @override
@@ -23,57 +25,56 @@ class ScaleChartWidget extends StatelessWidget {
     final keySig = KeySignature(tonic, scaleType);
     final notes = keySig.notesInKey(octave: 4);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 17, 20, 19),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: AppTheme.secondaryColor.withAlpha(14),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.music_note_rounded,
-                    size: 17,
-                    color: AppTheme.secondaryColor,
-                  ),
+    final content = Padding(
+      padding: const EdgeInsets.fromLTRB(20, 17, 20, 19),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppTheme.secondaryColor.withAlpha(14),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    keySig.displayName,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+                child: const Icon(
+                  Icons.music_note_rounded,
+                  size: 17,
+                  color: AppTheme.secondaryColor,
                 ),
-                Text(
-                  '${notes.length} 个音级',
-                  style: Theme.of(context).textTheme.labelMedium,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  keySig.displayName,
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
-              ],
-            ),
-            const SizedBox(height: 15),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (var index = 0; index < notes.length; index++)
-                  _scaleNote(
-                    degree: ScaleDegree.values[index].roman,
-                    note: NoteName.values[notes[index] % 12].sharpName,
-                    isTonic: index == 0,
-                  ),
-              ],
-            ),
-          ],
-        ),
+              ),
+              Text(
+                '${notes.length} 个音级',
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (var index = 0; index < notes.length; index++)
+                _scaleNote(
+                  degree: ScaleDegree.values[index].roman,
+                  note: NoteName.values[notes[index] % 12].sharpName,
+                  isTonic: index == 0,
+                ),
+            ],
+          ),
+        ],
       ),
     );
+    return embedded ? content : Card(child: content);
   }
 
   Widget _scaleNote({

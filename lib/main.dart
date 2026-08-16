@@ -71,7 +71,7 @@ class _GuitarBridgeAppState extends State<GuitarBridgeApp> {
     return MaterialApp(
       title: 'GuitarBridge',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.trainingTheme('clean'),
+      theme: AppTheme.trainingTheme(),
       home: _showOnboarding
           ? OnboardingScreen(
               requiresAudioActivation: kIsWeb && !widget.audioEngine.isReady,

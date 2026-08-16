@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/guitar_math.dart';
@@ -12,7 +15,7 @@ import '../../models/tuning.dart';
 ///
 /// Every cell keeps the same width at every fret, so note names stay legible
 /// and touch targets stay predictable on desktop, web and mobile.
-class FretboardWidget extends StatelessWidget {
+class FretboardWidget extends StatefulWidget {
   final TrainingEngine trainingEngine;
   final Tuning tuning;
   final ScaleType scaleType;
@@ -38,11 +41,65 @@ class FretboardWidget extends StatelessWidget {
     this.visibleFrets = 23,
   });
 
+  @override
+  State<FretboardWidget> createState() => _FretboardWidgetState();
+}
+
+class _FretboardWidgetState extends State<FretboardWidget> {
+  late final ScrollController _scrollController;
+  int _firstVisibleFret = 0;
+
+  TrainingEngine get trainingEngine => widget.trainingEngine;
+  Tuning get tuning => widget.tuning;
+  ScaleType get scaleType => widget.scaleType;
+  String get selectedKey => widget.selectedKey;
+  bool get showDegrees => widget.showDegrees;
+  bool get showNoteNames => widget.showNoteNames;
+  bool get showFretNumbers => widget.showFretNumbers;
+  ValueChanged<FretPosition> get onFretTapped => widget.onFretTapped;
+  int get startFret => widget.startFret;
+  int get visibleFrets => widget.visibleFrets;
+
   static const double _cellWidth = 58;
   static const double _rowHeight = 52;
   static const double _stringRailWidth = 68;
   static const double _headerHeight = 38;
   static const Set<int> _markerFrets = {3, 5, 7, 9, 12, 15, 17, 19, 21};
+
+  @override
+  void initState() {
+    super.initState();
+    _firstVisibleFret = startFret;
+    _scrollController = ScrollController()..addListener(_updateVisibleRange);
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..removeListener(_updateVisibleRange)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _updateVisibleRange() {
+    final first = startFret + (_scrollController.offset / _cellWidth).floor();
+    if (first != _firstVisibleFret && mounted) {
+      setState(() => _firstVisibleFret = first);
+    }
+  }
+
+  Future<void> _scrollByFrets(int fretDelta) async {
+    if (!_scrollController.hasClients) return;
+    final target = (_scrollController.offset + fretDelta * _cellWidth).clamp(
+      0.0,
+      _scrollController.position.maxScrollExtent,
+    );
+    await _scrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,48 +111,162 @@ class FretboardWidget extends StatelessWidget {
       scaleType,
     );
 
-    return ListenableBuilder(
-      listenable: trainingEngine,
-      builder: (context, _) {
-        return DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppTheme.fretboardWood,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.outlineColor),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(15),
-            child: SizedBox(
-              height: _headerHeight + tuning.stringCount * _rowHeight,
-              child: Row(
-                children: [
-                  _buildStringRail(),
-                  Container(width: 1, color: AppTheme.outlineColor),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: SizedBox(
-                        width: visibleFrets * _cellWidth,
-                        child: Column(
-                          children: [
-                            _buildFretHeader(),
-                            for (
-                              var stringIndex = 0;
-                              stringIndex < tuning.stringCount;
-                              stringIndex++
-                            )
-                              _buildStringRow(context, stringIndex, keySig),
-                          ],
-                        ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final boardViewportWidth = math.max(
+          _cellWidth,
+          constraints.maxWidth - _stringRailWidth - 1,
+        );
+        final onScreenFrets = math.max(
+          1,
+          (boardViewportWidth / _cellWidth).floor(),
+        );
+        final lastVisibleFret = math.min(
+          startFret + visibleFrets - 1,
+          _firstVisibleFret + onScreenFrets - 1,
+        );
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildNavigationBar(
+              context,
+              firstFret: _firstVisibleFret,
+              lastFret: lastVisibleFret,
+            ),
+            const SizedBox(height: 8),
+            ListenableBuilder(
+              listenable: trainingEngine,
+              builder: (context, _) {
+                return DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppTheme.fretboardWood,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.outlineColor),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child: SizedBox(
+                      height: _headerHeight + tuning.stringCount * _rowHeight,
+                      child: Row(
+                        children: [
+                          _buildStringRail(),
+                          Container(width: 1, color: AppTheme.outlineColor),
+                          Expanded(
+                            child: ScrollConfiguration(
+                              behavior: ScrollConfiguration.of(context)
+                                  .copyWith(
+                                    dragDevices: const {
+                                      PointerDeviceKind.touch,
+                                      PointerDeviceKind.mouse,
+                                      PointerDeviceKind.stylus,
+                                      PointerDeviceKind.trackpad,
+                                    },
+                                  ),
+                              child: Scrollbar(
+                                controller: _scrollController,
+                                thumbVisibility: true,
+                                interactive: true,
+                                thickness: 5,
+                                radius: const Radius.circular(99),
+                                child: SingleChildScrollView(
+                                  controller: _scrollController,
+                                  scrollDirection: Axis.horizontal,
+                                  child: SizedBox(
+                                    width: visibleFrets * _cellWidth,
+                                    child: Column(
+                                      children: [
+                                        _buildFretHeader(),
+                                        for (
+                                          var stringIndex = 0;
+                                          stringIndex < tuning.stringCount;
+                                          stringIndex++
+                                        )
+                                          _buildStringRow(
+                                            context,
+                                            stringIndex,
+                                            keySig,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ],
-              ),
+                );
+              },
             ),
-          ),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildNavigationBar(
+    BuildContext context, {
+    required int firstFret,
+    required int lastFret,
+  }) {
+    final atStart = firstFret <= startFret;
+    final atEnd = _scrollController.hasClients
+        ? _scrollController.offset >=
+              _scrollController.position.maxScrollExtent - 1
+        : visibleFrets <= 1;
+    return Container(
+      height: 42,
+      padding: const EdgeInsets.only(left: 12, right: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.subtleSurfaceColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.outlineColor),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.pan_tool_alt_rounded,
+            size: 16,
+            color: AppTheme.secondaryColor,
+          ),
+          const SizedBox(width: 7),
+          Text(
+            '$firstFret–$lastFret 品',
+            style: const TextStyle(
+              color: AppTheme.textPrimary,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(width: 8),
+          if (MediaQuery.sizeOf(context).width >= 430)
+            const Expanded(
+              child: Text(
+                '拖动指板、滚动条，或使用箭头切换把位',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: AppTheme.textMuted, fontSize: 10),
+              ),
+            )
+          else
+            const Spacer(),
+          IconButton(
+            onPressed: atStart ? null : () => _scrollByFrets(-4),
+            tooltip: '向低把位移动',
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.chevron_left_rounded),
+          ),
+          IconButton(
+            onPressed: atEnd ? null : () => _scrollByFrets(4),
+            tooltip: '向高把位移动',
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.chevron_right_rounded),
+          ),
+        ],
+      ),
     );
   }
 

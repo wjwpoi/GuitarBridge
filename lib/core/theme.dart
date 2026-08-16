@@ -31,20 +31,9 @@ class AppTheme {
   static const double contentMaxWidth = 1440;
   static const double panelRadius = 22;
 
-  static Color toneColor(String toneMode) {
-    switch (toneMode.toLowerCase()) {
-      case 'overdrive':
-        return const Color(0xFFFFB86B);
-      case 'distortion':
-        return const Color(0xFFFF7185);
-      default:
-        return primaryColor;
-    }
-  }
-
-  static ThemeData trainingTheme(String toneMode) {
-    final tone = toneColor(toneMode);
-    final scheme = ColorScheme.light(
+  static ThemeData trainingTheme() {
+    const tone = primaryColor;
+    const scheme = ColorScheme.light(
       primary: tone,
       onPrimary: Colors.white,
       secondary: secondaryColor,
@@ -142,7 +131,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: tone, width: 1.4),
+          borderSide: const BorderSide(color: tone, width: 1.4),
         ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
       ),
@@ -197,7 +186,7 @@ class AppTheme {
         side: const BorderSide(color: outlineColor),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         labelStyle: const TextStyle(color: textSecondary, fontSize: 12),
-        secondaryLabelStyle: TextStyle(
+        secondaryLabelStyle: const TextStyle(
           color: tone,
           fontSize: 12,
           fontWeight: FontWeight.w700,
@@ -221,7 +210,7 @@ class AppTheme {
               states.contains(WidgetState.selected) ? tone : outlineColor,
         ),
       ),
-      progressIndicatorTheme: ProgressIndicatorThemeData(
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: tone,
         linearTrackColor: outlineColor,
       ),
