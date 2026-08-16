@@ -23,7 +23,9 @@ void main() {
   });
 
   test('adding a streak twice on the same local day is idempotent', () async {
-    final now = DateTime.now();
+    // Keep the fixture away from midnight so adding one hour cannot make this
+    // test depend on the wall-clock time at which CI happens to run.
+    final now = DateTime(2026, 8, 16, 12);
     SharedPreferences.setMockInitialValues({});
     final storage = StorageService(await SharedPreferences.getInstance());
 

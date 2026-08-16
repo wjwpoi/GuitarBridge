@@ -32,6 +32,7 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   bool _disposed = false;
   SoundHandle? _activeHandle;
   int _playbackGeneration = 0;
+  Future<void>? _initialization;
 
   AudioEngineState get state => _state;
   ToneMode get currentMode => _currentMode;
@@ -48,8 +49,23 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   static double frequencyForMidi(int midiNote) =>
       440.0 * pow(2.0, (midiNote - 69) / 12.0);
 
-  Future<void> initialize() async {
-    if (_state == AudioEngineState.ready || _disposed) return;
+  Future<void> initialize() {
+    if (_state == AudioEngineState.ready || _disposed) {
+      return Future<void>.value();
+    }
+    final activeInitialization = _initialization;
+    if (activeInitialization != null) return activeInitialization;
+
+    final initialization = _initializeOnce();
+    _initialization = initialization;
+    return initialization.whenComplete(() {
+      if (identical(_initialization, initialization)) {
+        _initialization = null;
+      }
+    });
+  }
+
+  Future<void> _initializeOnce() async {
     _state = AudioEngineState.loading;
     _error = null;
     notifyListeners();

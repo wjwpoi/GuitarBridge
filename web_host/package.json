@@ -1,0 +1,19 @@
+{
+  "name": "guitarbridge-web-host",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "stage": "node scripts/stage-flutter.mjs",
+    "build": "node scripts/build-host.mjs",
+    "test": "node scripts/smoke-worker.mjs"
+  },
+  "devDependencies": {
+    "@openai/sites-vite-plugin": "0.1.0",
+    "typescript": "5.9.3",
+    "vite": "8.0.13"
+  }
+}

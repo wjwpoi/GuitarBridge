@@ -2,10 +2,22 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
 
-class OnboardingScreen extends StatelessWidget {
-  final VoidCallback onComplete;
+class OnboardingScreen extends StatefulWidget {
+  final Future<void> Function() onComplete;
+  final bool requiresAudioActivation;
 
-  const OnboardingScreen({super.key, required this.onComplete});
+  const OnboardingScreen({
+    super.key,
+    required this.onComplete,
+    this.requiresAudioActivation = false,
+  });
+
+  @override
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
+}
+
+class _OnboardingScreenState extends State<OnboardingScreen> {
+  bool _isCompleting = false;
 
   @override
   Widget build(BuildContext context) {
@@ -117,14 +129,32 @@ class OnboardingScreen extends StatelessWidget {
         ),
         const SizedBox(height: 36),
         ElevatedButton.icon(
-          onPressed: onComplete,
-          icon: const Icon(Icons.arrow_forward_rounded),
-          label: const Text('进入训练工作台'),
+          onPressed: _isCompleting ? null : _complete,
+          icon: _isCompleting
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(
+                  widget.requiresAudioActivation
+                      ? Icons.volume_up_rounded
+                      : Icons.arrow_forward_rounded,
+                ),
+          label: Text(
+            _isCompleting
+                ? '正在准备声音…'
+                : widget.requiresAudioActivation
+                ? '开启声音，进入训练'
+                : '进入训练工作台',
+          ),
         ),
         const SizedBox(height: 12),
-        const Text(
-          '首次建议佩戴耳机，并使用「清晰」音色。',
-          style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
+        Text(
+          widget.requiresAudioActivation
+              ? '浏览器首次需要一次点击来激活声音；建议佩戴耳机。'
+              : '首次建议佩戴耳机，并使用「清晰」音色。',
+          style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
         ),
       ],
     );
@@ -158,6 +188,15 @@ class OnboardingScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _complete() async {
+    setState(() => _isCompleting = true);
+    try {
+      await widget.onComplete();
+    } finally {
+      if (mounted) setState(() => _isCompleting = false);
+    }
   }
 }
 

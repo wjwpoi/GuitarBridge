@@ -464,3 +464,37 @@ CMake Error at CMakeLists.txt:3 (project):
 - 采样来源：CC0-1.0 的 String Studio / Karoryfer Black And Green Guitars；19 个 48 kHz、24-bit 单声道 WAV 根音，逐文件 SHA-256 校验后纳入 `assets/samples/guitar/`。
 - 播放路径：`SoLoud.loadAsset` 加载真实录音，按最近根音计算等律播放速率；清晰、过载、失真继续复用原有三个选择，后两者使用 SoLoud 全局波形整形效果。
 - CI 结果：run [31236555090](https://github.com/wjwpoi/GuitarBridge/actions/runs/31236555090) 的质量门禁及 Android、iOS、macOS、Windows、Linux、Web 构建全部成功。
+
+## 当前阶段：Web/PWA 交付（2026-08-16）
+
+### 目标
+
+- 从 `agent/ui-audio-v2` 建立独立的 `agent/web-app` 分支，把现有训练闭环交付为可通过浏览器直接访问的网页应用。
+- 保留 Flutter 共享训练引擎、真实吉他采样、等宽指板和本地练习记录；不复制一套独立且容易漂移的业务逻辑。
+- 浏览器首次访问必须先由用户手势激活音频，避免自动播放策略导致页面启动后无声。
+- 支持桌面、平板和手机响应式布局，并提供可添加到主屏幕的 PWA 元数据与品牌化加载状态。
+
+### 允许修改
+
+- `lib/main.dart`
+- `lib/engine/audio_engine.dart`
+- `lib/ui/screens/home_screen.dart`
+- `lib/ui/screens/onboarding_screen.dart`
+- `web/`
+- Web/PWA 对应测试、CI、部署配置、README 和本文档
+
+### 验收
+
+- 初次访问能在页面渲染后通过明确按钮激活声音；已完成引导的用户也可从训练页直接激活或重试。
+- 点击指板的每个音符仍播放对应真实吉他音高；开始训练、重播基准音和目标音的行为与桌面版一致。
+- 390px 手机宽度与桌面宽屏都能完成训练，指板保持等宽并可横向滚动。
+- PWA manifest 使用 GuitarBridge 品牌名称、主题色、横竖屏自适应和独立窗口模式。
+- `dart format --output=none --set-exit-if-changed .`、`flutter analyze`、`flutter test`、`flutter build web --release` 全部通过，并完成可访问网页部署。
+
+### 本地验证结果
+
+- `flutter analyze --no-pub`：通过，无静态分析问题。
+- `flutter test --no-pub`：108 项全部通过；新增浏览器音频激活等待态测试，并修复跨午夜会随机失败的 streak 测试夹具。
+- `flutter build web --release --no-pub`：通过；产物包含 PWA service worker、SoLoud WebAssembly、19 个真实吉他采样、新 PWA 图标和社交分享图。
+- `pnpm --dir web_host run build`：通过；生成 Sites 所需的 Cloudflare Worker ESM 与静态资源目录。
+- `pnpm --dir web_host test`：通过；验证 HTML 社交图片绝对地址替换与安全响应头。

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'engine/audio_engine.dart';
@@ -19,7 +20,12 @@ void main() async {
 
   // 加载数据
   await streakManager.loadData();
-  await audioEngine.initialize();
+  // Browsers only unlock Web Audio from a user gesture. Rendering the app
+  // first lets onboarding, the start button, or a fret tap perform that
+  // activation instead of leaving the page stuck before its first frame.
+  if (!kIsWeb) {
+    await audioEngine.initialize();
+  }
 
   final userPrefs = await storage.getPreferences();
 
@@ -67,7 +73,10 @@ class _GuitarBridgeAppState extends State<GuitarBridgeApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.trainingTheme('clean'),
       home: _showOnboarding
-          ? OnboardingScreen(onComplete: _onOnboardingComplete)
+          ? OnboardingScreen(
+              requiresAudioActivation: kIsWeb && !widget.audioEngine.isReady,
+              onComplete: _onOnboardingComplete,
+            )
           : HomeScreen(
               audioEngine: widget.audioEngine,
               storage: widget.storage,
@@ -77,7 +86,10 @@ class _GuitarBridgeAppState extends State<GuitarBridgeApp> {
     );
   }
 
-  void _onOnboardingComplete() async {
+  Future<void> _onOnboardingComplete() async {
+    if (kIsWeb && !widget.audioEngine.isReady) {
+      await widget.audioEngine.initialize();
+    }
     widget.userPreferences.hasCompletedOnboarding = true;
     await widget.storage.savePreferences(widget.userPreferences);
     if (mounted) setState(() => _showOnboarding = false);

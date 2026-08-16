@@ -353,6 +353,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildAudioNotice() {
     final isError = _audioEngine.state == AudioEngineState.error;
+    final needsActivation =
+        _audioEngine.state == AudioEngineState.uninitialized;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -386,17 +388,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   ? (_audioEngine.error ?? '音频初始化失败')
                   : _audioEngine.state == AudioEngineState.loading
                   ? '正在准备音频引擎…'
-                  : '音频引擎尚未初始化',
+                  : '浏览器需要你点击一次来开启声音，之后即可直接训练。',
               style: const TextStyle(
                 color: AppTheme.textSecondary,
                 fontSize: 12,
               ),
             ),
           ),
-          if (isError)
+          if (isError || needsActivation)
             TextButton(
-              onPressed: _audioEngine.initialize,
-              child: const Text('重试'),
+              onPressed: _ensureAudioReady,
+              child: Text(isError ? '重试' : '开启声音'),
             ),
         ],
       ),
@@ -668,7 +670,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _onStartTraining() async {
-    if (!_audioEngine.isReady) {
+    if (!await _ensureAudioReady()) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -685,13 +687,27 @@ class _HomeScreenState extends State<HomeScreen> {
     await _trainingEngine.start();
   }
 
-  void _onFretTapped(FretPosition position) {
+  Future<void> _onFretTapped(FretPosition position) async {
+    if (!await _ensureAudioReady()) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('无法开启声音，请检查浏览器的声音权限。')));
+      }
+      return;
+    }
     if (_trainingEngine.state != TrainingState.waitingAnswer) {
-      _audioEngine.playNote(position.midi);
+      await _audioEngine.playNote(position.midi);
       return;
     }
     HapticManager.light();
     _trainingEngine.submitAnswer(position);
+  }
+
+  Future<bool> _ensureAudioReady() async {
+    if (_audioEngine.isReady) return true;
+    await _audioEngine.initialize();
+    return _audioEngine.isReady;
   }
 
   void _checkCompletion() {

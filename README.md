@@ -53,6 +53,21 @@ flutter run -d macos
 flutter run -d chrome
 ```
 
+### Web / PWA
+
+Web 版复用同一套训练引擎、等宽指板、真实吉他采样和本地练习记录。首次访问时点击「开启声音，进入训练」，浏览器会在这次用户操作中激活音频；之后即可点击任意指板音符试听或开始训练。
+
+- 桌面、平板和手机使用同一网址，布局会自动适配；
+- 支持浏览器「添加到主屏幕」或「安装应用」；
+- 设置、练习记录与连续练习天数保存在当前浏览器；
+- Release 构建包含 PWA 离线缓存、SoLoud WebAssembly 和 19 个真实吉他采样。
+
+```bash
+flutter build web --release
+pnpm --dir web_host install --frozen-lockfile
+pnpm --dir web_host run build
+```
+
 ### 测试
 
 ```bash

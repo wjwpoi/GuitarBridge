@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:guitar_bridge/ui/screens/onboarding_screen.dart';
 import 'package:guitar_bridge/ui/widgets/completion_animation.dart';
 import 'package:guitar_bridge/ui/widgets/training_status.dart';
 import 'package:guitar_bridge/ui/widgets/scale_chart.dart';
@@ -7,6 +10,32 @@ import 'package:guitar_bridge/engine/training_engine.dart';
 import 'package:guitar_bridge/models/scale.dart';
 
 void main() {
+  group('OnboardingScreen', () {
+    testWidgets('explains and waits for browser audio activation', (
+      tester,
+    ) async {
+      final activation = Completer<void>();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: OnboardingScreen(
+            requiresAudioActivation: true,
+            onComplete: () => activation.future,
+          ),
+        ),
+      );
+
+      expect(find.text('开启声音，进入训练'), findsOneWidget);
+      expect(find.textContaining('浏览器首次需要一次点击'), findsOneWidget);
+
+      await tester.tap(find.text('开启声音，进入训练'));
+      await tester.pump();
+      expect(find.text('正在准备声音…'), findsOneWidget);
+
+      activation.complete();
+      await tester.pumpAndSettle();
+    });
+  });
+
   group('CompletionAnimationWidget', () {
     testWidgets('renders completion info correctly', (tester) async {
       await tester.pumpWidget(

@@ -313,8 +313,30 @@ jobs:
           channel: stable
           cache: true
 
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.19.0'
+          cache: pnpm
+          cache-dependency-path: web_host/pnpm-lock.yaml
+
       - run: flutter pub get
       - run: flutter build web --release
+      - name: Build deployable Web host
+        shell: bash
+        run: |
+          pnpm --dir web_host install --frozen-lockfile
+          pnpm --dir web_host run build
+          pnpm --dir web_host test
+          test -f dist/server/index.js
+          test -f dist/client/index.html
+          test -f dist/client/og.png
+          test -f dist/client/assets/packages/flutter_soloud/web/libflutter_soloud_plugin.wasm
+          test "$(find dist/client/assets/assets/samples/guitar -type f -name '*.wav' | wc -l)" -eq 19
       - name: Package Web bundle
         shell: bash
         run: |

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -18,23 +18,108 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="GuitarBridge 跨平台吉他音程与指板训练工具。">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#F3F0E9">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="GuitarBridge 用真实吉他采样连接相对音准与等宽指板训练，打开浏览器即可练习。">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="GuitarBridge · 听见音程，看懂指板">
+  <meta property="og:description" content="真实吉他采样、相对音准训练与等宽指板，在任意设备的浏览器中直接练习。">
+  <meta property="og:image" content="__GB_ORIGIN__/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="GuitarBridge · 听见音程，看懂指板">
+  <meta name="twitter:description" content="真实吉他采样、相对音准训练与等宽指板，在任意设备的浏览器中直接练习。">
+  <meta name="twitter:image" content="__GB_ORIGIN__/og.png">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="guitar_bridge">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="GuitarBridge">
+  <link rel="apple-touch-icon" href="icons/GuitarBridge-192.png">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" href="guitarbridge-favicon.png"/>
 
-  <title>GuitarBridge</title>
+  <title>GuitarBridge · 吉他音程与指板训练</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      background: #f3f0e9;
+    }
+
+    body {
+      overflow: hidden;
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    }
+
+    #gb-loading {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: grid;
+      place-items: center;
+      color: #1d2a2b;
+      background:
+        radial-gradient(circle at 85% 12%, rgba(36, 92, 88, .12), transparent 34%),
+        radial-gradient(circle at 12% 88%, rgba(215, 97, 77, .13), transparent 36%),
+        #f3f0e9;
+      transition: opacity 180ms ease;
+    }
+
+    .gb-loading-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 22px;
+      border: 1px solid #d8d3c8;
+      border-radius: 22px;
+      background: rgba(255, 252, 247, .9);
+      box-shadow: 0 18px 60px rgba(29, 42, 43, .08);
+    }
+
+    .gb-loading-mark {
+      display: grid;
+      width: 46px;
+      height: 46px;
+      place-items: center;
+      border-radius: 14px;
+      color: white;
+      background: linear-gradient(135deg, #d7614d, #245c58);
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -.5px;
+    }
+
+    .gb-loading-copy strong,
+    .gb-loading-copy span { display: block; }
+    .gb-loading-copy strong { font-size: 16px; }
+    .gb-loading-copy span { margin-top: 4px; color: #7c8989; font-size: 11px; }
+  </style>
 </head>
 <body>
+  <div id="gb-loading" role="status" aria-live="polite">
+    <div class="gb-loading-card">
+      <div class="gb-loading-mark" aria-hidden="true">GB</div>
+      <div class="gb-loading-copy">
+        <strong>GuitarBridge</strong>
+        <span>正在准备指板与真实吉他采样…</span>
+      </div>
+    </div>
+  </div>
+  <noscript>GuitarBridge 需要启用 JavaScript 才能运行训练。</noscript>
   <script src="assets/packages/flutter_soloud/web/libflutter_soloud_plugin.js" defer></script>
   <script src="assets/packages/flutter_soloud/web/init_module.dart.js" defer></script>
   <script src="flutter_bootstrap.js" defer></script>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      const loader = document.getElementById('gb-loading');
+      if (!loader) return;
+      loader.style.opacity = '0';
+      window.setTimeout(() => loader.remove(), 180);
+    });
+  </script>
 </body>
 </html>

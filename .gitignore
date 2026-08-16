@@ -4,6 +4,12 @@
 .packages
 build/
 coverage/
+dist/
+node_modules/
+web_host/index.html
+web_host/public/
+web_host/.openai/
+web_host/.wrangler/
 *.iml
 .idea/
 .vscode/
