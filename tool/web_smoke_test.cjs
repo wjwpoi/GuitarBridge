@@ -31,7 +31,9 @@ const server = http.createServer((request, response) => {
 async function semantics(page) {
   const placeholder = page.locator('flt-semantics-placeholder');
   await placeholder.waitFor({ state: 'attached' });
-  await placeholder.click({ force: true });
+  // This offscreen placeholder is activated by assistive technology, not a
+  // pointer hit test. Enable semantics before using normal visible buttons.
+  await placeholder.dispatchEvent('click');
   await page.getByRole('button', { name: '进入训练工作台', exact: true }).click();
   await page.getByRole('button', { name: '开始训练', exact: true }).waitFor();
 }
@@ -42,6 +44,9 @@ async function scenario(browser, origin, missingWave) {
   page.setDefaultTimeout(60000);
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error') console.error('Browser:', message.text());
+  });
   const requests = [];
   page.on('request', (request) => requests.push(request.url()));
   let releaseWasm;
