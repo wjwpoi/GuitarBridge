@@ -45,6 +45,7 @@ jobs:
       - run: dart format --output=none --set-exit-if-changed .
       - run: flutter analyze
       - run: flutter test --coverage
+      - run: node --test tool/web_audio_bootstrap_test.cjs
       - name: Validate bundled samples
         shell: bash
         run: |
@@ -314,7 +315,7 @@ jobs:
           cache: true
 
       - run: flutter pub get
-      - run: flutter build web --release
+      - run: flutter build web --release --no-web-resources-cdn
       - name: Package Web bundle
         shell: bash
         run: |
@@ -333,11 +334,21 @@ jobs:
             sleep 1
           done
           test -s /tmp/guitarbridge-web-index.html
-          grep -F 'flutter_bootstrap.js' /tmp/guitarbridge-web-index.html
+          grep -F 'audio_bootstrap.js' /tmp/guitarbridge-web-index.html
           grep -F 'assets/packages/flutter_soloud/web/libflutter_soloud_plugin.js' /tmp/guitarbridge-web-index.html
+          curl --fail --silent --show-error http://127.0.0.1:4173/audio_bootstrap.js \
+            -o /tmp/guitarbridge-audio-bootstrap.js
+          grep -F 'flutter_bootstrap.js' /tmp/guitarbridge-audio-bootstrap.js
           curl --fail --silent --show-error \
             http://127.0.0.1:4173/assets/packages/flutter_soloud/web/libflutter_soloud_plugin.wasm \
             -o /dev/null
+      - name: Browser smoke test Web training and recovery
+        shell: bash
+        run: |
+          smoke_dir="$RUNNER_TEMP/guitarbridge-browser-smoke"
+          npm install --prefix "$smoke_dir" --no-audit --no-fund --no-package-lock playwright@1.62.1
+          "$smoke_dir/node_modules/.bin/playwright" install --with-deps chromium
+          NODE_PATH="$smoke_dir/node_modules" node tool/web_smoke_test.cjs build/web
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: guitarbridge-web

@@ -1,19 +1,27 @@
 import 'dart:math' as math;
 
-import 'audio_engine.dart';
+import 'tone_mode.dart';
 
 /// Real-guitar multisample layout used by the audio engine.
 ///
 /// The bundled samples are the CC0 String Studio / Karoryfer electric-guitar
-/// recordings. They are velocity-normalized single-note WAVs whose root notes
-/// are encoded in the file name (MIDI 52 through 88, every two semitones).
+/// recordings. The original file numbers are one octave above the measured
+/// pitches: files 52 through 88 contain MIDI 40 through 76. Keep those source
+/// names for provenance, but use the sounding pitch for all playback ratios.
 class SampleConfig {
   SampleConfig._();
 
   static const String sampleDirectory = 'assets/samples/guitar';
+  static const int fileNumberOffset = 12;
 
   /// Root pitches available in the bundled real-guitar recordings.
   static const List<int> rootMidis = <int>[
+    40,
+    42,
+    44,
+    46,
+    48,
+    50,
     52,
     54,
     56,
@@ -27,12 +35,6 @@ class SampleConfig {
     72,
     74,
     76,
-    78,
-    80,
-    82,
-    84,
-    86,
-    88,
   ];
 
   static List<String> requiredSamples(ToneMode mode) => rootMidis
@@ -57,7 +59,7 @@ class SampleConfig {
       samplePathForRoot(mode, nearestSampleMidi(midiNote));
 
   static String samplePathForRoot(ToneMode mode, int rootMidi) =>
-      '$sampleDirectory/${rootMidi}_v100_rr1.wav';
+      '$sampleDirectory/${rootMidi + fileNumberOffset}_v100_rr1.wav';
 
   /// Playback-rate ratio needed to retune a recorded root to the target note.
   static double playbackSpeedForMidi(int midiNote) {
