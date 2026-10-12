@@ -1,28 +1,28 @@
-import 'dart:math';
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 
 import '../core/constants.dart';
-import 'training_audio_port.dart';
+import 'audio_backend.dart';
 import 'sample_config.dart';
+import 'tone_mode.dart';
+import 'training_audio_port.dart';
+
+export 'tone_mode.dart';
 
 enum AudioEngineState { uninitialized, loading, ready, error }
 
-enum ToneMode { clean, overdrive, distortion }
-
-/// Cross-platform audio service backed by flutter_soloud.
+/// Owns loaded samples for its lifetime; individual cues own only their voice.
 class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
-  final SoLoud _soloud = SoLoud.instance;
-  final Map<ToneMode, Map<int, AudioSource>> _sampleSources = {
-    for (final mode in ToneMode.values) mode: <int, AudioSource>{},
-  };
-  final Map<ToneMode, double> _modeGain = {
-    ToneMode.clean: 0.85,
-    ToneMode.overdrive: 0.95,
-    ToneMode.distortion: 1.0,
-  };
+  AudioEngine({AudioBackend? backend, Future<void> Function(Duration)? delay})
+    : _backend = backend ?? SoLoudAudioBackend(),
+      _delay = delay ?? Future<void>.delayed;
+
+  final AudioBackend _backend;
+  final Future<void> Function(Duration) _delay;
+  final Map<String, Future<AudioSource>> _sources = {};
 
   AudioEngineState _state = AudioEngineState.uninitialized;
   ToneMode _currentMode = ToneMode.clean;
@@ -31,157 +31,192 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   String? _error;
   bool _disposed = false;
   SoundHandle? _activeHandle;
+  int _playbackGeneration = 0;
+  int _lifecycleGeneration = 0;
+  Future<void>? _initialization;
+  Future<void>? _shutdown;
 
   AudioEngineState get state => _state;
   ToneMode get currentMode => _currentMode;
   double get volume => _volume;
   bool get isPlaying => _isPlaying;
   @override
-  bool get isReady => _state == AudioEngineState.ready;
+  bool get isReady => _state == AudioEngineState.ready && !_disposed;
   String? get error => _error;
 
-  bool hasSamples(ToneMode mode) => _sampleSources[mode]?.isNotEmpty ?? false;
+  bool hasSamples(ToneMode mode) =>
+      SampleConfig.requiredSamples(mode).isNotEmpty;
+
+  static double frequencyForMidi(int midiNote) =>
+      440.0 * pow(2.0, (midiNote - 69) / 12.0);
 
   Future<void> initialize() async {
-    if (_state == AudioEngineState.ready) return;
+    if (_disposed || isReady) return;
+    final closing = _shutdown;
+    if (closing != null) await closing;
+    if (_disposed) return;
+    final pending = _initialization;
+    if (pending != null) return pending;
+    final operation = _initialize();
+    _initialization = operation;
+    try {
+      await operation;
+    } finally {
+      if (_initialization == operation) _initialization = null;
+    }
+  }
+
+  Future<void> _initialize() async {
+    final generation = _lifecycleGeneration;
     _state = AudioEngineState.loading;
     _error = null;
     notifyListeners();
-
     try {
-      await _soloud.init(
-        sampleRate: 44100,
-        bufferSize: 2048,
-        channels: Channels.stereo,
-      );
-      await _loadSamples();
+      await _backend.initialize();
+      if (_disposed || generation != _lifecycleGeneration) return;
+      _backend.applyToneMode(_currentMode);
       _state = AudioEngineState.ready;
     } catch (error) {
+      if (_disposed || generation != _lifecycleGeneration) return;
       _state = AudioEngineState.error;
       _error = error.toString();
       debugPrint('[AudioEngine] initialization failed: $error');
     }
-    notifyListeners();
+    if (!_disposed) notifyListeners();
   }
 
-  Future<void> _loadSamples() async {
-    for (final mode in ToneMode.values) {
-      final sources = _sampleSources[mode]!;
-      for (var offset = 0; offset < SampleConfig.sampleCount; offset++) {
-        final sampleMidi = SampleConfig.firstSampleMidi + offset;
-        final path = SampleConfig.samplePath(mode, sampleMidi);
-        try {
-          sources[sampleMidi] = await _soloud.loadAsset(path);
-        } catch (error) {
-          debugPrint('[AudioEngine] missing sample $path: $error');
-        }
-      }
+  Future<AudioSource> _loadSource(String path) async {
+    final cached = _sources[path];
+    if (cached != null) return cached;
+    final pending = _backend.loadAsset(path);
+    _sources[path] = pending;
+    try {
+      return await pending;
+    } catch (_) {
+      // Failed loads must be retried after resources become available again.
+      if (_sources[path] == pending) _sources.remove(path);
+      rethrow;
     }
   }
+
+  bool _isCurrent(int generation) =>
+      generation == _playbackGeneration && !_disposed && isReady;
 
   @override
-  Future<void> playNote(int midiNote) async {
-    if (!isReady || _disposed) return;
+  Future<bool> playNote(int midiNote) async {
+    if (!isReady) return false;
+    final generation = ++_playbackGeneration;
+    final path = SampleConfig.samplePath(_currentMode, midiNote);
+    await _stopActiveHandle();
+    if (!_isCurrent(generation)) return false;
     _isPlaying = true;
+    _error = null;
     notifyListeners();
+
+    SoundHandle? handle;
     try {
-      final sample =
-          _sampleSources[_currentMode]?[SampleConfig.nearestSampleMidi(
-            midiNote,
-          )];
-      if (sample != null) {
-        await _playSample(sample, midiNote);
-      } else {
-        await _playSynthesized(midiNote);
+      final source = await _loadSource(path);
+      if (!_isCurrent(generation)) return false;
+      handle = await _backend.playPaused(source, _volume);
+      if (!_isCurrent(generation)) return false;
+      if (handle.isError || !_backend.isVoiceValid(handle)) {
+        throw StateError('Audio backend returned an invalid voice');
       }
+      _activeHandle = handle;
+      _backend.resume(handle, SampleConfig.playbackSpeedForMidi(midiNote));
+      await _delay(const Duration(milliseconds: 900));
+      return _isCurrent(generation) && _backend.isVoiceValid(handle);
     } catch (error) {
-      debugPrint('[AudioEngine] playback failed: $error');
+      // A cancelled load/play must not overwrite a newer cue's ready state.
+      if (_isCurrent(generation)) {
+        _state = AudioEngineState.error;
+        _error = '无法播放 MIDI $midiNote：$error';
+        debugPrint('[AudioEngine] playback failed: $error');
+        notifyListeners();
+      }
+      return false;
     } finally {
-      _isPlaying = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> _playSample(AudioSource source, int midiNote) async {
-    final speed = pow(2.0, SampleConfig.octaveShift(midiNote)).toDouble();
-    final handle = _activeHandle = await _soloud.play(
-      source,
-      volume: (_volume * (_modeGain[_currentMode] ?? 1.0))
-          .clamp(0.0, 1.0)
-          .toDouble(),
-    );
-    try {
-      _soloud.setRelativePlaySpeed(handle, speed);
-      final milliseconds = (800 / speed).round().clamp(120, 1800).toInt();
-      await Future<void>.delayed(Duration(milliseconds: milliseconds));
-    } finally {
-      _activeHandle = null;
-      if (_soloud.isInitialized && !handle.isError) {
-        try {
-          await _soloud.stop(handle);
-        } catch (_) {
-          // The handle can finish naturally during the delay.
-        }
+      if (handle != null) {
+        if (_activeHandle == handle) _activeHandle = null;
+        await _stopHandle(handle);
+      }
+      if (generation == _playbackGeneration) {
+        _isPlaying = false;
+        if (!_disposed) notifyListeners();
       }
     }
   }
 
-  Future<void> _playSynthesized(int midiNote) async {
-    final source = await _soloud.loadWaveform(WaveForm.sin, false, 0.25, 1);
-    final frequency = 440.0 * pow(2.0, (midiNote - 69) / 12.0);
-    _soloud.setWaveformFreq(source, frequency);
-    final handle = _activeHandle = await _soloud.play(
-      source,
-      volume: (_volume * (_modeGain[_currentMode] ?? 1.0))
-          .clamp(0.0, 1.0)
-          .toDouble(),
-    );
-    try {
-      await Future<void>.delayed(const Duration(milliseconds: 800));
-    } finally {
-      _activeHandle = null;
-      if (_soloud.isInitialized && !handle.isError) {
-        try {
-          await _soloud.stop(handle);
-        } catch (_) {
-          // The handle may already have ended.
-        }
-      }
-      if (_soloud.isInitialized) {
-        await _soloud.disposeSource(source);
+  Future<void> _stopHandle(SoundHandle handle) async {
+    if (!handle.isError && _backend.isInitialized) {
+      try {
+        await _backend.stop(handle);
+      } catch (_) {
+        // An already-ended voice is safely stopped.
       }
     }
+  }
+
+  Future<void> _stopActiveHandle() async {
+    final handle = _activeHandle;
+    _activeHandle = null;
+    if (handle != null) await _stopHandle(handle);
   }
 
   @override
   Future<void> stopAll() async {
-    final handle = _activeHandle;
-    _activeHandle = null;
+    _playbackGeneration++;
     _isPlaying = false;
-    if (handle != null && _soloud.isInitialized && !handle.isError) {
-      try {
-        await _soloud.stop(handle);
-      } catch (_) {}
-    }
+    await _stopActiveHandle();
+    if (!_disposed) notifyListeners();
   }
 
   Future<void> switchToneMode(ToneMode newMode) async {
-    if (newMode == _currentMode || _disposed) return;
+    if (_disposed) return;
     _currentMode = newMode;
+    if (isReady) _backend.applyToneMode(newMode);
     notifyListeners();
   }
 
   void setVolume(double value) {
     _volume = value.clamp(0.0, 1.0).toDouble();
-    notifyListeners();
+    if (!_disposed) notifyListeners();
   }
 
   Future<void> disposeEngine() async {
-    if (_soloud.isInitialized) {
-      await _soloud.disposeAllSources();
-      _soloud.deinit();
+    final pending = _shutdown;
+    if (pending != null) return pending;
+    final operation = _disposeBackend();
+    _shutdown = operation;
+    try {
+      await operation;
+    } finally {
+      if (_shutdown == operation) _shutdown = null;
     }
+  }
+
+  Future<void> _disposeBackend() async {
+    _lifecycleGeneration++;
+    _playbackGeneration++;
     _state = AudioEngineState.uninitialized;
+    _isPlaying = false;
+    await _stopActiveHandle();
+    // Let in-flight loads finish before deinitializing their native backend.
+    await _initialization;
+    await Future.wait(
+      _sources.values.map((source) async {
+        try {
+          await source;
+        } catch (_) {
+          // Failed loads have no resource to dispose.
+        }
+      }),
+    );
+    _sources.clear();
+    if (_backend.isInitialized) {
+      await _backend.disposeAllSources();
+      _backend.deinitialize();
+    }
     if (!_disposed) notifyListeners();
   }
 

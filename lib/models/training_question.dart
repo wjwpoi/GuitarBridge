@@ -1,7 +1,11 @@
 import 'tuning.dart';
 
 /// How a submitted fretboard answer is evaluated.
-enum AnswerMode { exactPosition, pitchClass }
+///
+/// [exactPitch] is the default for ear training because audio can identify a
+/// MIDI pitch, but it cannot encode which of several equivalent fretboard
+/// positions produced that pitch.
+enum AnswerMode { exactPitch, exactPosition, pitchClass }
 
 /// A concrete location on the fretboard.
 class FretPosition {

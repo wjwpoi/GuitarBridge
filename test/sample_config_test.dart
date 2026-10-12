@@ -4,23 +4,31 @@ import 'package:guitar_bridge/engine/sample_config.dart';
 
 void main() {
   group('SampleConfig', () {
-    test('folds target notes into the C4-B4 sample octave', () {
-      expect(SampleConfig.nearestSampleMidi(40), 64); // E2 -> E4
-      expect(SampleConfig.nearestSampleMidi(64), 64); // E4 -> E4
-      expect(SampleConfig.nearestSampleMidi(88), 64); // E6 -> E4
+    test('selects sounding roots rather than the original file numbers', () {
+      expect(SampleConfig.nearestSampleMidi(38), 40);
+      expect(SampleConfig.nearestSampleMidi(40), 40);
+      expect(SampleConfig.nearestSampleMidi(64), 64);
+      expect(SampleConfig.nearestSampleMidi(88), 76);
     });
 
-    test('calculates octave playback shifts', () {
-      expect(SampleConfig.octaveShift(40), -2);
-      expect(SampleConfig.octaveShift(64), 0);
-      expect(SampleConfig.octaveShift(88), 2);
+    test('calculates equal-temperament playback speed', () {
+      expect(SampleConfig.playbackSpeedForMidi(64), closeTo(1.0, 0.000001));
+      expect(SampleConfig.playbackSpeedForMidi(40), closeTo(1.0, 0.000001));
+      expect(SampleConfig.playbackSpeedForMidi(88), closeTo(2.0, 0.000001));
     });
 
-    test('always resolves to a bundled sample path', () {
-      expect(
-        SampleConfig.samplePath(ToneMode.overdrive, 40),
-        'assets/samples/overdrive/E4.wav',
-      );
+    test('all tone modes resolve to the same bundled recordings', () {
+      for (final mode in ToneMode.values) {
+        expect(
+          SampleConfig.samplePath(mode, 40),
+          'assets/samples/guitar/52_v100_rr1.wav',
+        );
+        expect(
+          SampleConfig.samplePath(mode, 64),
+          'assets/samples/guitar/76_v100_rr1.wav',
+        );
+        expect(SampleConfig.requiredSamples(mode), hasLength(19));
+      }
     });
   });
 }

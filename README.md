@@ -74,8 +74,8 @@ lib/
 │   ├── constants.dart                 # 全局常量
 │   └── theme.dart                     # 主题 + 音色配色
 ├── engine/
-│   ├── audio_engine.dart              # 跨平台音频(采样+合成+crossfade)
-│   └── training_engine.dart           # 训练状态机(6状态)
+│   ├── audio_engine.dart              # 跨平台真实吉他采样与 SoLoud 播放
+│   └── training_engine.dart           # 可取消训练状态机
 ├── services/
 │   ├── storage_service.dart           # 数据持久化
 │   ├── streak_manager.dart            # 连续练习管理
@@ -117,11 +117,11 @@ idle → playingRoot → waitingAnswer → showingResult → playingRoot → ...
 
 ## 技术亮点
 
-- **17.817 品距公式** — 物理准确的指板比例绘制
-- **SoLoud audio backend** — 三种音色采样，缺失采样时自动合成正弦波
-- **Position-aware answers** — 精确到弦和品的寻址判定
-- **Duplicate prevention** — 同一音程组合不会重复出题
-- **6-state FSM** — 完整的训练生命周期管理
+- **等宽指板** — 0–22 品横向滚动，弦品位置按真实调弦计算
+- **SoLoud audio backend** — CC0 真实吉他多采样，按 MIDI 就近根音重调；过载/失真使用已有波形整形效果
+- **Exact-pitch answers** — 按 MIDI 音高判定，接受不同弦位的同音高答案
+- **Finite question pool** — 上行、一个八度内的题目池；超出池容量时有限循环
+- **Cancellable FSM** — 旧播放不回写新状态，音频失败阻止进入答题状态
 
 ## 实施文档
 
