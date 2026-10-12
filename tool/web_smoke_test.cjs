@@ -82,13 +82,13 @@ async function scenario(browser, origin, missingWave) {
   });
   await page.getByRole('button', { name: '开始训练', exact: true }).click();
   if (missingWave) {
-    await page.locator('[aria-label*="声音没有可靠播放"]').first().waitFor({ state: 'attached' });
-    assert.equal(await page.locator('[aria-label*="找到目标音"]').count(), 0);
+    await page.getByText('声音没有可靠播放', { exact: true }).waitFor({ state: 'attached' });
+    assert.equal(await page.getByText('找到目标音', { exact: true }).count(), 0);
     await page.getByRole('button', { name: '重试', exact: true }).click();
-    await page.locator('[aria-label*="音频就绪"]').first().waitFor({ state: 'attached' });
+    await page.getByText('音频就绪', { exact: true }).waitFor({ state: 'attached' });
     await page.getByRole('button', { name: '重新尝试', exact: true }).click();
   }
-  await page.locator('[aria-label*="找到目标音"]').first().waitFor({ state: 'attached' });
+  await page.getByText('找到目标音', { exact: true }).waitFor({ state: 'attached' });
   assert.ok(await page.evaluate(() => globalThis.smokeCueCount) >= 2,
     'Training must play both native cues, not merely render a state label');
   assert.ok(requests.some((url) => url.endsWith('.wav')));
