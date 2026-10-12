@@ -28,6 +28,12 @@ const server = http.createServer((request, response) => {
   response.end(content);
 });
 
+// Flutter may merge non-interactive Text widgets into a parent's ARIA label.
+function stateLabel(page, label) {
+  return page.getByText(label, { exact: true })
+    .or(page.getByLabel(label, { exact: false })).first();
+}
+
 async function semantics(page) {
   const placeholder = page.locator('flt-semantics-placeholder');
   await placeholder.waitFor({ state: 'attached' });
@@ -45,7 +51,9 @@ async function scenario(browser, origin, missingWave) {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('console', (message) => {
-    if (message.type() === 'error') console.error('Browser:', message.text());
+    if (message.type() === 'error' || message.text().includes('[AudioEngine]')) {
+      console.error('Browser:', message.text());
+    }
   });
   const requests = [];
   page.on('request', (request) => requests.push(request.url()));
@@ -82,13 +90,25 @@ async function scenario(browser, origin, missingWave) {
   });
   await page.getByRole('button', { name: '开始训练', exact: true }).click();
   if (missingWave) {
-    await page.getByText('声音没有可靠播放', { exact: true }).waitFor({ state: 'attached' });
-    assert.equal(await page.getByText('找到目标音', { exact: true }).count(), 0);
+    await stateLabel(page, '声音没有可靠播放').waitFor({ state: 'attached' });
+    assert.equal(await stateLabel(page, '找到目标音').count(), 0);
     await page.getByRole('button', { name: '重试', exact: true }).click();
-    await page.getByText('音频就绪', { exact: true }).waitFor({ state: 'attached' });
+    await stateLabel(page, '音频就绪').waitFor({ state: 'attached' });
     await page.getByRole('button', { name: '重新尝试', exact: true }).click();
   }
-  await page.getByText('找到目标音', { exact: true }).waitFor({ state: 'attached' });
+  try {
+    await stateLabel(page, '找到目标音').waitFor({ state: 'attached' });
+  } catch (error) {
+    console.error('Training diagnostics:', await page.evaluate(() => ({
+      cueCount: globalThis.smokeCueCount,
+      initialized: globalThis.Module_soloud?._isInited?.(),
+      labels: [...document.querySelectorAll('flt-semantics')]
+        .map((node) => ({ label: node.getAttribute('aria-label'), text: node.textContent }))
+        .filter((node) => /训练状态|基准音|目标音|可靠播放|音频/.test((node.label || '') + node.text))
+        .slice(0, 12),
+    })));
+    throw error;
+  }
   assert.ok(await page.evaluate(() => globalThis.smokeCueCount) >= 2,
     'Training must play both native cues, not merely render a state label');
   assert.ok(requests.some((url) => url.endsWith('.wav')));

@@ -29,7 +29,8 @@
 - 首次新 CI run [38242949719](https://github.com/wjwpoi/GuitarBridge/actions/runs/38242949719)：
   质量门和 Linux 构建通过；Web build 通过，但浏览器夹具用指针点击了 Flutter
   视口外的无障碍入口而失败。夹具改用无障碍激活事件，再继续真实按钮交互；
-  依据固定 SDK 的语义实现读取实际 DOM 文本，不假定叶节点总有 `aria-label`。
+  状态断言兼容实际 DOM 文本与 Flutter 合并到父容器的 ARIA 标签，
+  不假定每个 Text 都是独立语义节点，并在失败时记录播放次数和状态标签。
 
 - Flutter 3.32.8 / Dart 3.8.1，`pubspec.lock` 未改变。
 - 格式化与 `flutter analyze --no-pub` 通过；完整 `flutter test --no-pub`
