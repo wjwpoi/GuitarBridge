@@ -116,10 +116,11 @@ class TrainingEngine extends ChangeNotifier {
   }
 
   Future<void> start() async {
+    if (isDisposed) return;
     final engine = audioEngine;
-    await engine?.stopAll();
-    if (engine == null || !engine.isReady) return;
     final token = ++_generation;
+    await engine?.stopAll();
+    if (!_isCurrent(token) || engine == null || !engine.isReady) return;
     _state = TrainingState.configuring;
     _currentQuestion = 0;
     _correctCount = 0;
@@ -228,21 +229,21 @@ class TrainingEngine extends ChangeNotifier {
     notifyListeners();
 
     final rootPlayed = await audioEngine!.playNote(question.root.midi);
+    if (!_isCurrent(token)) return;
     if (!rootPlayed) {
       _state = TrainingState.audioError;
       notifyListeners();
       return;
     }
-    if (!_isCurrent(token)) return;
     await _delay(const Duration(milliseconds: 600));
     if (!_isCurrent(token)) return;
     final targetPlayed = await audioEngine!.playNote(question.target.midi);
+    if (!_isCurrent(token)) return;
     if (!targetPlayed) {
       _state = TrainingState.audioError;
       notifyListeners();
       return;
     }
-    if (!_isCurrent(token)) return;
     await _delay(const Duration(milliseconds: 400));
     if (!_isCurrent(token)) return;
     _state = TrainingState.waitingAnswer;

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -28,19 +27,15 @@ void main() {
     expect(find.text('开始训练'), findsOneWidget);
 
     await tester.tap(find.text('开始训练'));
-    await tester.pump(const Duration(milliseconds: 900));
-
-    final trainingState = find.byWidgetPredicate(
-      (widget) =>
-          widget is Text &&
-          const {
-            '准备开始',
-            '正在准备题目',
-            '听基准音',
-            '找到目标音',
-            '声音没有可靠播放',
-          }.contains(widget.data),
-    );
-    expect(trainingState, findsWidgets);
+    // Wait for both 900 ms cues, their gap, and the answer-state transition.
+    // Idle or an audio error must fail this smoke test, not count as success.
+    for (var attempt = 0; attempt < 40; attempt++) {
+      await tester.pump(const Duration(milliseconds: 250));
+      if (find.text('找到目标音').evaluate().isNotEmpty) break;
+    }
+    expect(find.text('找到目标音'), findsOneWidget);
+    expect(find.text('声音没有可靠播放'), findsNothing);
+    expect(find.text('重播基准音'), findsOneWidget);
+    expect(find.text('重播目标音'), findsOneWidget);
   });
 }

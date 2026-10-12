@@ -251,6 +251,9 @@ class FretboardWidget extends StatelessWidget {
 
     return Semantics(
       button: true,
+      enabled:
+          trainingEngine.state != TrainingState.playingRoot &&
+          trainingEngine.state != TrainingState.configuring,
       label:
           '${stringIndex + 1}弦 $fret品，${GuitarMath.noteNameAt(position.midi).sharpName}',
       child: SizedBox(
@@ -259,7 +262,12 @@ class FretboardWidget extends StatelessWidget {
         child: Material(
           color: cellBackground,
           child: InkWell(
-            onTap: () => onFretTapped(position),
+            key: ValueKey('fret:$stringIndex:$fret'),
+            onTap:
+                trainingEngine.state == TrainingState.playingRoot ||
+                    trainingEngine.state == TrainingState.configuring
+                ? null
+                : () => onFretTapped(position),
             child: Stack(
               alignment: Alignment.center,
               children: [

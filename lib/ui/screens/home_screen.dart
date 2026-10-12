@@ -686,6 +686,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onFretTapped(FretPosition position) {
+    // Auditioning must not interrupt either cue of the current question.
+    if (_trainingEngine.state == TrainingState.playingRoot ||
+        _trainingEngine.state == TrainingState.configuring) {
+      return;
+    }
     if (_trainingEngine.state != TrainingState.waitingAnswer) {
       _audioEngine.playNote(position.midi);
       return;
