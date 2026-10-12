@@ -8,6 +8,36 @@
 - 不再进行第二次全量重写；保留现有 UI 与基础模型，对核心闭环做定向重构。
 - 发布前必须同时满足：可构建、可听见、可交互、可恢复、可测试。
 
+## 当前任务：PR #8 回归修复（2026-10-12）
+
+本节是当前授权范围；后面的旧阶段记录保留为历史，不作为本次修复的边界。
+用户要求修复 PR #8 审查发现的采样音高、资源生命周期、取消竞态、Web
+初始化和指板交互回归。基线 HEAD 为 `2924f27`，沿用已有 PR 分支和历史。
+
+- 影响范围：音频后端/引擎/采样映射、训练取消保护、Home/指板试听门禁、
+  Web 初始化脚本、相关单元/Widget/集成测试、CI Web 验证、README 与采样文档。
+- 采样以实测 MIDI 40–76 为根音，保留源文件 52–88 的命名，不改变采样内容。
+- 音源由引擎缓存并在关闭时统一释放；每次播放只清理自己的 voice。
+- 资源加载和暂停 voice 的每个异步边界检查取消；旧失败不得回写新状态。
+- 训练 cue 返回后先检查 token；播放题目期间禁止指板试听打断 cue。
+- Web 等待 SoLoud WASM 完成后启动 Flutter；失败仍显示错误 UI并允许重试。
+- 补测：真实 PCM 音高、共享采样快速重播、加载中取消/失败、销毁竞态、
+  真实同音异位和滚动点击、Web 慢 WASM 与缺失 WAV 后恢复。
+
+### 验证状态
+
+- Flutter 3.32.8 / Dart 3.8.1，`pubspec.lock` 未改变。
+- 格式化与 `flutter analyze --no-pub` 通过；完整 `flutter test --no-pub`
+  **130 项通过**；Node WASM 启动门禁测试 **2 项通过**。
+- `flutter build web --release --no-pub --no-web-resources-cdn` 通过。
+- 构建仍有已有的 Cupertino icon 字体提示；本次不扩展图标依赖。
+- Web release 浏览器验证已加入 CI：延迟 WASM、`/GuitarBridge/` 子路径资源、
+  缺失 WAV 后错误状态与重试恢复。本地 Chrome 受运行环境的 Unix socket/进程
+  限制无法启动，不能将这些端到端用例标为本地通过。iOS 的更严格集成断言
+  需 macOS CI runner 执行。
+- Android、iOS、macOS、Windows、Linux 的本次构建结果以新 CI run 为准；
+  不将历史六平台通过结果作为本次修复的验证结果。
+
 ## 本轮边界（CI/Release → 音频错误 UI）
 
 > 阶段一（已完成）：收敛 CI/Release 流水线和基础质量门禁。
