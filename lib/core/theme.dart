@@ -43,6 +43,10 @@ class AppTheme {
       error: wrongColor,
       onError: Colors.white,
       outline: outlineColor,
+      outlineVariant: outlineColor,
+      surfaceContainerHighest: raisedSurfaceColor,
+      secondaryContainer: Color(0xFFDCE8E5),
+      onSecondaryContainer: secondaryColor,
     );
 
     final roundedShape = RoundedRectangleBorder(
@@ -56,6 +60,7 @@ class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: backgroundColor,
       dividerColor: outlineColor,
+      dividerTheme: const DividerThemeData(color: outlineColor, space: 1),
       splashColor: tone.withAlpha(24),
       highlightColor: tone.withAlpha(14),
       textTheme: const TextTheme(

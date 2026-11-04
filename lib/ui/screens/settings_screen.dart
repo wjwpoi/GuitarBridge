@@ -183,8 +183,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: '关于 GuitarBridge',
                     description: 'v3.0.0 · Flutter 跨平台版',
                     child: Text(
-                      '当前训练规则：播放基准音与一个八度内的上行目标音；'
-                      '在等宽指板上选择任意同音高位置。\n\n'
+                      '训练规则：先播放基准音（指板上标出），再播放一个八度内的上行目标音；'
+                      '在指板上点击任意同音高的位置作答。\n'
+                      '正确率与连击只统计第一次就答对的题；答错的音程会在本轮稍后再出现一次。\n\n'
+                      '快捷键：空格 开始 / 重听两音 · R 基准音 · T 目标音 · Esc 结束本轮\n\n'
                       '支持 Windows、macOS、Linux、iOS、Android 与 Web。',
                       style: TextStyle(
                         color: AppTheme.textSecondary,

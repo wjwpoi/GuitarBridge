@@ -63,7 +63,8 @@ Web 版复用同一套训练引擎、等宽指板、真实吉他采样和本地�
 - Release 构建包含 PWA 离线缓存、SoLoud WebAssembly 和 19 个真实吉他采样。
 
 ```bash
-flutter build web --release
+# --no-web-resources-cdn 会把 CanvasKit 一起打包，不再依赖 www.gstatic.com
+flutter build web --release --no-web-resources-cdn
 pnpm --dir web_host install --frozen-lockfile
 pnpm --dir web_host run build
 ```
@@ -114,29 +115,35 @@ lib/
 ## 核心逻辑
 
 ```
-调性建立 → 物理锚点 → 听觉挑战 → 寻址判定
+调性建立 → 物理锚点 → 听觉挑战 → 寻址判定 → 反馈与回炉
 ```
 
-1. **调性建立**：选择 C大调 / G大调 / A小调...
-2. **物理锚点**：播放基准音，与指板位置对应
-3. **听觉挑战**：播放调内另一个音
-4. **寻址判定**：用户在指板上点击目标位置
+1. **调性建立**：选择调性、音阶、调弦与难度（训练中锁定，避免题目与指板不一致）
+2. **物理锚点**：播放基准音，并在指板上标出它的位置（每题随机换弦换把位）
+3. **听觉挑战**：紧接着播放调内一个八度以内的上行目标音
+4. **寻址判定**：在指板上点击任意同音高的位置；答错会提示「偏高 / 偏低 / 八度不对」
+5. **反馈与回炉**：答对或揭示后显示音程名称与所有同音位置；没有首答正确的音程会在本轮稍后再出现一次
+
+计分规则：正确率与连击只统计**第一次就答对**的题；重试后找到的音记为「已解决」但不计入正确率。
+每轮结束后显示各音程的首答表现，统计页汇总最近 30 轮的「音程掌握度」。
+
+快捷键（桌面/Web）：`空格` 开始或重听两音，`R` 基准音，`T` 目标音，`Esc` 结束本轮。
 
 ## 训练引擎状态机
 
 ```
-idle → playingRoot → waitingAnswer → showingResult → playingRoot → ...
-  ↑                                                         ↓
-  └───────────────── completed ←────────────────────────────┘
+idle → playingRoot → waitingAnswer ⟲（答错重试）→ showingResult → playingRoot → ...
+  ↑                        │ 看答案 / 达到上限                          ↓
+  └──────────────────── completed ←（题目完成或「结束本轮」）←───────────┘
 ```
 
 ## 技术亮点
 
-- **等宽可移动指板** — 手机与桌面均提供拖动、滚动条和把位切换按钮
-- **SoLoud audio backend** — CC0 真实吉他多采样，按 MIDI 就近根音重调并保持单一清晰音色
-- **Position-aware answers** — 精确到弦和品的寻址判定
-- **Balanced interval sampling** — 每轮按音程均衡抽题，不受指板位置组合数量干扰
-- **6-state FSM** — 完整的训练生命周期管理
+- **自适应等宽指板** — 宽屏一次显示 0–22 品；窄屏保持 44px 触控目标并自动滚动到基准音
+- **SoLoud audio backend** — CC0 真实吉他多采样，按 MIDI 就近根音重调；采样首次解码后缓存，换音时淡出避免爆音
+- **Pitch-based answers** — 按音高判定，任何同音高位置都算对
+- **Balanced interval sampling** — 每轮按音程均衡抽题，不受指板位置组合数量干扰；错题音程本轮回炉
+- **First-try scoring** — 正确率、连击、音程掌握度都基于首次作答
 
 ## 实施文档
 

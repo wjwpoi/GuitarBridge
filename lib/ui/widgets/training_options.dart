@@ -1,297 +1,241 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
+import '../../models/scale.dart';
+import '../../models/training_config.dart';
+import '../../models/tuning.dart';
 
-/// Configuration rail for the training workspace.
+/// Training setup controls.
 ///
-/// The controls are intentionally compact and use the same quiet surface as
-/// the rest of the app. The widget owns no state; HomeScreen remains the
-/// source of truth so desktop and mobile behave identically.
+/// Stateless: the home screen owns the [TrainingConfig] and receives every
+/// change through [onChanged]. While a session runs the question-affecting
+/// fields are [locked] so the fretboard and the active question never
+/// disagree about key, scale or tuning.
 class TrainingOptionsWidget extends StatelessWidget {
-  final String selectedKey;
-  final String selectedScale;
-  final String selectedTuning;
-  final String selectedDifficulty;
-  final bool showDegrees;
-  final bool showNoteNames;
-  final bool showFretNumbers;
-  final bool embedded;
-  final ValueChanged<String> onKeyChanged;
-  final ValueChanged<String> onScaleChanged;
-  final ValueChanged<String> onTuningChanged;
-  final ValueChanged<String> onDifficultyChanged;
-  final VoidCallback onToggleDegrees;
-  final VoidCallback onToggleNoteNames;
-  final VoidCallback onToggleFretNumbers;
+  final TrainingConfig config;
+  final ValueChanged<TrainingConfig> onChanged;
+  final bool locked;
+
+  /// Lays the dropdowns out in one row (desktop toolbar) instead of a grid.
+  final bool inline;
 
   const TrainingOptionsWidget({
     super.key,
-    required this.selectedKey,
-    required this.selectedScale,
-    required this.selectedTuning,
-    required this.selectedDifficulty,
-    required this.showDegrees,
-    required this.showNoteNames,
-    required this.showFretNumbers,
-    this.embedded = false,
-    required this.onKeyChanged,
-    required this.onScaleChanged,
-    required this.onTuningChanged,
-    required this.onDifficultyChanged,
-    required this.onToggleDegrees,
-    required this.onToggleNoteNames,
-    required this.onToggleFretNumbers,
+    required this.config,
+    required this.onChanged,
+    this.locked = false,
+    this.inline = false,
   });
-
-  static const keys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-  static const scales = [
-    '自然大调',
-    '自然小调',
-    '和声小调',
-    '旋律小调',
-    '大调五声',
-    '小调五声',
-    '蓝调音阶',
-    '多利亚调式',
-    '弗里吉亚调式',
-    '利底亚调式',
-    '混合利底亚',
-    '洛克里亚调式',
-  ];
-  static const tunings = [
-    '标准 (EADGBE)',
-    '降半音 (Eb)',
-    '降全音 (D)',
-    'Drop D',
-    'DADGAD',
-    'Open G',
-  ];
-  static const difficulties = ['easy', 'medium', 'hard'];
 
   @override
   Widget build(BuildContext context) {
-    final content = Padding(
-      padding: EdgeInsets.fromLTRB(20, embedded ? 4 : 18, 20, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!embedded) ...[
-            const _PanelHeading(
-              icon: Icons.tune_rounded,
-              eyebrow: 'WORKSPACE',
-              title: '训练设置',
-              trailing: '即时生效',
-            ),
-            const SizedBox(height: 18),
-          ],
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final fieldWidth = constraints.maxWidth < 300
-                  ? constraints.maxWidth
-                  : (constraints.maxWidth - 10) / 2;
-              return Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  _buildDropdown(
-                    label: '调性',
-                    value: selectedKey,
-                    items: keys,
-                    width: fieldWidth,
-                    onChanged: onKeyChanged,
-                  ),
-                  _buildDropdown(
-                    label: '音阶',
-                    value: selectedScale,
-                    items: scales,
-                    width: fieldWidth,
-                    onChanged: onScaleChanged,
-                  ),
-                  _buildDropdown(
-                    label: '调弦',
-                    value: selectedTuning,
-                    items: tunings,
-                    width: fieldWidth,
-                    onChanged: onTuningChanged,
-                  ),
-                  _buildDropdown(
-                    label: '难度',
-                    value: selectedDifficulty,
-                    items: difficulties,
-                    labels: const {
-                      'easy': '入门',
-                      'medium': '进阶',
-                      'hard': '完整指板',
-                    },
-                    width: fieldWidth,
-                    onChanged: onDifficultyChanged,
-                  ),
-                ],
-              );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final fields = <Widget>[
+          _dropdown<String>(
+            label: '调性',
+            value: config.key,
+            items: {for (final key in TrainingConfig.keys) key: key},
+            onChanged: (value) => onChanged(config.copyWith(key: value)),
+          ),
+          _dropdown<ScaleType>(
+            label: '音阶',
+            value: config.scale,
+            items: {
+              for (final scale in ScaleType.values) scale: scale.chineseName,
             },
+            onChanged: (value) => onChanged(config.copyWith(scale: value)),
           ),
-          const SizedBox(height: 22),
-          const _SectionLabel('指板显示'),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildToggleChip(
-                label: '音名',
-                icon: Icons.music_note_rounded,
-                selected: showNoteNames,
-                onTap: onToggleNoteNames,
-              ),
-              _buildToggleChip(
-                label: '级数',
-                icon: Icons.format_list_numbered_rounded,
-                selected: showDegrees,
-                onTap: onToggleDegrees,
-              ),
-              _buildToggleChip(
-                label: '品号',
-                icon: Icons.grid_4x4_rounded,
-                selected: showFretNumbers,
-                onTap: onToggleFretNumbers,
-              ),
-            ],
+          _dropdown<Tuning>(
+            label: '调弦',
+            value: config.tuning,
+            items: {for (final tuning in Tuning.all) tuning: tuning.name},
+            onChanged: (value) => onChanged(config.copyWith(tuning: value)),
           ),
-        ],
-      ),
-    );
-    return embedded ? content : Card(child: content);
-  }
+          _dropdown<String>(
+            label: '难度',
+            value: config.difficulty,
+            items: {
+              for (final key in TrainingConfig.difficultyKeys)
+                key: TrainingConfig.difficultyLabel(key),
+            },
+            onChanged: (value) => onChanged(config.copyWith(difficulty: value)),
+          ),
+        ];
 
-  Widget _buildDropdown({
-    required String label,
-    required String value,
-    required List<String> items,
-    required double width,
-    required ValueChanged<String> onChanged,
-    Map<String, String> labels = const {},
-  }) {
-    return SizedBox(
-      width: width,
-      child: DropdownButtonFormField<String>(
-        value: value,
-        isExpanded: true,
-        decoration: InputDecoration(labelText: label),
-        icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
-        dropdownColor: AppTheme.surfaceColor,
-        items: [
-          for (final item in items)
-            DropdownMenuItem(
-              value: item,
-              child: Text(
-                labels[item] ?? item,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+        final toggles = Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            _toggle(
+              label: '音名',
+              selected: config.showNoteNames,
+              onTap: () => onChanged(
+                config.copyWith(showNoteNames: !config.showNoteNames),
               ),
             ),
-        ],
-        onChanged: (next) {
-          if (next != null) onChanged(next);
-        },
-      ),
+            _toggle(
+              label: '级数',
+              selected: config.showDegrees,
+              onTap: () =>
+                  onChanged(config.copyWith(showDegrees: !config.showDegrees)),
+            ),
+            _toggle(
+              label: '品号',
+              selected: config.showFretNumbers,
+              onTap: () => onChanged(
+                config.copyWith(showFretNumbers: !config.showFretNumbers),
+              ),
+            ),
+          ],
+        );
+
+        if (inline) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(flex: 2, child: fields[0]),
+              const SizedBox(width: 10),
+              Expanded(flex: 3, child: fields[1]),
+              const SizedBox(width: 10),
+              Expanded(flex: 3, child: fields[2]),
+              const SizedBox(width: 10),
+              Expanded(flex: 3, child: fields[3]),
+              const SizedBox(width: 16),
+              toggles,
+            ],
+          );
+        }
+
+        final twoColumns = constraints.maxWidth >= 300;
+        final fieldWidth = twoColumns
+            ? (constraints.maxWidth - 10) / 2
+            : constraints.maxWidth;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (final field in fields)
+                  SizedBox(width: fieldWidth, child: field),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              TrainingConfig.difficultyDescription(config.difficulty),
+              style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              '指板显示',
+              style: TextStyle(
+                color: AppTheme.textMuted,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            toggles,
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildToggleChip({
+  Widget _dropdown<T>({
     required String label,
-    required IconData icon,
+    required T value,
+    required Map<T, String> items,
+    required ValueChanged<T> onChanged,
+  }) {
+    return DropdownButtonFormField<T>(
+      value: value,
+      isExpanded: true,
+      isDense: true,
+      decoration: InputDecoration(
+        labelText: label,
+        contentPadding: const EdgeInsets.fromLTRB(12, 12, 8, 10),
+      ),
+      icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+      dropdownColor: AppTheme.surfaceColor,
+      borderRadius: BorderRadius.circular(14),
+      style: const TextStyle(
+        color: AppTheme.textPrimary,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
+      items: [
+        for (final entry in items.entries)
+          DropdownMenuItem<T>(
+            value: entry.key,
+            child: Text(
+              entry.value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+      ],
+      onChanged: locked
+          ? null
+          : (next) {
+              if (next != null) onChanged(next);
+            },
+    );
+  }
+
+  Widget _toggle({
+    required String label,
     required bool selected,
     required VoidCallback onTap,
   }) {
-    return FilterChip(
-      selected: selected,
-      showCheckmark: false,
-      avatar: Icon(
-        icon,
-        size: 15,
-        color: selected ? AppTheme.primaryColor : AppTheme.textMuted,
-      ),
-      label: Text(label),
-      onSelected: (_) => onTap(),
-    );
-  }
-}
-
-class _PanelHeading extends StatelessWidget {
-  final IconData icon;
-  final String eyebrow;
-  final String title;
-  final String trailing;
-
-  const _PanelHeading({
-    required this.icon,
-    required this.eyebrow,
-    required this.title,
-    required this.trailing,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: AppTheme.secondaryColor.withAlpha(14),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, size: 17, color: AppTheme.secondaryColor),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                eyebrow,
-                style: const TextStyle(
-                  color: AppTheme.textMuted,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.1,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
+    return Semantics(
+      toggled: selected,
+      button: true,
+      label: '显示$label',
+      child: Material(
+        color: selected
+            ? AppTheme.secondaryColor.withAlpha(22)
+            : AppTheme.subtleSurfaceColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide(
+            color: selected ? AppTheme.secondaryColor : AppTheme.outlineColor,
           ),
         ),
-        Text(
-          trailing,
-          style: const TextStyle(color: AppTheme.textMuted, fontSize: 10),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  selected
+                      ? Icons.check_box_rounded
+                      : Icons.check_box_outline_blank_rounded,
+                  size: 15,
+                  color: selected
+                      ? AppTheme.secondaryColor
+                      : AppTheme.textMuted,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: selected
+                        ? AppTheme.secondaryColor
+                        : AppTheme.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-      ],
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-
-  const _SectionLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(
-        color: AppTheme.textMuted,
-        fontSize: 11,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 0.4,
       ),
     );
   }

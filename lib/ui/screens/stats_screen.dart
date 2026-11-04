@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
+import '../../engine/training_engine.dart';
+import '../widgets/interval_breakdown.dart';
 import '../../models/practice_record.dart';
 import '../../services/streak_manager.dart';
 
@@ -43,10 +45,26 @@ class StatsScreen extends StatelessWidget {
       0,
       (best, record) => best > record.bestStreak ? best : record.bestStreak,
     );
+    final intervalTallies = <int, IntervalTally>{};
+    for (final record in records.reversed.take(30)) {
+      for (final entry in record.intervalResults.entries) {
+        final tally = IntervalTally(entry.value.$1, entry.value.$2);
+        intervalTallies.update(
+          entry.key,
+          (existing) => existing + tally,
+          ifAbsent: () => tally,
+        );
+      }
+    }
     final now = DateTime.now();
-    final weekStart = now.subtract(Duration(days: now.weekday - 1));
+    // Monday 00:00 local time, so sessions earlier on Monday still count.
+    final weekStart = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(Duration(days: now.weekday - 1));
     final sessionsThisWeek = records
-        .where((record) => record.date.isAfter(weekStart))
+        .where((record) => !record.date.toLocal().isBefore(weekStart))
         .length;
 
     return Scaffold(
@@ -144,6 +162,40 @@ class StatsScreen extends StatelessWidget {
                             ),
                           ),
                         ),
+                        if (intervalTallies.isNotEmpty) ...[
+                          const SizedBox(height: 14),
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                20,
+                                16,
+                                20,
+                                16,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '音程掌握度',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    '按首次作答是否正确统计，最近 30 轮',
+                                    style: TextStyle(
+                                      color: AppTheme.textMuted,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  IntervalBreakdown(tallies: intervalTallies),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 24),
                         Text(
                           '最近记录',

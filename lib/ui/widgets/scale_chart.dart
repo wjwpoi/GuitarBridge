@@ -4,9 +4,12 @@ import '../../core/theme.dart';
 import '../../models/note.dart';
 import '../../models/scale.dart';
 
+/// The notes of the selected key with their degree relative to the tonic.
 class ScaleChartWidget extends StatelessWidget {
   final String selectedKey;
   final ScaleType scaleType;
+
+  /// Without the card and heading, for use inside another panel.
   final bool embedded;
 
   const ScaleChartWidget({
@@ -25,56 +28,52 @@ class ScaleChartWidget extends StatelessWidget {
     final keySig = KeySignature(tonic, scaleType);
     final notes = keySig.notesInKey(octave: 4);
 
-    final content = Padding(
-      padding: const EdgeInsets.fromLTRB(20, 17, 20, 19),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: AppTheme.secondaryColor.withAlpha(14),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.music_note_rounded,
-                  size: 17,
-                  color: AppTheme.secondaryColor,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  keySig.displayName,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-              Text(
-                '${notes.length} 个音级',
-                style: Theme.of(context).textTheme.labelMedium,
-              ),
-            ],
+    final chips = Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (var index = 0; index < notes.length; index++)
+          _scaleNote(
+            degree: keySig.degreeLabel(notes[index]) ?? '',
+            note: NoteName.values[notes[index] % 12].sharpName,
+            isTonic: index == 0,
           ),
-          const SizedBox(height: 15),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (var index = 0; index < notes.length; index++)
-                _scaleNote(
-                  degree: ScaleDegree.values[index].roman,
-                  note: NoteName.values[notes[index] % 12].sharpName,
-                  isTonic: index == 0,
+      ],
+    );
+
+    if (embedded) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+        child: chips,
+      );
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    keySig.displayName,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 ),
-            ],
-          ),
-        ],
+                Text(
+                  '${notes.length} 个音',
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            chips,
+          ],
+        ),
       ),
     );
-    return embedded ? content : Card(child: content);
   }
 
   Widget _scaleNote({
@@ -84,10 +83,10 @@ class ScaleChartWidget extends StatelessWidget {
   }) {
     final color = isTonic ? AppTheme.primaryColor : AppTheme.secondaryColor;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
       decoration: BoxDecoration(
         color: isTonic ? color.withAlpha(20) : AppTheme.subtleSurfaceColor,
-        borderRadius: BorderRadius.circular(11),
+        borderRadius: BorderRadius.circular(9),
         border: Border.all(color: isTonic ? color : AppTheme.outlineColor),
       ),
       child: Row(
@@ -97,11 +96,11 @@ class ScaleChartWidget extends StatelessWidget {
             degree,
             style: TextStyle(
               color: isTonic ? color : AppTheme.textMuted,
-              fontSize: 10,
+              fontSize: 10.5,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(width: 7),
+          const SizedBox(width: 6),
           Text(
             note,
             style: const TextStyle(

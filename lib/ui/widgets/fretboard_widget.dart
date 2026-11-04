@@ -13,8 +13,10 @@ import '../../models/tuning.dart';
 
 /// A clean equal-width note matrix rather than a physical guitar drawing.
 ///
-/// Every cell keeps the same width at every fret, so note names stay legible
-/// and touch targets stay predictable on desktop, web and mobile.
+/// Cells share one width that stretches to fit the whole neck when there is
+/// room (desktop) and falls back to horizontal scrolling with a 44 px minimum
+/// touch target on narrow screens. When a new question starts the board
+/// scrolls so the root note is visible.
 class FretboardWidget extends StatefulWidget {
   final TrainingEngine trainingEngine;
   final Tuning tuning;
@@ -26,6 +28,10 @@ class FretboardWidget extends StatefulWidget {
   final ValueChanged<FretPosition> onFretTapped;
   final int startFret;
   final int visibleFrets;
+
+  /// Fret range the current questions are drawn from. Frets outside it are
+  /// dimmed during a session (answers there are still accepted).
+  final (int, int)? focusFretRange;
 
   const FretboardWidget({
     super.key,
@@ -39,7 +45,11 @@ class FretboardWidget extends StatefulWidget {
     required this.onFretTapped,
     this.startFret = 0,
     this.visibleFrets = 23,
+    this.focusFretRange,
   });
+
+  static const double minCellWidth = 44;
+  static const double maxCellWidth = 64;
 
   @override
   State<FretboardWidget> createState() => _FretboardWidgetState();
@@ -48,22 +58,18 @@ class FretboardWidget extends StatefulWidget {
 class _FretboardWidgetState extends State<FretboardWidget> {
   late final ScrollController _scrollController;
   int _firstVisibleFret = 0;
+  double _cellWidth = FretboardWidget.minCellWidth;
+  int _onScreenFrets = 1;
+  TrainingQuestion? _lastQuestion;
+  TrainingState? _lastState;
 
-  TrainingEngine get trainingEngine => widget.trainingEngine;
+  TrainingEngine get engine => widget.trainingEngine;
   Tuning get tuning => widget.tuning;
-  ScaleType get scaleType => widget.scaleType;
-  String get selectedKey => widget.selectedKey;
-  bool get showDegrees => widget.showDegrees;
-  bool get showNoteNames => widget.showNoteNames;
-  bool get showFretNumbers => widget.showFretNumbers;
-  ValueChanged<FretPosition> get onFretTapped => widget.onFretTapped;
   int get startFret => widget.startFret;
   int get visibleFrets => widget.visibleFrets;
 
-  static const double _cellWidth = 58;
-  static const double _rowHeight = 52;
-  static const double _stringRailWidth = 68;
-  static const double _headerHeight = 38;
+  static const double _rowHeight = 46;
+  static const double _headerHeight = 30;
   static const Set<int> _markerFrets = {3, 5, 7, 9, 12, 15, 17, 19, 21};
 
   @override
@@ -71,18 +77,74 @@ class _FretboardWidgetState extends State<FretboardWidget> {
     super.initState();
     _firstVisibleFret = startFret;
     _scrollController = ScrollController()..addListener(_updateVisibleRange);
+    engine.addListener(_onEngineChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant FretboardWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.trainingEngine, engine)) {
+      oldWidget.trainingEngine.removeListener(_onEngineChanged);
+      engine.addListener(_onEngineChanged);
+    }
   }
 
   @override
   void dispose() {
+    engine.removeListener(_onEngineChanged);
     _scrollController
       ..removeListener(_updateVisibleRange)
       ..dispose();
     super.dispose();
   }
 
+  void _onEngineChanged() {
+    final question = engine.activeQuestion;
+    final state = engine.state;
+    if (question != null && !identical(question, _lastQuestion)) {
+      _ensureFretVisible(question.root.fret);
+    } else if (state == TrainingState.showingResult &&
+        _lastState != TrainingState.showingResult &&
+        engine.showCorrectPosition &&
+        question != null) {
+      // Bring a placement of the target into view if none is visible.
+      final placements = tuning
+          .findNotePositions(question.target.midi, maxFret: _lastFret)
+          .map((p) => p.$2)
+          .toList();
+      final anyVisible = placements.any(_isFretVisible);
+      if (!anyVisible && placements.isNotEmpty) {
+        _ensureFretVisible(placements.reduce(math.min));
+      }
+    }
+    _lastQuestion = question;
+    _lastState = state;
+  }
+
+  int get _lastFret => startFret + visibleFrets - 1;
+
+  bool _isFretVisible(int fret) =>
+      fret >= _firstVisibleFret && fret < _firstVisibleFret + _onScreenFrets;
+
+  void _ensureFretVisible(int fret) {
+    if (_isFretVisible(fret)) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      final target = ((fret - startFret - 1) * _cellWidth).clamp(
+        0.0,
+        _scrollController.position.maxScrollExtent,
+      );
+      _scrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
   void _updateVisibleRange() {
-    final first = startFret + (_scrollController.offset / _cellWidth).floor();
+    final first =
+        startFret + (_scrollController.offset / _cellWidth + 0.01).floor();
     if (first != _firstVisibleFret && mounted) {
       setState(() => _firstVisibleFret = first);
     }
@@ -105,94 +167,103 @@ class _FretboardWidgetState extends State<FretboardWidget> {
   Widget build(BuildContext context) {
     final keySig = KeySignature(
       NoteName.values.firstWhere(
-        (note) => note.sharpName == selectedKey || note.flatName == selectedKey,
+        (note) =>
+            note.sharpName == widget.selectedKey ||
+            note.flatName == widget.selectedKey,
         orElse: () => NoteName.c,
       ),
-      scaleType,
+      widget.scaleType,
     );
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final boardViewportWidth = math.max(
-          _cellWidth,
-          constraints.maxWidth - _stringRailWidth - 1,
+        final railWidth = constraints.maxWidth < 520 ? 38.0 : 50.0;
+        final viewport = math.max(
+          FretboardWidget.minCellWidth,
+          constraints.maxWidth - railWidth - 1,
         );
-        final onScreenFrets = math.max(
-          1,
-          (boardViewportWidth / _cellWidth).floor(),
+        _cellWidth = (viewport / visibleFrets).clamp(
+          FretboardWidget.minCellWidth,
+          FretboardWidget.maxCellWidth,
         );
+        final fitsAll = _cellWidth * visibleFrets <= viewport + 0.5;
+        _onScreenFrets = math.max(1, (viewport / _cellWidth + 0.01).floor());
         final lastVisibleFret = math.min(
-          startFret + visibleFrets - 1,
-          _firstVisibleFret + onScreenFrets - 1,
+          _lastFret,
+          _firstVisibleFret + _onScreenFrets - 1,
         );
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildNavigationBar(
-              context,
-              firstFret: _firstVisibleFret,
-              lastFret: lastVisibleFret,
-            ),
-            const SizedBox(height: 8),
+            if (!fitsAll) ...[
+              _buildNavigationBar(
+                context,
+                firstFret: _firstVisibleFret,
+                lastFret: lastVisibleFret,
+              ),
+              const SizedBox(height: 8),
+            ],
             ListenableBuilder(
-              listenable: trainingEngine,
+              listenable: engine,
               builder: (context, _) {
+                final board = SizedBox(
+                  width: visibleFrets * _cellWidth,
+                  child: Column(
+                    children: [
+                      _buildFretHeader(),
+                      for (
+                        var stringIndex = 0;
+                        stringIndex < tuning.stringCount;
+                        stringIndex++
+                      )
+                        _buildStringRow(stringIndex, keySig),
+                    ],
+                  ),
+                );
                 return DecoratedBox(
                   decoration: BoxDecoration(
                     color: AppTheme.fretboardWood,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: AppTheme.outlineColor),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius: BorderRadius.circular(13),
                     child: SizedBox(
                       height: _headerHeight + tuning.stringCount * _rowHeight,
                       child: Row(
                         children: [
-                          _buildStringRail(),
+                          _buildStringRail(railWidth),
                           Container(width: 1, color: AppTheme.outlineColor),
                           Expanded(
-                            child: ScrollConfiguration(
-                              behavior: ScrollConfiguration.of(context)
-                                  .copyWith(
-                                    dragDevices: const {
-                                      PointerDeviceKind.touch,
-                                      PointerDeviceKind.mouse,
-                                      PointerDeviceKind.stylus,
-                                      PointerDeviceKind.trackpad,
-                                    },
-                                  ),
-                              child: Scrollbar(
-                                controller: _scrollController,
-                                thumbVisibility: true,
-                                interactive: true,
-                                thickness: 5,
-                                radius: const Radius.circular(99),
-                                child: SingleChildScrollView(
-                                  controller: _scrollController,
-                                  scrollDirection: Axis.horizontal,
-                                  child: SizedBox(
-                                    width: visibleFrets * _cellWidth,
-                                    child: Column(
-                                      children: [
-                                        _buildFretHeader(),
-                                        for (
-                                          var stringIndex = 0;
-                                          stringIndex < tuning.stringCount;
-                                          stringIndex++
-                                        )
-                                          _buildStringRow(
-                                            context,
-                                            stringIndex,
-                                            keySig,
-                                          ),
-                                      ],
+                            child: fitsAll
+                                ? Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: board,
+                                  )
+                                : ScrollConfiguration(
+                                    behavior: ScrollConfiguration.of(context)
+                                        .copyWith(
+                                          dragDevices: const {
+                                            PointerDeviceKind.touch,
+                                            PointerDeviceKind.mouse,
+                                            PointerDeviceKind.stylus,
+                                            PointerDeviceKind.trackpad,
+                                          },
+                                        ),
+                                    child: Scrollbar(
+                                      controller: _scrollController,
+                                      thumbVisibility: true,
+                                      interactive: true,
+                                      thickness: 4,
+                                      radius: const Radius.circular(99),
+                                      child: SingleChildScrollView(
+                                        controller: _scrollController,
+                                        scrollDirection: Axis.horizontal,
+                                        child: board,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            ),
                           ),
                         ],
                       ),
@@ -217,78 +288,47 @@ class _FretboardWidgetState extends State<FretboardWidget> {
         ? _scrollController.offset >=
               _scrollController.position.maxScrollExtent - 1
         : visibleFrets <= 1;
-    return Container(
-      height: 42,
-      padding: const EdgeInsets.only(left: 12, right: 4),
-      decoration: BoxDecoration(
-        color: AppTheme.subtleSurfaceColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.outlineColor),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.pan_tool_alt_rounded,
-            size: 16,
-            color: AppTheme.secondaryColor,
+    return Row(
+      children: [
+        Text(
+          '$firstFret–$lastFret 品',
+          style: const TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
           ),
-          const SizedBox(width: 7),
-          Text(
-            '$firstFret–$lastFret 品',
-            style: const TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-            ),
+        ),
+        const SizedBox(width: 8),
+        const Expanded(
+          child: Text(
+            '左右拖动查看更多品位',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
           ),
-          const SizedBox(width: 8),
-          if (MediaQuery.sizeOf(context).width >= 430)
-            const Expanded(
-              child: Text(
-                '拖动指板、滚动条，或使用箭头切换把位',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 10),
-              ),
-            )
-          else
-            const Spacer(),
-          IconButton(
-            onPressed: atStart ? null : () => _scrollByFrets(-4),
-            tooltip: '向低把位移动',
-            visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.chevron_left_rounded),
-          ),
-          IconButton(
-            onPressed: atEnd ? null : () => _scrollByFrets(4),
-            tooltip: '向高把位移动',
-            visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.chevron_right_rounded),
-          ),
-        ],
-      ),
+        ),
+        IconButton(
+          onPressed: atStart ? null : () => _scrollByFrets(-4),
+          tooltip: '向低把位移动',
+          visualDensity: VisualDensity.compact,
+          icon: const Icon(Icons.chevron_left_rounded),
+        ),
+        IconButton(
+          onPressed: atEnd ? null : () => _scrollByFrets(4),
+          tooltip: '向高把位移动',
+          visualDensity: VisualDensity.compact,
+          icon: const Icon(Icons.chevron_right_rounded),
+        ),
+      ],
     );
   }
 
-  Widget _buildStringRail() {
+  Widget _buildStringRail(double width) {
     return SizedBox(
-      width: _stringRailWidth,
+      width: width,
       child: Column(
         children: [
-          const SizedBox(
-            height: _headerHeight,
-            child: Center(
-              child: Text(
-                '弦',
-                style: TextStyle(
-                  color: AppTheme.textMuted,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ),
+          const SizedBox(height: _headerHeight),
           for (
             var stringIndex = 0;
             stringIndex < tuning.stringCount;
@@ -296,34 +336,40 @@ class _FretboardWidgetState extends State<FretboardWidget> {
           )
             SizedBox(
               height: _rowHeight,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '${stringIndex + 1}',
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
+              child: Center(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '${stringIndex + 1}',
+                        style: const TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      TextSpan(
+                        text:
+                            ' ${GuitarMath.noteNameAt(tuning.noteAt(stringIndex, 0)).sharpName}',
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    GuitarMath.noteNameAt(
-                      tuning.noteAt(stringIndex, 0),
-                    ).sharpName,
-                    style: const TextStyle(
-                      color: AppTheme.textMuted,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+                  style: const TextStyle(fontSize: 12),
+                ),
               ),
             ),
         ],
       ),
     );
+  }
+
+  bool _inFocus(int fret) {
+    final range = widget.focusFretRange;
+    if (range == null || !engine.isSessionActive) return true;
+    return fret >= range.$1 && fret <= range.$2;
   }
 
   Widget _buildFretHeader() {
@@ -331,36 +377,39 @@ class _FretboardWidgetState extends State<FretboardWidget> {
       height: _headerHeight,
       child: Row(
         children: [
-          for (var fret = startFret; fret < startFret + visibleFrets; fret++)
+          for (var fret = startFret; fret <= _lastFret; fret++)
             SizedBox(
               width: _cellWidth,
               child: Center(
-                child: showFretNumbers
-                    ? Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '$fret',
-                            style: const TextStyle(
-                              color: AppTheme.textMuted,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                            ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (widget.showFretNumbers)
+                      Text(
+                        '$fret',
+                        style: TextStyle(
+                          color: _inFocus(fret)
+                              ? AppTheme.textSecondary
+                              : AppTheme.textMuted.withAlpha(140),
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    if (_markerFrets.contains(fret)) ...[
+                      if (widget.showFretNumbers) const SizedBox(width: 3),
+                      for (var dot = 0; dot < (fret == 12 ? 2 : 1); dot++)
+                        Container(
+                          width: 5,
+                          height: 5,
+                          margin: const EdgeInsets.symmetric(horizontal: 1),
+                          decoration: const BoxDecoration(
+                            color: AppTheme.fretMarkerColor,
+                            shape: BoxShape.circle,
                           ),
-                          if (_markerFrets.contains(fret)) ...[
-                            const SizedBox(width: 4),
-                            Container(
-                              width: fret == 12 ? 7 : 5,
-                              height: 5,
-                              decoration: const BoxDecoration(
-                                color: AppTheme.accentColor,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ],
-                        ],
-                      )
-                    : null,
+                        ),
+                    ],
+                  ],
+                ),
               ),
             ),
         ],
@@ -368,76 +417,70 @@ class _FretboardWidgetState extends State<FretboardWidget> {
     );
   }
 
-  Widget _buildStringRow(
-    BuildContext context,
-    int stringIndex,
-    KeySignature keySig,
-  ) {
+  Widget _buildStringRow(int stringIndex, KeySignature keySig) {
     return SizedBox(
       height: _rowHeight,
       child: Row(
         children: [
-          for (var fret = startFret; fret < startFret + visibleFrets; fret++)
-            _buildFretCell(context, stringIndex, fret, keySig),
+          for (var fret = startFret; fret <= _lastFret; fret++)
+            _buildFretCell(stringIndex, fret, keySig),
         ],
       ),
     );
   }
 
-  Widget _buildFretCell(
-    BuildContext context,
-    int stringIndex,
-    int fret,
-    KeySignature keySig,
-  ) {
+  Widget _buildFretCell(int stringIndex, int fret, KeySignature keySig) {
     final position = FretPosition.fromTuning(
       tuning: tuning,
       stringIndex: stringIndex,
       fret: fret,
     );
+    final state = engine.state;
     final inKey = GuitarMath.isInKey(position.midi, keySig);
-    final isRoot =
-        (trainingEngine.state == TrainingState.playingRoot ||
-            trainingEngine.state == TrainingState.waitingAnswer) &&
-        trainingEngine.rootPosition == position;
-    final isAnswer = trainingEngine.userAnswerPosition == position;
-    final isRevealedTarget =
-        trainingEngine.showCorrectPosition &&
-        trainingEngine.targetMidi == position.midi;
+    final inFocus = _inFocus(fret);
+    final questionVisible =
+        state == TrainingState.playingRoot ||
+        state == TrainingState.waitingAnswer ||
+        state == TrainingState.showingResult;
+
+    final role = _roleFor(position, questionVisible);
     final label = _noteLabel(position.midi, keySig, inKey);
-    final stateColor = _stateColor(
-      isRoot: isRoot,
-      isAnswer: isAnswer,
-      isRevealedTarget: isRevealedTarget,
-    );
-    final cellBackground = isRoot
-        ? AppTheme.primaryColor.withAlpha(20)
-        : isAnswer
-        ? stateColor.withAlpha(20)
-        : isRevealedTarget
-        ? AppTheme.accentColor.withAlpha(24)
-        : inKey
-        ? AppTheme.surfaceColor.withAlpha(112)
-        : Colors.transparent;
+    final highlighted = role != _CellRole.none;
+    final roleColor = _roleColor(role);
+
+    final semanticsState = switch (role) {
+      _CellRole.root => '，基准音',
+      _CellRole.correct => '，正确',
+      _CellRole.wrong => '，已尝试',
+      _CellRole.target => '，目标音',
+      _CellRole.none => '',
+    };
 
     return Semantics(
       button: true,
       label:
-          '${stringIndex + 1}弦 $fret品，${GuitarMath.noteNameAt(position.midi).sharpName}',
+          '${stringIndex + 1}弦 $fret品，${GuitarMath.noteLabel(position.midi)}$semanticsState',
       child: SizedBox(
         width: _cellWidth,
         height: _rowHeight,
         child: Material(
-          color: cellBackground,
+          color: !inFocus
+              ? AppTheme.backgroundColor.withAlpha(150)
+              : inKey
+              ? AppTheme.surfaceColor.withAlpha(90)
+              : Colors.transparent,
           child: InkWell(
-            onTap: () => onFretTapped(position),
+            onTap: () => widget.onFretTapped(position),
             child: Stack(
               alignment: Alignment.center,
               children: [
                 Positioned(
                   left: 0,
                   right: 0,
-                  child: Container(height: 1, color: AppTheme.stringColor),
+                  child: Container(
+                    height: 1 + (stringIndex * 0.25),
+                    color: AppTheme.stringColor.withAlpha(inFocus ? 200 : 110),
+                  ),
                 ),
                 Positioned.fill(
                   child: DecoratedBox(
@@ -445,48 +488,60 @@ class _FretboardWidgetState extends State<FretboardWidget> {
                       border: Border(
                         right: BorderSide(
                           color: fret == 0
-                              ? AppTheme.secondaryColor.withAlpha(100)
+                              ? AppTheme.textSecondary.withAlpha(140)
                               : AppTheme.outlineColor,
-                          width: fret == 0 ? 2 : 1,
+                          width: fret == 0 ? 3 : 1,
                         ),
-                        bottom: const BorderSide(color: AppTheme.outlineColor),
                       ),
                     ),
                   ),
                 ),
-                if (label != null)
+                if (label != null || highlighted || inKey)
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 160),
-                    width: isRoot || isAnswer || isRevealedTarget ? 38 : 32,
-                    height: isRoot || isAnswer || isRevealedTarget ? 30 : 26,
+                    width: highlighted ? 36 : (inKey ? 30 : 22),
+                    height: highlighted ? 30 : (inKey ? 24 : 18),
                     decoration: BoxDecoration(
-                      color: _nodeColor(
-                        inKey: inKey,
-                        isRoot: isRoot,
-                        isAnswer: isAnswer,
-                        isRevealedTarget: isRevealedTarget,
-                      ),
-                      borderRadius: BorderRadius.circular(9),
+                      color: highlighted
+                          ? roleColor
+                          : inKey
+                          ? AppTheme.surfaceColor
+                          : AppTheme.raisedSurfaceColor.withAlpha(150),
+                      borderRadius: BorderRadius.circular(highlighted ? 10 : 8),
                       border: Border.all(
-                        color: isRoot || isAnswer || isRevealedTarget
-                            ? stateColor
-                            : AppTheme.outlineColor.withAlpha(150),
-                        width: isRoot || isAnswer || isRevealedTarget ? 1.5 : 1,
+                        color: highlighted
+                            ? roleColor
+                            : AppTheme.outlineColor.withAlpha(inKey ? 200 : 90),
                       ),
+                      boxShadow: highlighted
+                          ? [
+                              BoxShadow(
+                                color: roleColor.withAlpha(70),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
                     ),
                     child: Center(
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          color: _nodeTextColor(
-                            isRoot: isRoot,
-                            isAnswer: isAnswer,
-                            isRevealedTarget: isRevealedTarget,
-                          ),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                      child: role == _CellRole.wrong && label == null
+                          ? const Icon(
+                              Icons.close_rounded,
+                              size: 14,
+                              color: Colors.white,
+                            )
+                          : Text(
+                              label ?? '',
+                              style: TextStyle(
+                                color: highlighted
+                                    ? Colors.white
+                                    : inKey
+                                    ? AppTheme.textSecondary
+                                    : AppTheme.textMuted,
+                                fontSize: inKey || highlighted ? 10.5 : 9,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                     ),
                   ),
               ],
@@ -497,55 +552,36 @@ class _FretboardWidgetState extends State<FretboardWidget> {
     );
   }
 
-  Color _stateColor({
-    required bool isRoot,
-    required bool isAnswer,
-    required bool isRevealedTarget,
-  }) {
-    if (isAnswer) {
-      return trainingEngine.lastAnswerCorrect
-          ? AppTheme.correctColor
-          : AppTheme.wrongColor;
+  _CellRole _roleFor(FretPosition position, bool questionVisible) {
+    if (!questionVisible) return _CellRole.none;
+    final state = engine.state;
+    final resolved = state == TrainingState.showingResult;
+    if (resolved &&
+        engine.showCorrectPosition &&
+        engine.targetMidi == position.midi) {
+      return engine.lastAnswerCorrect && engine.userAnswerPosition == position
+          ? _CellRole.correct
+          : _CellRole.target;
     }
-    if (isRoot) return AppTheme.primaryColor;
-    if (isRevealedTarget) return AppTheme.accentColor;
-    return AppTheme.secondaryColor;
+    if (engine.rootPosition == position) return _CellRole.root;
+    if (engine.wrongPositions.contains(position)) return _CellRole.wrong;
+    return _CellRole.none;
   }
 
-  Color _nodeColor({
-    required bool inKey,
-    required bool isRoot,
-    required bool isAnswer,
-    required bool isRevealedTarget,
-  }) {
-    if (isAnswer) {
-      return trainingEngine.lastAnswerCorrect
-          ? AppTheme.correctColor
-          : AppTheme.wrongColor;
-    }
-    if (isRoot) return AppTheme.primaryColor;
-    if (isRevealedTarget) return AppTheme.accentColor;
-    return inKey
-        ? AppTheme.surfaceColor
-        : AppTheme.raisedSurfaceColor.withAlpha(120);
-  }
-
-  Color _nodeTextColor({
-    required bool isRoot,
-    required bool isAnswer,
-    required bool isRevealedTarget,
-  }) {
-    if (isRoot || isAnswer || isRevealedTarget) return Colors.white;
-    return AppTheme.textSecondary;
-  }
+  Color _roleColor(_CellRole role) => switch (role) {
+    _CellRole.root => AppTheme.primaryColor,
+    _CellRole.correct => AppTheme.correctColor,
+    _CellRole.wrong => AppTheme.wrongColor,
+    _CellRole.target => AppTheme.correctColor,
+    _CellRole.none => AppTheme.secondaryColor,
+  };
 
   String? _noteLabel(int midi, KeySignature keySig, bool inKey) {
-    if (!inKey && !showNoteNames) return null;
-    final degree = keySig.degreeOf(midi);
-    if (showDegrees && degree != null) {
-      return ScaleDegree.values[degree - 1].roman;
-    }
-    if (showNoteNames) return GuitarMath.noteNameAt(midi).sharpName;
+    final degree = keySig.degreeLabel(midi);
+    if (widget.showDegrees && degree != null) return degree;
+    if (widget.showNoteNames) return GuitarMath.noteNameAt(midi).sharpName;
     return null;
   }
 }
+
+enum _CellRole { none, root, correct, wrong, target }

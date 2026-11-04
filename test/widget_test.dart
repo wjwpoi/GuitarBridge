@@ -52,9 +52,9 @@ void main() {
       );
 
       expect(find.text('训练完成！'), findsOneWidget);
-      expect(find.text('80% 准确率'), findsOneWidget);
-      expect(find.text('8 / 10 道正确'), findsOneWidget);
-      expect(find.text('最佳连击: 5'), findsOneWidget);
+      expect(find.text('80%'), findsOneWidget);
+      expect(find.text('首次即答对 8 / 10 题'), findsOneWidget);
+      expect(find.text('5'), findsOneWidget);
       expect(find.text('完成'), findsOneWidget);
     });
 
@@ -87,7 +87,7 @@ void main() {
         ),
       );
 
-      expect(find.text('100% 准确率'), findsOneWidget);
+      expect(find.text('100%'), findsOneWidget);
       expect(find.byIcon(Icons.emoji_events), findsOneWidget);
     });
   });
@@ -190,13 +190,13 @@ void main() {
         ),
       );
 
-      expect(find.text('0–4 品'), findsOneWidget);
+      expect(find.text('0–6 品'), findsOneWidget);
       expect(find.byTooltip('向高把位移动'), findsOneWidget);
 
       await tester.tap(find.byTooltip('向高把位移动'));
       await tester.pumpAndSettle();
 
-      expect(find.text('4–8 品'), findsOneWidget);
+      expect(find.text('4–10 品'), findsOneWidget);
     });
   });
 }
