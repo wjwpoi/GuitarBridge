@@ -77,6 +77,12 @@ class GuitarMath {
     return NoteName.values[midiNote % 12];
   }
 
+  /// Scientific pitch label such as `E4` (MIDI 64).
+  static String noteLabel(int midiNote) {
+    final (name, octave) = noteAndOctave(midiNote);
+    return '${name.sharpName}$octave';
+  }
+
   /// 获取音名和八度
   static (NoteName, int) noteAndOctave(int midiNote) {
     return (NoteName.values[midiNote % 12], midiNote ~/ 12 - 1);

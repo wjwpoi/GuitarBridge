@@ -32,19 +32,19 @@ class AppConstants {
     'easy': DifficultyConfig(
       fretRange: (0, 5),
       stringRange: (0, 5),
-      allowedIntervals: [0, 3, 4, 5, 7], // P1, m3, M3, P4, P5
+      allowedIntervals: [3, 4, 5, 7, 12], // m3, M3, P4, P5, P8
       showHint: true,
     ),
     'medium': DifficultyConfig(
       fretRange: (0, 12),
       stringRange: (0, 5),
-      allowedIntervals: [0, 1, 2, 3, 4, 5, 7, 8, 9], // 增加大/小二度、六度
+      allowedIntervals: [1, 2, 3, 4, 5, 7, 8, 9, 12], // 增加大/小二度、六度
       showHint: false,
     ),
     'hard': DifficultyConfig(
       fretRange: (0, 22),
       stringRange: (0, 5),
-      allowedIntervals: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      allowedIntervals: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
       showHint: false,
     ),
   };

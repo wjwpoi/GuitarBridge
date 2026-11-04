@@ -9,6 +9,13 @@ class PracticeRecord {
   final String scaleType;
   final int bestStreak;
 
+  /// First-try results per interval: semitones → (firstTryCorrect, total).
+  /// Empty for records written before per-interval tracking existed.
+  final Map<int, (int, int)> intervalResults;
+
+  /// Difficulty key used for the session, null for legacy records.
+  final String? difficulty;
+
   const PracticeRecord({
     this.id,
     required this.date,
@@ -18,6 +25,8 @@ class PracticeRecord {
     required this.keySignature,
     required this.scaleType,
     required this.bestStreak,
+    this.intervalResults = const {},
+    this.difficulty,
   });
 
   double get accuracy =>
@@ -32,7 +41,28 @@ class PracticeRecord {
     'keySignature': keySignature,
     'scaleType': scaleType,
     'bestStreak': bestStreak,
+    if (intervalResults.isNotEmpty)
+      'intervalResults': {
+        for (final entry in intervalResults.entries)
+          '${entry.key}': [entry.value.$1, entry.value.$2],
+      },
+    if (difficulty != null) 'difficulty': difficulty,
   };
+
+  static Map<int, (int, int)> _parseIntervalResults(Object? raw) {
+    if (raw is! Map) return const {};
+    final result = <int, (int, int)>{};
+    for (final entry in raw.entries) {
+      final semitones = int.tryParse('${entry.key}');
+      final value = entry.value;
+      if (semitones == null || value is! List || value.length != 2) continue;
+      final correct = value[0];
+      final total = value[1];
+      if (correct is! num || total is! num) continue;
+      result[semitones] = (correct.toInt(), total.toInt());
+    }
+    return result;
+  }
 
   factory PracticeRecord.fromMap(Map<String, dynamic> map) => PracticeRecord(
     id: map['id'] as int?,
@@ -43,6 +73,8 @@ class PracticeRecord {
     keySignature: map['keySignature'] as String,
     scaleType: map['scaleType'] as String,
     bestStreak: map['bestStreak'] as int,
+    intervalResults: _parseIntervalResults(map['intervalResults']),
+    difficulty: map['difficulty'] as String?,
   );
 }
 

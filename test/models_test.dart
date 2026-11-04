@@ -3,6 +3,8 @@ import 'package:guitar_bridge/models/note.dart';
 import 'package:guitar_bridge/models/scale.dart';
 import 'package:guitar_bridge/models/tuning.dart';
 import 'package:guitar_bridge/core/guitar_math.dart';
+import 'package:guitar_bridge/models/practice_record.dart';
+import 'package:guitar_bridge/models/training_config.dart';
 
 void main() {
   group('IntervalType', () {
@@ -281,6 +283,134 @@ void main() {
       expect(GuitarMath.degreeDifference(cMajor, 60, 64), 3); // C->E = 3rd
       expect(GuitarMath.degreeDifference(cMajor, 60, 67), 5); // C->G = 5th
       expect(GuitarMath.degreeDifference(cMajor, 67, 60), 4); // G->C = 4th
+    });
+  });
+
+  group('KeySignature.degreeLabel', () {
+    test('labels major scale degrees with plain numbers', () {
+      const key = KeySignature(NoteName.c, ScaleType.major);
+      expect(key.degreeLabel(60), '1');
+      expect(key.degreeLabel(64), '3');
+      expect(key.degreeLabel(71), '7');
+      expect(key.degreeLabel(61), isNull);
+    });
+
+    test('labels modes and pentatonics by their sound', () {
+      const dorian = KeySignature(NoteName.d, ScaleType.dorian);
+      expect(dorian.degreeLabel(65), 'b3'); // F
+      expect(dorian.degreeLabel(72), 'b7'); // C
+      const pentatonic = KeySignature(NoteName.c, ScaleType.majorPentatonic);
+      expect(pentatonic.degreeLabel(67), '5'); // G is the 5th, not the IV
+    });
+  });
+
+  group('GuitarMath.noteLabel', () {
+    test('uses scientific pitch notation', () {
+      expect(GuitarMath.noteLabel(60), 'C4');
+      expect(GuitarMath.noteLabel(40), 'E2');
+      expect(GuitarMath.noteLabel(70), 'A#4');
+    });
+  });
+
+  group('PracticeRecord interval results', () {
+    test('round-trips per-interval results', () {
+      final record = PracticeRecord(
+        date: DateTime(2026, 1, 2),
+        totalAttempts: 4,
+        correctAnswers: 3,
+        durationSeconds: 30,
+        keySignature: 'C',
+        scaleType: '自然大调',
+        bestStreak: 2,
+        difficulty: 'medium',
+        intervalResults: const {4: (2, 2), 7: (1, 2)},
+      );
+      final restored = PracticeRecord.fromMap(record.toMap());
+      expect(restored.intervalResults, {4: (2, 2), 7: (1, 2)});
+      expect(restored.difficulty, 'medium');
+    });
+
+    test('legacy records without interval data still load', () {
+      final restored = PracticeRecord.fromMap({
+        'date': '2026-01-02T00:00:00.000',
+        'totalAttempts': 10,
+        'correctAnswers': 8,
+        'durationSeconds': 60,
+        'keySignature': 'G',
+        'scaleType': '自然大调',
+        'bestStreak': 4,
+      });
+      expect(restored.intervalResults, isEmpty);
+      expect(restored.difficulty, isNull);
+    });
+
+    test('malformed interval data is ignored instead of throwing', () {
+      final restored = PracticeRecord.fromMap({
+        'date': '2026-01-02T00:00:00.000',
+        'totalAttempts': 1,
+        'correctAnswers': 1,
+        'durationSeconds': 5,
+        'keySignature': 'C',
+        'scaleType': '自然大调',
+        'bestStreak': 1,
+        'intervalResults': {
+          'x': [1, 1],
+          '4': 'bad',
+          '7': [1, 2],
+        },
+      });
+      expect(restored.intervalResults, {7: (1, 2)});
+    });
+  });
+
+  group('TrainingConfig', () {
+    test('restores from preferences and writes back', () {
+      final prefs = UserPreferences(
+        selectedKey: 'G',
+        selectedScale: '多利亚调式',
+        selectedTuning: 'Drop D',
+        difficulty: 'hard',
+      );
+      final config = TrainingConfig.fromPreferences(prefs);
+      expect(config.key, 'G');
+      expect(config.scale, ScaleType.dorian);
+      expect(config.tuning, Tuning.dropD);
+      expect(config.difficulty, 'hard');
+
+      final next = config.copyWith(key: 'A', showDegrees: true);
+      final saved = UserPreferences();
+      next.writeTo(saved);
+      expect(saved.selectedKey, 'A');
+      expect(saved.selectedScale, '多利亚调式');
+      expect(saved.showDegrees, true);
+    });
+
+    test('falls back to defaults for unknown stored values', () {
+      final config = TrainingConfig.fromPreferences(
+        UserPreferences(
+          selectedKey: 'H',
+          selectedScale: '?',
+          selectedTuning: '?',
+          difficulty: 'impossible',
+        ),
+      );
+      expect(config.key, 'C');
+      expect(config.scale, ScaleType.major);
+      expect(config.tuning, Tuning.standard);
+      expect(config.difficulty, 'easy');
+    });
+
+    test('only question-relevant changes lock during a session', () {
+      const config = TrainingConfig();
+      expect(
+        config.affectsQuestions(config.copyWith(showDegrees: true)),
+        false,
+      );
+      expect(config.affectsQuestions(config.copyWith(key: 'D')), true);
+      expect(
+        config.affectsQuestions(config.copyWith(difficulty: 'hard')),
+        true,
+      );
     });
   });
 }

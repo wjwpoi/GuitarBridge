@@ -131,11 +131,9 @@ void main() {
       );
     });
 
-    test('rootMidi and targetMidi are different notes', () async {
+    test('targetMidi is always above rootMidi', () async {
       await engine.start();
-      if (engine.rootMidi != null && engine.targetMidi != null) {
-        expect(engine.rootMidi! % 12, isNot(engine.targetMidi! % 12));
-      }
+      expect(engine.targetMidi!, greaterThan(engine.rootMidi!));
     });
 
     test('targetMidi is within the current key', () async {
@@ -470,21 +468,24 @@ void main() {
       }
     });
 
-    test('correct after wrong on same question increments counters', () async {
-      engine.maxFailedAttempts = 3;
-      await engine.start();
-      final targetMidi = engine.targetMidi;
-      if (targetMidi != null) {
-        // Wrong first — stays in waitingAnswer
+    test(
+      'correct after wrong solves the question but is not first-try correct',
+      () async {
+        engine.maxFailedAttempts = 3;
+        await engine.start();
+        final targetMidi = engine.targetMidi!;
         await engine.submitAnswer(targetMidi + 1);
         expect(engine.currentStreak, 0);
         expect(engine.state, TrainingState.waitingAnswer);
-        // Correct on retry
         engine.submitAnswer(targetMidi);
         expect(engine.lastAnswerCorrect, true);
-        expect(engine.correctCount, 1);
-      }
-    });
+        expect(engine.correctCount, 0);
+        expect(engine.currentQuestion, 1);
+        expect(engine.outcomes.single.solved, true);
+        expect(engine.outcomes.single.firstTryCorrect, false);
+        expect(engine.outcomes.single.attempts, 2);
+      },
+    );
   });
 
   group('TrainingEngine - Edge Cases', () {
@@ -536,6 +537,192 @@ void main() {
       await start;
 
       expect(delayedEngine.state, TrainingState.idle);
+    });
+  });
+
+  group('TrainingEngine - Feedback and scoring', () {
+    test(
+      'wrong attempts report whether they were too low or too high',
+      () async {
+        await engine.start();
+        final target = engine.targetMidi!;
+        await engine.submitAnswer(target - 1);
+        expect(engine.lastDirection, PitchDirection.tooLow);
+        await engine.submitAnswer(target + 1);
+        expect(engine.lastDirection, PitchDirection.tooHigh);
+      },
+    );
+
+    test('same note name in the wrong octave is called out', () async {
+      engine.maxFailedAttempts = 5;
+      await engine.start();
+      await engine.submitAnswer(engine.targetMidi! + 12);
+      expect(engine.lastDirection, PitchDirection.samePitchClassWrongOctave);
+    });
+
+    test(
+      'wrong fret positions are remembered for the active question',
+      () async {
+        await engine.start();
+        final target = engine.targetPosition!;
+        final wrong = FretPosition(
+          stringIndex: 0,
+          fret: 0,
+          midi: target.midi + 1,
+        );
+        await engine.submitAnswer(wrong);
+        expect(engine.wrongPositions, contains(wrong));
+        expect(engine.attemptsRemaining, engine.maxFailedAttempts - 1);
+      },
+    );
+
+    test('only first-try answers build the streak and accuracy', () async {
+      engine.questionsPerSession = 5;
+      await engine.start();
+      await engine.submitAnswer(engine.targetMidi!); // first try
+      expect(engine.currentStreak, 1);
+      expect(engine.accuracy, 100);
+      await engine.submitAnswer(engine.targetMidi! + 1); // miss
+      await engine.submitAnswer(engine.targetMidi!); // solved on retry
+      expect(engine.currentStreak, 0);
+      expect(engine.correctCount, 1);
+      expect(engine.accuracy, 50);
+    });
+
+    test('response time is measured from the answer prompt', () async {
+      await engine.start();
+      await engine.submitAnswer(engine.targetMidi!);
+      expect(engine.outcomes.single.firstResponseSeconds, isNotNull);
+      expect(engine.averageResponseTime, lessThan(1));
+    });
+
+    test('revealAnswer marks the question missed and moves on', () async {
+      engine.questionsPerSession = 5;
+      final gate = Completer<void>();
+      final gated = TrainingEngine(
+        delay: (duration) => duration == TrainingEngine.revealResultHold
+            ? gate.future
+            : Future<void>.value(),
+      )..configure(engine: mockAudio, tuning: Tuning.standard);
+      await gated.start();
+      final reveal = gated.revealAnswer();
+      expect(gated.state, TrainingState.showingResult);
+      expect(gated.showCorrectPosition, true);
+      expect(gated.outcomes.single.revealed, true);
+      expect(gated.outcomes.single.solved, false);
+      expect(gated.currentStreak, 0);
+      gate.complete();
+      await reveal;
+      expect(gated.state, TrainingState.waitingAnswer);
+      expect(gated.currentQuestion, 1);
+    });
+
+    test('a missed interval is asked again later in the session', () async {
+      final reviewing = TrainingEngine(random: Random(3), delay: (_) async {})
+        ..configure(engine: mockAudio, tuning: Tuning.standard)
+        ..difficulty = AppConstants.difficulties['medium']!
+        ..questionsPerSession = 10
+        ..maxFailedAttempts = 1;
+      await reviewing.start();
+      final missed = reviewing.activeQuestion!.intervalSemitones;
+      await reviewing.submitAnswer(reviewing.targetMidi! + 1);
+      final upcoming = reviewing.questionPool
+          .skip(1)
+          .take(TrainingEngine.reviewDistance + 1)
+          .map((question) => question.intervalSemitones);
+      expect(upcoming, contains(missed));
+    });
+
+    test('review can be disabled', () async {
+      final plain = TrainingEngine(random: Random(3), delay: (_) async {})
+        ..configure(engine: mockAudio, tuning: Tuning.standard)
+        ..questionsPerSession = 10
+        ..maxFailedAttempts = 1
+        ..reviewMissedIntervals = false;
+      await plain.start();
+      final before = plain.questionPoolIntervals;
+      await plain.submitAnswer(plain.targetMidi! + 1);
+      expect(plain.questionPoolIntervals, before);
+    });
+
+    test('intervalTallies groups first-try results by interval', () async {
+      engine.questionsPerSession = 5;
+      await engine.start();
+      final first = engine.activeQuestion!.intervalSemitones;
+      await engine.submitAnswer(engine.targetMidi!);
+      final tally = engine.intervalTallies[first]!;
+      expect(tally.total, greaterThanOrEqualTo(1));
+      expect(tally.firstTryCorrect, greaterThanOrEqualTo(1));
+    });
+  });
+
+  group('TrainingEngine - Question variety', () {
+    test(
+      'the root is placed on more than one string across a session',
+      () async {
+        final varied = TrainingEngine(random: Random(11), delay: (_) async {})
+          ..configure(engine: mockAudio, tuning: Tuning.standard)
+          ..questionsPerSession = 50;
+        await varied.start();
+        final strings = varied.questionPool
+            .map((question) => question.root.stringIndex)
+            .toSet();
+        expect(strings.length, greaterThan(2));
+      },
+    );
+
+    test('consecutive questions avoid repeating the same pitch pair', () async {
+      final varied = TrainingEngine(random: Random(5), delay: (_) async {})
+        ..configure(engine: mockAudio, tuning: Tuning.standard)
+        ..questionsPerSession = 30;
+      await varied.start();
+      final pool = varied.questionPool;
+      for (var i = 1; i < pool.length; i++) {
+        final same =
+            pool[i].root.midi == pool[i - 1].root.midi &&
+            pool[i].target.midi == pool[i - 1].target.midi;
+        expect(same, false, reason: 'questions ${i - 1} and $i repeat');
+      }
+    });
+
+    test('questions carry a named interval', () async {
+      await engine.start();
+      final question = engine.activeQuestion!;
+      expect(question.interval.semitones, question.intervalSemitones);
+    });
+  });
+
+  group('TrainingEngine - Session controls', () {
+    test('replayQuestion plays root and target and keeps waiting', () async {
+      await engine.start();
+      final before = mockAudio.playCallCount;
+      await engine.replayQuestion();
+      expect(mockAudio.playCallCount, before + 2);
+      expect(engine.state, TrainingState.waitingAnswer);
+      expect(engine.isReplaying, false);
+    });
+
+    test('finishEarly completes with only the answered questions', () async {
+      engine.questionsPerSession = 10;
+      await engine.start();
+      await engine.submitAnswer(engine.targetMidi!);
+      await engine.finishEarly();
+      expect(engine.state, TrainingState.completed);
+      expect(engine.totalQuestions, 1);
+      expect(engine.correctCount, 1);
+    });
+
+    test('isAnnouncing is true only while a question plays', () async {
+      final gate = Completer<void>();
+      final gated = TrainingEngine(delay: (_) => gate.future)
+        ..configure(engine: mockAudio, tuning: Tuning.standard);
+      final start = gated.start();
+      await Future<void>.delayed(Duration.zero);
+      expect(gated.isAnnouncing, true);
+      gate.complete();
+      await start;
+      expect(gated.isAnnouncing, false);
+      expect(gated.state, TrainingState.waitingAnswer);
     });
   });
 }

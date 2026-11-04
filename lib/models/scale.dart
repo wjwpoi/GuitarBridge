@@ -56,6 +56,30 @@ class KeySignature {
     return scaleType.notesInKey(root);
   }
 
+  static const _degreeLabels = [
+    '1',
+    'b2',
+    '2',
+    'b3',
+    '3',
+    '4',
+    '#4',
+    '5',
+    'b6',
+    '6',
+    'b7',
+    '7',
+  ];
+
+  /// Degree relative to the tonic in major-scale terms (`1`, `b3`, `#4`…),
+  /// so modes and pentatonic scales are labelled by what they sound like
+  /// rather than by their position in the scale. Null when not in the scale.
+  String? degreeLabel(int midiNote) {
+    final semitone = ((midiNote - tonic.semitoneIndex) % 12 + 12) % 12;
+    if (!scaleType.intervals.contains(semitone)) return null;
+    return _degreeLabels[semitone];
+  }
+
   /// 某个 MIDI 音高在此调内的级数（1-7），不在调内返回 null
   int? degreeOf(int midiNote) {
     final root = tonic.semitoneIndex;

@@ -1,3 +1,4 @@
+import 'note.dart';
 import 'tuning.dart';
 
 /// How a submitted fretboard answer is evaluated.
@@ -58,6 +59,42 @@ class TrainingQuestion {
     required this.intervalSemitones,
   });
 
+  /// The named interval for this prompt. Questions are always ascending and
+  /// at most one octave, so the semitone count maps to exactly one name.
+  IntervalType get interval => IntervalType.values.firstWhere(
+    (candidate) => candidate.semitones == intervalSemitones,
+  );
+
   String get id =>
       '${root.stringIndex}:${root.fret}-${target.stringIndex}:${target.fret}';
+}
+
+/// Direction hint for a wrong attempt, relative to the target pitch.
+enum PitchDirection { tooLow, tooHigh, samePitchClassWrongOctave }
+
+/// The final result of one question in a session.
+///
+/// [firstTryCorrect] is what accuracy and streaks are based on: a pitch found
+/// after several audible attempts is useful practice, but it is not evidence
+/// that the interval was recognised by ear.
+class QuestionOutcome {
+  final TrainingQuestion question;
+  final int attempts;
+  final bool firstTryCorrect;
+  final bool solved;
+  final bool revealed;
+
+  /// Seconds between the answer prompt and the first attempt.
+  final double? firstResponseSeconds;
+
+  const QuestionOutcome({
+    required this.question,
+    required this.attempts,
+    required this.firstTryCorrect,
+    required this.solved,
+    required this.revealed,
+    this.firstResponseSeconds,
+  });
+
+  int get intervalSemitones => question.intervalSemitones;
 }
