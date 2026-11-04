@@ -16,8 +16,21 @@ enum AudioEngineState { uninitialized, loading, ready, error }
 /// exact equal-temperament playback-rate ratio. Keeping the sample root close
 /// to the target avoids the extreme artifacts of folding one octave across
 /// the full guitar range.
+///
+/// Decoded samples are cached for the lifetime of the engine (19 short WAVs),
+/// so repeated cues never hit the asset bundle again. Voices are released
+/// with a short fade instead of a hard stop to avoid clicks, and a new cue
+/// fades the previous one out.
 class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
-  final SoLoud _soloud = SoLoud.instance;
+  /// How long [playNote] waits before reporting the cue as heard.
+  static const Duration cueDuration = Duration(milliseconds: 900);
+
+  /// How long a voice keeps ringing before it is faded out on its own.
+  static const Duration ringDuration = Duration(milliseconds: 1600);
+  static const Duration releaseFade = Duration(milliseconds: 260);
+  static const Duration interruptFade = Duration(milliseconds: 45);
+
+  SoLoud get _soloud => SoLoud.instance;
 
   AudioEngineState _state = AudioEngineState.uninitialized;
   double _volume = AppConstants.defaultVolume;
@@ -27,6 +40,9 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   SoundHandle? _activeHandle;
   int _playbackGeneration = 0;
   Future<void>? _initialization;
+  final Map<int, AudioSource> _sources = {};
+  final Map<int, Future<AudioSource>> _pendingSources = {};
+  Future<void> _loadQueue = Future<void>.value();
 
   AudioEngineState get state => _state;
   double get volume => _volume;
@@ -70,27 +86,96 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
       }
       _ensureCleanTone();
       _state = AudioEngineState.ready;
+      // Warm the sample cache in the background so the first question does
+      // not wait for decoding. Failures surface on the first real play.
+      unawaited(_preloadSamples());
     } catch (error) {
       _state = AudioEngineState.error;
-      _error = error.toString();
+      _error = '音频初始化失败：$error';
       debugPrint('[AudioEngine] initialization failed: $error');
     }
     if (!_disposed) notifyListeners();
   }
 
+  Future<void> _preloadSamples() async {
+    for (final root in SampleConfig.rootMidis) {
+      if (_disposed || !_soloud.isInitialized) return;
+      // Leave room for cues requested by the user to jump the queue.
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      try {
+        await _sourceForRoot(root);
+      } catch (error) {
+        debugPrint('[AudioEngine] preload of $root failed: $error');
+      }
+    }
+  }
+
+  /// Loads (once) and caches the sample for [rootMidi].
+  ///
+  /// Loads are serialised: the SoLoud web loader does not support several
+  /// concurrent `loadAsset` calls, and a cue requested during background
+  /// preloading must not hang waiting on a lost completion.
+  Future<AudioSource> _sourceForRoot(int rootMidi) {
+    final cached = _sources[rootMidi];
+    if (cached != null) return Future.value(cached);
+    final pending = _pendingSources[rootMidi];
+    if (pending != null) return pending;
+    final load = _loadQueue
+        .catchError((_) {})
+        .then((_) async {
+          final ready = _sources[rootMidi];
+          if (ready != null) return ready;
+          final source = await _soloud.loadAsset(
+            SampleConfig.samplePathForRoot(rootMidi),
+          );
+          _sources[rootMidi] = source;
+          return source;
+        })
+        // Block body on purpose: returning the removed future (this very
+        // load) from whenComplete would make it wait on itself forever.
+        .whenComplete(() {
+          _pendingSources.remove(rootMidi);
+        });
+    _pendingSources[rootMidi] = load;
+    _loadQueue = load;
+    return load;
+  }
+
+  /// Plays [midiNote] and completes after [cueDuration].
+  ///
+  /// Returns false only when the backend failed. A cue interrupted by a newer
+  /// cue still counts as played: it reached the speakers, it was just cut
+  /// short on purpose.
   @override
   Future<bool> playNote(int midiNote) async {
     if (!isReady || _disposed) return false;
 
     final generation = ++_playbackGeneration;
-    await _stopActiveHandle();
+    _releaseActiveHandle(interruptFade);
     _isPlaying = true;
-    _error = null;
     notifyListeners();
 
     try {
-      await _playPitchCue(midiNote, generation);
-      return generation == _playbackGeneration && !_disposed;
+      final source = await _sourceForRoot(
+        SampleConfig.nearestSampleMidi(midiNote),
+      );
+      if (generation != _playbackGeneration || _disposed) return true;
+      final handle = await _soloud.play(
+        source,
+        volume: _volume.clamp(0.0, 1.0).toDouble(),
+      );
+      _soloud.setRelativePlaySpeed(
+        handle,
+        SampleConfig.playbackSpeedForMidi(midiNote),
+      );
+      if (generation != _playbackGeneration) {
+        _release(handle, interruptFade);
+        return true;
+      }
+      _activeHandle = handle;
+      _scheduleNaturalRelease(handle);
+      await Future<void>.delayed(cueDuration);
+      return !_disposed;
     } catch (error) {
       _state = AudioEngineState.error;
       _error = '无法播放 MIDI $midiNote：$error';
@@ -105,50 +190,27 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
     }
   }
 
-  Future<void> _playPitchCue(int midiNote, int generation) async {
-    final source = await _soloud.loadAsset(SampleConfig.samplePath(midiNote));
-    final handle = await _soloud.play(
-      source,
-      volume: _volume.clamp(0.0, 1.0).toDouble(),
-    );
-    _soloud.setRelativePlaySpeed(
-      handle,
-      SampleConfig.playbackSpeedForMidi(midiNote),
-    );
-    if (generation == _playbackGeneration) {
-      _activeHandle = handle;
-    }
-
-    try {
-      await Future<void>.delayed(const Duration(milliseconds: 900));
-    } finally {
-      if (_activeHandle == handle) _activeHandle = null;
-      if (_soloud.isInitialized && !handle.isError) {
-        try {
-          await _soloud.stop(handle);
-        } catch (_) {
-          // The voice may have ended or been stopped by a newer cue.
-        }
-      }
-      if (_soloud.isInitialized) {
-        try {
-          await _soloud.disposeSource(source);
-        } catch (_) {
-          // Deinitialization can race with application disposal.
-        }
-      }
-    }
+  void _scheduleNaturalRelease(SoundHandle handle) {
+    Timer(ringDuration, () {
+      if (identical(_activeHandle, handle)) _activeHandle = null;
+      _release(handle, releaseFade);
+    });
   }
 
-  Future<void> _stopActiveHandle() async {
+  void _releaseActiveHandle(Duration fade) {
     final handle = _activeHandle;
     _activeHandle = null;
-    if (handle != null && _soloud.isInitialized && !handle.isError) {
-      try {
-        await _soloud.stop(handle);
-      } catch (_) {
-        // Treat an already-finished voice as stopped.
-      }
+    if (handle != null) _release(handle, fade);
+  }
+
+  void _release(SoundHandle handle, Duration fade) {
+    if (!_soloud.isInitialized || handle.isError) return;
+    try {
+      if (!_soloud.getIsValidVoiceHandle(handle)) return;
+      _soloud.fadeVolume(handle, 0, fade);
+      _soloud.scheduleStop(handle, fade);
+    } catch (_) {
+      // The voice may already have ended.
     }
   }
 
@@ -156,7 +218,7 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   Future<void> stopAll() async {
     _playbackGeneration++;
     _isPlaying = false;
-    await _stopActiveHandle();
+    _releaseActiveHandle(interruptFade);
     if (!_disposed) notifyListeners();
   }
 
@@ -176,11 +238,12 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
 
   Future<void> disposeEngine() async {
     _playbackGeneration++;
-    await _stopActiveHandle();
+    _releaseActiveHandle(interruptFade);
     if (_soloud.isInitialized) {
       await _soloud.disposeAllSources();
       _soloud.deinit();
     }
+    _sources.clear();
     _state = AudioEngineState.uninitialized;
     if (!_disposed) notifyListeners();
   }
