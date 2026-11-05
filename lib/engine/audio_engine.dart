@@ -260,6 +260,11 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
 
   Future<void> disposeEngine() async {
     _playbackGeneration++;
+    // Never touch the plugin if audio was never started (e.g. a web visitor
+    // who left before enabling sound): loading it is the expensive part.
+    if (_state == AudioEngineState.uninitialized && _initialization == null) {
+      return;
+    }
     _releaseActiveHandle(interruptFade);
     if (_soloud.isInitialized) {
       await _soloud.disposeAllSources();
