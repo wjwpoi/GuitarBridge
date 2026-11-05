@@ -113,6 +113,12 @@ class UserPreferences {
   /// 0 = never reveal, 1-5 = max wrong attempts before showing correct answer.
   int maxFailedAttempts;
 
+  /// 'system' | 'light' | 'dark'.
+  String themeMode;
+
+  /// Weight question selection towards historically weak intervals.
+  bool adaptiveTraining;
+
   UserPreferences({
     this.showNoteNames = true,
     this.showFretNumbers = true,
@@ -126,6 +132,8 @@ class UserPreferences {
     this.toneMode = 'clean',
     this.hasCompletedOnboarding = false,
     this.maxFailedAttempts = 3,
+    this.themeMode = 'system',
+    this.adaptiveTraining = true,
   });
 
   Map<String, dynamic> toJson() => {
@@ -141,6 +149,8 @@ class UserPreferences {
     'toneMode': toneMode,
     'hasCompletedOnboarding': hasCompletedOnboarding,
     'maxFailedAttempts': maxFailedAttempts,
+    'themeMode': themeMode,
+    'adaptiveTraining': adaptiveTraining,
   };
 
   factory UserPreferences.fromJson(
@@ -158,5 +168,11 @@ class UserPreferences {
     toneMode: json['toneMode'] as String? ?? 'clean',
     hasCompletedOnboarding: json['hasCompletedOnboarding'] as bool? ?? false,
     maxFailedAttempts: (json['maxFailedAttempts'] as num?)?.toInt() ?? 3,
+    themeMode: switch (json['themeMode']) {
+      'light' => 'light',
+      'dark' => 'dark',
+      _ => 'system',
+    },
+    adaptiveTraining: json['adaptiveTraining'] as bool? ?? true,
   );
 }

@@ -9,6 +9,7 @@ import '../models/note.dart';
 import '../models/scale.dart';
 import '../models/training_question.dart';
 import '../models/tuning.dart';
+import 'adaptive_planner.dart';
 import 'training_audio_port.dart';
 
 /// Training lifecycle.
@@ -77,6 +78,14 @@ class TrainingEngine extends ChangeNotifier {
 
   /// Re-ask missed intervals later in the same session.
   bool reviewMissedIntervals = true;
+
+  /// Optional per-interval weights from [AdaptivePlanner.weightsFor]. Null
+  /// gives every interval the same number of questions.
+  Map<int, double>? intervalWeights;
+  Map<int, int> _plannedAllocation = const {};
+
+  /// Questions planned per interval for the current session.
+  Map<int, int> get plannedAllocation => Map.unmodifiable(_plannedAllocation);
 
   int _questionsPerSession = AppConstants.defaultQuestionsPerSession;
   int get questionsPerSession => _questionsPerSession;
@@ -294,19 +303,26 @@ class TrainingEngine extends ChangeNotifier {
     // fret range (most visibly perfect fourths and fifths). Build the session
     // from interval buckets instead: every available interval gets the same
     // number of questions, with a difference of at most one.
-    final intervals = questionsByInterval.keys.toList()..shuffle(_random);
+    final intervals = questionsByInterval.keys.toList()..sort();
     for (final bucket in questionsByInterval.values) {
       bucket.shuffle(_random);
     }
-    final bucketOffsets = <int, int>{};
+    // Balanced by default; with [intervalWeights] (cross-session history)
+    // weaker intervals receive extra questions while every interval keeps at
+    // least one when the session is long enough.
+    final allocation = AdaptivePlanner.allocate(
+      intervals,
+      questionsPerSession,
+      intervalWeights,
+      _random,
+    );
+    _plannedAllocation = allocation;
     final pool = <TrainingQuestion>[];
-    for (var index = 0; index < questionsPerSession; index++) {
-      if (intervals.isEmpty) break;
-      final interval = intervals[index % intervals.length];
+    for (final interval in intervals) {
       final bucket = questionsByInterval[interval]!;
-      final offset = bucketOffsets[interval] ?? 0;
-      pool.add(bucket[offset % bucket.length]);
-      bucketOffsets[interval] = offset + 1;
+      for (var i = 0; i < allocation[interval]!; i++) {
+        pool.add(bucket[i % bucket.length]);
+      }
     }
     pool.shuffle(_random);
     _spreadRepeats(pool);
@@ -599,6 +615,7 @@ class TrainingEngine extends ChangeNotifier {
 
   void reset() {
     _generation++;
+    _plannedAllocation = const {};
     _state = TrainingState.idle;
     _currentQuestion = 0;
     _sessionQuestionCount = 0;
