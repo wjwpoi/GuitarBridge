@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
+import '../widgets/common.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final Future<void> Function() onComplete;
@@ -22,170 +23,134 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          const Positioned(
-            top: -180,
-            right: -120,
-            child: _AmbientOrb(size: 430, color: AppTheme.secondaryColor),
-          ),
-          const Positioned(
-            bottom: -220,
-            left: -180,
-            child: _AmbientOrb(size: 480, color: AppTheme.primaryColor),
-          ),
-          SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth >= 900;
-                return SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: constraints.maxWidth < 600 ? 22 : 48,
-                    vertical: 32,
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1120),
-                      child: isWide
-                          ? Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Expanded(child: _buildHero(context)),
-                                const SizedBox(width: 64),
-                                Expanded(child: _buildFeatureGrid()),
-                              ],
-                            )
-                          : Column(
-                              children: [
-                                _buildHero(context),
-                                const SizedBox(height: 40),
-                                _buildFeatureGrid(),
-                              ],
-                            ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final wide = constraints.maxWidth >= 900;
+            final pad = constraints.maxWidth < 600 ? 24.0 : 56.0;
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: pad, vertical: 28),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 56,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1040),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Wordmark(),
+                        ),
+                        SizedBox(height: wide ? 72 : 40),
+                        if (wide)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(flex: 6, child: _buildHero(context)),
+                              const SizedBox(width: 72),
+                              Expanded(flex: 5, child: _buildSteps(context)),
+                            ],
+                          )
+                        else ...[
+                          _buildHero(context),
+                          const SizedBox(height: 44),
+                          _buildSteps(context),
+                        ],
+                      ],
                     ),
                   ),
-                );
-              },
-            ),
-          ),
-        ],
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 
   Widget _buildHero(BuildContext context) {
+    final c = context.gb;
+    final compact = MediaQuery.sizeOf(context).width < 600;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Container(
-          width: 58,
-          height: 58,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        Text(
+          '听见音程，\n在指板上找到它。',
+          style: context.text.displaySmall?.copyWith(
+            fontSize: compact ? 30 : 40,
+            height: 1.25,
+          ),
+        ),
+        const SizedBox(height: 20),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 460),
+          child: Text(
+            '每一题先播放基准音，再播放一个更高的音。你要做的，是在指板上点出第二个音。'
+            '练得越多，耳朵和手指之间的距离就越短。',
+            style: context.text.bodyLarge?.copyWith(
+              color: c.textSecondary,
+              height: 1.75,
             ),
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.primaryColor.withAlpha(40),
-                blurRadius: 28,
-                spreadRadius: 2,
+          ),
+        ),
+        const SizedBox(height: 36),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          ),
+          onPressed: _isCompleting ? null : _complete,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_isCompleting) ...[
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: c.textMuted,
+                  ),
+                ),
+                const SizedBox(width: 10),
+              ],
+              Text(
+                _isCompleting
+                    ? '正在准备声音…'
+                    : widget.requiresAudioActivation
+                    ? '开启声音，进入训练'
+                    : '开始练习',
               ),
             ],
           ),
-          child: const Icon(
-            Icons.music_note_rounded,
-            color: Colors.white,
-            size: 31,
-          ),
         ),
-        const SizedBox(height: 28),
-        Text('听见音程，\n看懂指板。', style: Theme.of(context).textTheme.displaySmall),
-        const SizedBox(height: 18),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 470),
-          child: const Text(
-            'GuitarBridge 把相对音准训练和吉他指板连接起来。'
-            '从清晰的上行音程开始，在等宽指板上找到你真正听见的音。',
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 15,
-              height: 1.65,
-            ),
-          ),
-        ),
-        const SizedBox(height: 30),
-        const Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            _HeroTag(icon: Icons.headphones_rounded, text: '相对音准'),
-            _HeroTag(icon: Icons.grid_view_rounded, text: '等宽指板'),
-            _HeroTag(icon: Icons.devices_rounded, text: '跨平台一致'),
-          ],
-        ),
-        const SizedBox(height: 36),
-        ElevatedButton.icon(
-          onPressed: _isCompleting ? null : _complete,
-          icon: _isCompleting
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Icon(
-                  widget.requiresAudioActivation
-                      ? Icons.volume_up_rounded
-                      : Icons.arrow_forward_rounded,
-                ),
-          label: Text(
-            _isCompleting
-                ? '正在准备声音…'
-                : widget.requiresAudioActivation
-                ? '开启声音，进入训练'
-                : '进入训练工作台',
-          ),
-        ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         Text(
           widget.requiresAudioActivation
-              ? '浏览器首次需要一次点击来激活声音；建议佩戴耳机。'
-              : '首次建议佩戴耳机，训练全程使用清晰的真实吉他音色。',
-          style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+              ? '浏览器首次需要一次点击来激活声音。建议佩戴耳机。'
+              : '建议佩戴耳机。',
+          style: context.text.bodySmall,
         ),
       ],
     );
   }
 
-  Widget _buildFeatureGrid() {
-    return const Column(
+  Widget _buildSteps(BuildContext context) {
+    const steps = [
+      ('听', '基准音会在指板上标出，紧接着播放一个八度以内、比它高的目标音。'),
+      ('找', '点击指板上任意与目标音同音高的位置。答错会提示偏高还是偏低。'),
+      ('记', '答案揭晓时会告诉你这是什么音程，并标出它在指板上的所有位置。'),
+      ('练', '没答对的音程会在本轮再出现；智能出题会在之后多安排你的弱项。'),
+    ];
+    return Column(
       children: [
-        _FeatureCard(
-          index: '01',
-          icon: Icons.hearing_rounded,
-          title: '先听，再定位',
-          description: '依次播放基准音和目标音，把听觉距离映射到指板。',
-          accent: AppTheme.primaryColor,
-        ),
-        SizedBox(height: 12),
-        _FeatureCard(
-          index: '02',
-          icon: Icons.straighten_rounded,
-          title: '抽象等宽指板',
-          description: '不模拟物理品距，让每一品都同样清楚、同样容易点击。',
-          accent: AppTheme.secondaryColor,
-        ),
-        SizedBox(height: 12),
-        _FeatureCard(
-          index: '03',
-          icon: Icons.query_stats_rounded,
-          title: '可追踪的练习',
-          description: '记录准确率、连续练习与答题趋势，观察真实进步。',
-          accent: AppTheme.accentColor,
-        ),
+        for (final (i, (title, body)) in steps.indexed) ...[
+          if (i > 0) const Divider(height: 40),
+          _Step(index: i + 1, title: title, body: body),
+        ],
       ],
     );
   }
@@ -200,130 +165,42 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-class _AmbientOrb extends StatelessWidget {
-  final double size;
-  final Color color;
-
-  const _AmbientOrb({required this.size, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [color.withAlpha(28), color.withAlpha(0)],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HeroTag extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _HeroTag({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.outlineColor),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 15, color: AppTheme.primaryColor),
-          const SizedBox(width: 7),
-          Text(
-            text,
-            style: const TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FeatureCard extends StatelessWidget {
-  final String index;
-  final IconData icon;
+class _Step extends StatelessWidget {
+  final int index;
   final String title;
-  final String description;
-  final Color accent;
+  final String body;
 
-  const _FeatureCard({
-    required this.index,
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.accent,
-  });
+  const _Step({required this.index, required this.title, required this.body});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(22),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: accent.withAlpha(16),
-                borderRadius: BorderRadius.circular(13),
-                border: Border.all(color: accent.withAlpha(70)),
-              ),
-              child: Icon(icon, color: accent, size: 21),
+    final c = context.gb;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 36,
+          child: Text(
+            '0$index',
+            style: TextStyle(
+              color: c.textMuted,
+              fontSize: 12,
+              fontFeatures: const [FontFeature.tabularFigures()],
+              height: 1.9,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ),
-                      Text(
-                        index,
-                        style: const TextStyle(
-                          color: AppTheme.textMuted,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 7),
-                  Text(
-                    description,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: context.text.titleLarge),
+              const SizedBox(height: 6),
+              Text(body, style: context.text.bodyMedium),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

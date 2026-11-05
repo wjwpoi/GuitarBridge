@@ -4,6 +4,7 @@ import '../../core/guitar_math.dart';
 import '../../core/theme.dart';
 import '../../engine/training_engine.dart';
 import '../../models/training_question.dart';
+import 'common.dart';
 
 /// The training "stage": what is happening now, what to do next and how the
 /// session is going. Rebuilds itself from [engine].
@@ -22,6 +23,9 @@ class TrainingStatusWidget extends StatelessWidget {
   /// Label for the start button when audio still needs a user gesture.
   final String? startLabel;
 
+  /// Shown under the idle message, e.g. which intervals adaptive mode favours.
+  final String? planNote;
+
   const TrainingStatusWidget({
     super.key,
     required this.engine,
@@ -33,6 +37,7 @@ class TrainingStatusWidget extends StatelessWidget {
     this.onFinish,
     this.showShortcuts = false,
     this.startLabel,
+    this.planNote,
   });
 
   @override
@@ -40,51 +45,109 @@ class TrainingStatusWidget extends StatelessWidget {
     return ListenableBuilder(
       listenable: engine,
       builder: (context, _) {
+        final c = context.gb;
         final state = engine.state;
-        final visuals = _visuals(state);
         final compact = MediaQuery.sizeOf(context).width < 600;
+        final showProgress =
+            engine.isSessionActive || state == TrainingState.completed;
+        final pad = compact ? 18.0 : 26.0;
         return Card(
           clipBehavior: Clip.antiAlias,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               SizedBox(
-                height: 4,
-                child:
-                    engine.isSessionActive || state == TrainingState.completed
-                    ? LinearProgressIndicator(
-                        value: engine.progress,
-                        backgroundColor: AppTheme.raisedSurfaceColor,
-                        color: visuals.color,
+                height: 2,
+                child: showProgress
+                    ? TweenAnimationBuilder<double>(
+                        tween: Tween(end: engine.progress),
+                        duration: const Duration(milliseconds: 320),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, _) => LinearProgressIndicator(
+                          value: value,
+                          backgroundColor: Colors.transparent,
+                          color: c.accent,
+                        ),
                       )
-                    : ColoredBox(color: visuals.color.withAlpha(90)),
+                    : null,
               ),
               Padding(
                 padding: EdgeInsets.fromLTRB(
+                  pad,
                   compact ? 16 : 22,
-                  compact ? 14 : 18,
+                  pad,
                   compact ? 16 : 22,
-                  compact ? 14 : 18,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildHeadline(context, state, visuals, compact),
+                    _buildEyebrow(context, state),
+                    const SizedBox(height: 8),
+                    Text(
+                      _title(state),
+                      style: context.text.headlineSmall?.copyWith(
+                        fontSize: compact ? 20 : 24,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 160),
+                      layoutBuilder: (current, previous) => Stack(
+                        alignment: Alignment.topLeft,
+                        children: [...previous, if (current != null) current],
+                      ),
+                      child: Text(
+                        _message(state),
+                        key: ValueKey(_message(state)),
+                        style: context.text.bodyMedium?.copyWith(
+                          color: _hasFeedback(state) ? c.wrong : null,
+                        ),
+                      ),
+                    ),
+                    if (state == TrainingState.idle && planNote != null) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        planNote!,
+                        style: context.text.bodySmall?.copyWith(
+                          color: c.accent,
+                        ),
+                      ),
+                    ],
                     if (engine.activeQuestion != null) ...[
-                      SizedBox(height: compact ? 12 : 16),
+                      SizedBox(height: compact ? 16 : 20),
                       _QuestionStrip(engine: engine),
                     ],
-                    SizedBox(height: compact ? 12 : 16),
-                    _buildActions(state, compact),
-                    // On phones the metrics give way to the fretboard while a
-                    // question is open; they come back on the result screen.
-                    if (state == TrainingState.completed ||
-                        (engine.isSessionActive && !compact)) ...[
-                      SizedBox(height: compact ? 12 : 16),
-                      const Divider(height: 1),
-                      SizedBox(height: compact ? 10 : 12),
-                      _buildMetrics(),
-                    ],
+                    SizedBox(height: compact ? 16 : 22),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final showMetrics =
+                            state == TrainingState.completed ||
+                            (engine.isSessionActive && !compact);
+                        final actions = _buildActions(context, state, compact);
+                        if (!showMetrics) return actions;
+                        // Wide cards keep the metrics beside the actions so
+                        // the fretboard stays above the fold.
+                        if (constraints.maxWidth >= 920) {
+                          return Row(
+                            children: [
+                              Expanded(child: actions),
+                              const SizedBox(width: 24),
+                              _buildMetrics(context),
+                            ],
+                          );
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            actions,
+                            SizedBox(height: compact ? 16 : 20),
+                            const Divider(),
+                            const SizedBox(height: 14),
+                            _buildMetrics(context),
+                          ],
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -95,67 +158,55 @@ class TrainingStatusWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildHeadline(
-    BuildContext context,
-    TrainingState state,
-    _Visuals visuals,
-    bool compact,
-  ) {
+  Widget _buildEyebrow(BuildContext context, TrainingState state) {
+    final c = context.gb;
+    final color = switch (state) {
+      TrainingState.playingRoot || TrainingState.configuring => c.ink,
+      TrainingState.waitingAnswer =>
+        engine.failedAttempts > 0 ? c.wrong : c.accent,
+      TrainingState.showingResult =>
+        engine.lastAnswerCorrect ? c.correct : c.accent,
+      TrainingState.audioError => c.wrong,
+      _ => c.textMuted,
+    };
+    final number =
+        (engine.currentQuestion +
+                (state == TrainingState.showingResult ? 0 : 1))
+            .clamp(1, engine.totalQuestions);
+    final label = switch (state) {
+      TrainingState.idle => '相对音准 · 指板定位',
+      TrainingState.completed => '本轮结束',
+      TrainingState.audioError => '音频',
+      _ => '第 $number 题 · 共 ${engine.totalQuestions} 题',
+    };
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          width: compact ? 40 : 46,
-          height: compact ? 40 : 46,
-          decoration: BoxDecoration(
-            color: visuals.color.withAlpha(22),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: visuals.color.withAlpha(90)),
-          ),
-          child: Icon(visuals.icon, color: visuals.color, size: 22),
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _title(state),
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontSize: compact ? 19 : 22,
-                ),
-              ),
-              const SizedBox(height: 4),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 160),
-                child: Text(
-                  _message(state),
-                  key: ValueKey(_message(state)),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: _messageColor(state),
-                    fontWeight: _hasFeedback(state)
-                        ? FontWeight.w700
-                        : FontWeight.w400,
+        const SizedBox(width: 8),
+        Expanded(child: Text(label, style: context.text.labelMedium)),
+        if (state == TrainingState.waitingAnswer &&
+            engine.maxFailedAttempts > 0)
+          Semantics(
+            label: '剩余尝试 ${engine.attemptsRemaining} 次',
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < engine.maxFailedAttempts; i++)
+                  Container(
+                    width: 6,
+                    height: 6,
+                    margin: const EdgeInsets.only(left: 4),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: i < engine.failedAttempts ? c.wrong : c.strongLine,
+                    ),
                   ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (engine.isSessionActive || state == TrainingState.completed)
-          Padding(
-            padding: const EdgeInsets.only(left: 12),
-            child: _QuestionCount(
-              current:
-                  (engine.currentQuestion +
-                          (state == TrainingState.completed ||
-                                  state == TrainingState.showingResult
-                              ? 0
-                              : 1))
-                      .clamp(0, engine.totalQuestions)
-                      .toInt(),
-              total: engine.totalQuestions,
+              ],
             ),
           ),
       ],
@@ -165,118 +216,67 @@ class TrainingStatusWidget extends StatelessWidget {
   bool _hasFeedback(TrainingState state) =>
       state == TrainingState.waitingAnswer && engine.failedAttempts > 0;
 
-  Color _messageColor(TrainingState state) {
-    if (_hasFeedback(state)) return AppTheme.wrongColor;
-    return AppTheme.textSecondary;
-  }
-
-  Widget _buildMetrics() {
+  Widget _buildMetrics(BuildContext context) {
     final answered = engine.currentQuestion;
-    return Row(
+    final items = <(String, String)>[
+      ('首答正确', '${engine.correctCount}/$answered'),
+      ('正确率', answered == 0 ? '—' : '${engine.accuracy.toStringAsFixed(0)}%'),
+      ('连击', '${engine.currentStreak}'),
+      (
+        '平均反应',
+        engine.averageResponseTime == 0
+            ? '—'
+            : '${engine.averageResponseTime.toStringAsFixed(1)}s',
+      ),
+    ];
+    return Wrap(
+      spacing: 32,
+      runSpacing: 10,
       children: [
-        Expanded(child: _metric('首答正确', '${engine.correctCount}/$answered')),
-        Expanded(
-          child: _metric(
-            '正确率',
-            answered == 0 ? '—' : '${engine.accuracy.toStringAsFixed(0)}%',
+        for (final (label, value) in items)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: context.text.titleMedium?.copyWith(
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+              Text(label, style: context.text.bodySmall),
+            ],
           ),
-        ),
-        Expanded(child: _metric('连击', '${engine.currentStreak}')),
-        Expanded(
-          child: _metric(
-            '平均反应',
-            engine.averageResponseTime == 0
-                ? '—'
-                : '${engine.averageResponseTime.toStringAsFixed(1)}s',
-          ),
-        ),
       ],
     );
   }
-
-  Widget _metric(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppTheme.textMuted,
-            fontSize: 10.5,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-
-  _Visuals _visuals(TrainingState state) => switch (state) {
-    TrainingState.idle => const _Visuals(
-      Icons.headphones_rounded,
-      AppTheme.secondaryColor,
-    ),
-    TrainingState.configuring => const _Visuals(
-      Icons.tune_rounded,
-      AppTheme.secondaryColor,
-    ),
-    TrainingState.playingRoot => const _Visuals(
-      Icons.graphic_eq_rounded,
-      AppTheme.primaryColor,
-    ),
-    TrainingState.audioError => const _Visuals(
-      Icons.volume_off_rounded,
-      AppTheme.wrongColor,
-    ),
-    TrainingState.waitingAnswer =>
-      engine.failedAttempts > 0
-          ? const _Visuals(Icons.hearing_rounded, AppTheme.wrongColor)
-          : const _Visuals(Icons.hearing_rounded, AppTheme.accentColor),
-    TrainingState.showingResult =>
-      engine.lastAnswerCorrect
-          ? const _Visuals(Icons.check_rounded, AppTheme.correctColor)
-          : const _Visuals(Icons.lightbulb_rounded, AppTheme.accentColor),
-    TrainingState.completed => const _Visuals(
-      Icons.auto_awesome_rounded,
-      AppTheme.accentColor,
-    ),
-  };
 
   String _title(TrainingState state) => switch (state) {
-    TrainingState.idle => '准备开始',
+    TrainingState.idle => '听两个音，在指板上找到第二个',
     TrainingState.configuring => '正在准备题目',
     TrainingState.playingRoot => '仔细听',
     TrainingState.audioError => '声音没有正常播放',
     TrainingState.waitingAnswer => engine.failedAttempts > 0 ? '再试一次' : '找到目标音',
     TrainingState.showingResult =>
       engine.lastAnswerCorrect
-          ? (engine.failedAttempts == 0 ? '答对了！' : '找到了')
+          ? (engine.failedAttempts == 0 ? '答对了' : '找到了')
           : '答案在这里',
-    TrainingState.completed => '本轮完成',
+    TrainingState.completed => '这一轮练完了',
   };
 
   String _message(TrainingState state) {
     final question = engine.activeQuestion;
     switch (state) {
       case TrainingState.idle:
-        return '先听基准音（指板上会标出），再听目标音，然后在指板上点出目标音。';
+        return '先播放基准音并在指板上标出，再播放比它高的目标音。点击任意同音高的位置作答。';
       case TrainingState.configuring:
         return '正在按当前调性生成题目…';
       case TrainingState.playingRoot:
-        return '基准音 → 目标音，记住两个音之间的距离。';
+        return '基准音之后是目标音，留意两个音之间的距离。';
       case TrainingState.audioError:
-        return '本题已暂停。请检查设备音量或浏览器声音权限，然后重新开始。';
+        return '本题已暂停。请检查设备音量或浏览器的声音权限，然后重新开始。';
       case TrainingState.waitingAnswer:
         if (engine.failedAttempts == 0) {
-          return '目标音比基准音高。点击指板上任意同音高的位置作答。';
+          return '目标音比基准音高，点击指板上任意同音高的位置。';
         }
         final remaining = engine.attemptsRemaining;
         final hint = switch (engine.lastDirection) {
@@ -293,35 +293,28 @@ class TrainingStatusWidget extends StatelessWidget {
             '${GuitarMath.noteLabel(question.root.midi)} → '
             '${GuitarMath.noteLabel(question.target.midi)}';
         if (engine.lastAnswerCorrect) {
-          return '$pair 是${interval.chineseName}（${interval.abbreviation}）。';
+          return '$pair 是${interval.chineseName}。';
         }
         return '目标音是 ${GuitarMath.noteLabel(question.target.midi)}，'
-            '与基准音相差${interval.chineseName}（${interval.abbreviation}）。'
-            '所有同音位置已标出。';
+            '与基准音相差${interval.chineseName}，所有同音位置已标出。';
       case TrainingState.completed:
-        return '查看本轮各音程的表现，或用相同设置再练一轮。';
+        return '可以查看各音程的表现，或用相同设置再练一轮。';
     }
   }
 
-  Widget _buildActions(TrainingState state, bool compact) {
+  Widget _buildActions(
+    BuildContext context,
+    TrainingState state,
+    bool compact,
+  ) {
     if (state == TrainingState.idle ||
         state == TrainingState.completed ||
         state == TrainingState.audioError) {
-      return Wrap(
-        spacing: 10,
-        runSpacing: 10,
-        crossAxisAlignment: WrapCrossAlignment.center,
+      return Row(
         children: [
-          FilledButton.icon(
+          FilledButton(
             onPressed: onStart,
-            icon: Icon(
-              state == TrainingState.completed
-                  ? Icons.refresh_rounded
-                  : state == TrainingState.audioError
-                  ? Icons.replay_rounded
-                  : Icons.play_arrow_rounded,
-            ),
-            label: Text(
+            child: Text(
               state == TrainingState.completed
                   ? '再练一轮'
                   : state == TrainingState.audioError
@@ -329,28 +322,30 @@ class TrainingStatusWidget extends StatelessWidget {
                   : startLabel ?? '开始训练',
             ),
           ),
-          if (showShortcuts) const _KeyHint(keys: '空格'),
+          if (showShortcuts) ...[
+            const SizedBox(width: 12),
+            const KeyCap('Space'),
+          ],
         ],
       );
     }
 
     final waiting = state == TrainingState.waitingAnswer;
     if (compact) {
-      const dense = EdgeInsets.symmetric(horizontal: 12, vertical: 10);
+      const dense = EdgeInsets.symmetric(horizontal: 10, vertical: 10);
       return Row(
         children: [
           if (onReplayQuestion != null) ...[
             Expanded(
-              child: FilledButton.icon(
+              child: FilledButton(
                 style: FilledButton.styleFrom(padding: dense),
                 onPressed: waiting && !engine.isReplaying
                     ? onReplayQuestion
                     : null,
-                icon: const Icon(Icons.replay_rounded, size: 18),
-                label: const Text('重听'),
+                child: const Text('重听'),
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
           ],
           Expanded(
             child: OutlinedButton(
@@ -359,7 +354,7 @@ class TrainingStatusWidget extends StatelessWidget {
               child: const Text('基准音'),
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Expanded(
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(padding: dense),
@@ -370,7 +365,7 @@ class TrainingStatusWidget extends StatelessWidget {
           if (onReveal != null || onFinish != null)
             PopupMenuButton<String>(
               tooltip: '更多',
-              icon: const Icon(Icons.more_vert_rounded),
+              icon: const Icon(Icons.more_horiz_rounded),
               onSelected: (value) {
                 if (value == 'reveal') onReveal?.call();
                 if (value == 'finish') onFinish?.call();
@@ -389,51 +384,73 @@ class TrainingStatusWidget extends StatelessWidget {
         ],
       );
     }
+
+    Widget withKey(String text, String key) => showShortcuts
+        ? Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [Text(text), const SizedBox(width: 8), KeyCap(key)],
+          )
+        : Text(text);
+
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         if (onReplayQuestion != null)
-          FilledButton.icon(
+          FilledButton(
             onPressed: waiting && !engine.isReplaying ? onReplayQuestion : null,
-            icon: const Icon(Icons.replay_rounded, size: 18),
-            label: Text(showShortcuts ? '重听两音 · 空格' : '重听两音'),
+            child: showShortcuts
+                ? const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('重听两音'),
+                      SizedBox(width: 8),
+                      _OnAccentKey(),
+                    ],
+                  )
+                : const Text('重听两音'),
           ),
-        OutlinedButton.icon(
+        OutlinedButton(
           onPressed: waiting ? onReplayRoot : null,
-          icon: const Icon(Icons.radio_button_checked_rounded, size: 16),
-          label: Text(showShortcuts ? '基准音 · R' : '基准音'),
+          child: withKey('基准音', 'R'),
         ),
-        OutlinedButton.icon(
+        OutlinedButton(
           onPressed: waiting ? onReplayTarget : null,
-          icon: const Icon(Icons.volume_up_rounded, size: 16),
-          label: Text(showShortcuts ? '目标音 · T' : '目标音'),
+          child: withKey('目标音', 'T'),
         ),
+        const SizedBox(width: 4),
         if (onReveal != null)
-          TextButton.icon(
+          TextButton(
             onPressed: waiting ? onReveal : null,
-            style: TextButton.styleFrom(
-              foregroundColor: AppTheme.textSecondary,
-            ),
-            icon: const Icon(Icons.visibility_rounded, size: 16),
-            label: const Text('看答案'),
+            child: const Text('看答案'),
           ),
         if (onFinish != null)
-          TextButton(
-            onPressed: onFinish,
-            style: TextButton.styleFrom(foregroundColor: AppTheme.textMuted),
-            child: Text(showShortcuts ? '结束本轮 · Esc' : '结束本轮'),
-          ),
+          TextButton(onPressed: onFinish, child: withKey('结束本轮', 'Esc')),
       ],
     );
   }
 }
 
-class _Visuals {
-  final IconData icon;
-  final Color color;
-  const _Visuals(this.icon, this.color);
+/// Key hint drawn on the filled accent button.
+class _OnAccentKey extends StatelessWidget {
+  const _OnAccentKey();
+
+  @override
+  Widget build(BuildContext context) {
+    final color = DefaultTextStyle.of(context).style.color ?? Colors.white;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: color.withAlpha(110)),
+      ),
+      child: Text(
+        'Space',
+        style: TextStyle(color: color.withAlpha(210), fontSize: 10.5),
+      ),
+    );
+  }
 }
 
 /// Root → target summary with the interval revealed after the answer.
@@ -444,127 +461,36 @@ class _QuestionStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.gb;
     final question = engine.activeQuestion!;
     final resolved = engine.state == TrainingState.showingResult;
-    final targetColor = resolved ? AppTheme.correctColor : AppTheme.accentColor;
-    final maxAttempts = engine.maxFailedAttempts;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppTheme.subtleSurfaceColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.outlineColor),
-      ),
-      child: Wrap(
-        spacing: 10,
-        runSpacing: 8,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          _NotePill(
-            label: '基准',
-            value: GuitarMath.noteLabel(question.root.midi),
-            color: AppTheme.primaryColor,
-            filled: true,
-          ),
-          const Icon(
-            Icons.arrow_forward_rounded,
-            size: 16,
-            color: AppTheme.textMuted,
-          ),
-          _NotePill(
-            label: '目标',
-            value: resolved ? GuitarMath.noteLabel(question.target.midi) : '?',
-            color: targetColor,
-            filled: resolved,
-          ),
-          if (resolved)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: AppTheme.secondaryColor.withAlpha(20),
-                borderRadius: BorderRadius.circular(99),
-              ),
-              child: Text(
-                '${question.interval.chineseName} · ${question.interval.abbreviation}',
-                style: const TextStyle(
-                  color: AppTheme.secondaryColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            )
-          else if (maxAttempts > 0)
-            Semantics(
-              label: '剩余尝试 ${engine.attemptsRemaining} 次',
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (var i = 0; i < maxAttempts; i++)
-                    Container(
-                      width: 8,
-                      height: 8,
-                      margin: const EdgeInsets.only(right: 4),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: i < engine.failedAttempts
-                            ? AppTheme.wrongColor
-                            : AppTheme.outlineColor,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _NotePill extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-  final bool filled;
-
-  const _NotePill({
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.filled,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppTheme.textMuted,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
+        _NotePill(
+          caption: '基准',
+          value: GuitarMath.noteLabel(question.root.midi),
+          fill: c.ink,
+          foreground: c.onInk,
+          border: c.ink,
         ),
-        const SizedBox(width: 6),
-        AnimatedContainer(
+        Icon(Icons.east_rounded, size: 16, color: c.textMuted),
+        _NotePill(
+          caption: '目标',
+          value: resolved ? GuitarMath.noteLabel(question.target.midi) : '?',
+          fill: resolved ? c.correct : Colors.transparent,
+          foreground: resolved ? c.surface : c.textMuted,
+          border: resolved ? c.correct : c.strongLine,
+        ),
+        AnimatedOpacity(
           duration: const Duration(milliseconds: 200),
-          constraints: const BoxConstraints(minWidth: 42),
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-          decoration: BoxDecoration(
-            color: filled ? color : AppTheme.surfaceColor,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: color, width: 1.4),
-          ),
+          opacity: resolved ? 1 : 0,
           child: Text(
-            value,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: filled ? Colors.white : color,
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-            ),
+            '${question.interval.chineseName}  ${question.interval.abbreviation}',
+            style: context.text.titleSmall?.copyWith(color: c.textSecondary),
           ),
         ),
       ],
@@ -572,54 +498,47 @@ class _NotePill extends StatelessWidget {
   }
 }
 
-class _KeyHint extends StatelessWidget {
-  final String keys;
+class _NotePill extends StatelessWidget {
+  final String caption;
+  final String value;
+  final Color fill;
+  final Color foreground;
+  final Color border;
 
-  const _KeyHint({required this.keys});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppTheme.outlineColor),
-      ),
-      child: Text(
-        keys,
-        style: const TextStyle(
-          color: AppTheme.textMuted,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class _QuestionCount extends StatelessWidget {
-  final int current;
-  final int total;
-
-  const _QuestionCount({required this.current, required this.total});
+  const _NotePill({
+    required this.caption,
+    required this.value,
+    required this.fill,
+    required this.foreground,
+    required this.border,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          '$current/$total',
-          style: const TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
+        Text(caption, style: context.text.bodySmall),
+        const SizedBox(width: 8),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          constraints: const BoxConstraints(minWidth: 44),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: fill,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: border),
           ),
-        ),
-        const SizedBox(height: 2),
-        const Text(
-          '题目',
-          style: TextStyle(color: AppTheme.textMuted, fontSize: 10),
+          child: Text(
+            value,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: foreground,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              height: 1.2,
+            ),
+          ),
         ),
       ],
     );

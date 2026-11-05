@@ -29,113 +29,81 @@ class TrainingOptionsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fields = <Widget>[
+      _dropdown<String>(
+        context,
+        label: '调性',
+        value: config.key,
+        items: {for (final key in TrainingConfig.keys) key: key},
+        onChanged: (value) => onChanged(config.copyWith(key: value)),
+      ),
+      _dropdown<ScaleType>(
+        context,
+        label: '音阶',
+        value: config.scale,
+        items: {for (final scale in ScaleType.values) scale: scale.chineseName},
+        onChanged: (value) => onChanged(config.copyWith(scale: value)),
+      ),
+      _dropdown<Tuning>(
+        context,
+        label: '调弦',
+        value: config.tuning,
+        items: {for (final tuning in Tuning.all) tuning: tuning.name},
+        onChanged: (value) => onChanged(config.copyWith(tuning: value)),
+      ),
+      _dropdown<String>(
+        context,
+        label: '难度',
+        value: config.difficulty,
+        items: {
+          for (final key in TrainingConfig.difficultyKeys)
+            key: TrainingConfig.difficultyLabel(key),
+        },
+        onChanged: (value) => onChanged(config.copyWith(difficulty: value)),
+      ),
+    ];
+
+    final toggles = DisplayToggles(config: config, onChanged: onChanged);
+
+    if (inline) {
+      return Row(
+        children: [
+          Expanded(flex: 2, child: fields[0]),
+          const SizedBox(width: 8),
+          Expanded(flex: 3, child: fields[1]),
+          const SizedBox(width: 8),
+          Expanded(flex: 3, child: fields[2]),
+          const SizedBox(width: 8),
+          Expanded(flex: 3, child: fields[3]),
+          const SizedBox(width: 20),
+          toggles,
+        ],
+      );
+    }
+
     return LayoutBuilder(
       builder: (context, constraints) {
-        final fields = <Widget>[
-          _dropdown<String>(
-            label: '调性',
-            value: config.key,
-            items: {for (final key in TrainingConfig.keys) key: key},
-            onChanged: (value) => onChanged(config.copyWith(key: value)),
-          ),
-          _dropdown<ScaleType>(
-            label: '音阶',
-            value: config.scale,
-            items: {
-              for (final scale in ScaleType.values) scale: scale.chineseName,
-            },
-            onChanged: (value) => onChanged(config.copyWith(scale: value)),
-          ),
-          _dropdown<Tuning>(
-            label: '调弦',
-            value: config.tuning,
-            items: {for (final tuning in Tuning.all) tuning: tuning.name},
-            onChanged: (value) => onChanged(config.copyWith(tuning: value)),
-          ),
-          _dropdown<String>(
-            label: '难度',
-            value: config.difficulty,
-            items: {
-              for (final key in TrainingConfig.difficultyKeys)
-                key: TrainingConfig.difficultyLabel(key),
-            },
-            onChanged: (value) => onChanged(config.copyWith(difficulty: value)),
-          ),
-        ];
-
-        final toggles = Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            _toggle(
-              label: '音名',
-              selected: config.showNoteNames,
-              onTap: () => onChanged(
-                config.copyWith(showNoteNames: !config.showNoteNames),
-              ),
-            ),
-            _toggle(
-              label: '级数',
-              selected: config.showDegrees,
-              onTap: () =>
-                  onChanged(config.copyWith(showDegrees: !config.showDegrees)),
-            ),
-            _toggle(
-              label: '品号',
-              selected: config.showFretNumbers,
-              onTap: () => onChanged(
-                config.copyWith(showFretNumbers: !config.showFretNumbers),
-              ),
-            ),
-          ],
-        );
-
-        if (inline) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(flex: 2, child: fields[0]),
-              const SizedBox(width: 10),
-              Expanded(flex: 3, child: fields[1]),
-              const SizedBox(width: 10),
-              Expanded(flex: 3, child: fields[2]),
-              const SizedBox(width: 10),
-              Expanded(flex: 3, child: fields[3]),
-              const SizedBox(width: 16),
-              toggles,
-            ],
-          );
-        }
-
-        final twoColumns = constraints.maxWidth >= 300;
-        final fieldWidth = twoColumns
-            ? (constraints.maxWidth - 10) / 2
+        final fieldWidth = constraints.maxWidth >= 300
+            ? (constraints.maxWidth - 8) / 2
             : constraints.maxWidth;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Wrap(
-              spacing: 10,
-              runSpacing: 10,
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 for (final field in fields)
                   SizedBox(width: fieldWidth, child: field),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               TrainingConfig.difficultyDescription(config.difficulty),
-              style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+              style: context.text.bodySmall,
             ),
-            const SizedBox(height: 14),
-            const Text(
-              '指板显示',
-              style: TextStyle(
-                color: AppTheme.textMuted,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            const SizedBox(height: 16),
+            Text('指板显示', style: context.text.labelMedium),
             const SizedBox(height: 8),
             toggles,
           ],
@@ -144,27 +112,31 @@ class TrainingOptionsWidget extends StatelessWidget {
     );
   }
 
-  Widget _dropdown<T>({
+  Widget _dropdown<T>(
+    BuildContext context, {
     required String label,
     required T value,
     required Map<T, String> items,
     required ValueChanged<T> onChanged,
   }) {
+    final c = context.gb;
     return DropdownButtonFormField<T>(
       value: value,
       isExpanded: true,
       isDense: true,
-      decoration: InputDecoration(
-        labelText: label,
-        contentPadding: const EdgeInsets.fromLTRB(12, 12, 8, 10),
+      decoration: InputDecoration(labelText: label),
+      icon: Icon(
+        Icons.expand_more_rounded,
+        size: 18,
+        color: locked ? c.textMuted.withAlpha(120) : c.textMuted,
       ),
-      icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
-      dropdownColor: AppTheme.surfaceColor,
-      borderRadius: BorderRadius.circular(14),
-      style: const TextStyle(
-        color: AppTheme.textPrimary,
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
+      dropdownColor: c.surface,
+      borderRadius: BorderRadius.circular(12),
+      style: TextStyle(
+        fontFamily: AppTheme.sans,
+        color: locked ? c.textMuted : c.textPrimary,
+        fontSize: 13.5,
+        fontWeight: FontWeight.w500,
       ),
       items: [
         for (final entry in items.entries)
@@ -184,58 +156,92 @@ class TrainingOptionsWidget extends StatelessWidget {
             },
     );
   }
+}
 
-  Widget _toggle({
-    required String label,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return Semantics(
-      toggled: selected,
-      button: true,
-      label: '显示$label',
-      child: Material(
-        color: selected
-            ? AppTheme.secondaryColor.withAlpha(22)
-            : AppTheme.subtleSurfaceColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(
-            color: selected ? AppTheme.secondaryColor : AppTheme.outlineColor,
-          ),
+/// Note name / degree / fret number toggles as one quiet button group.
+class DisplayToggles extends StatelessWidget {
+  final TrainingConfig config;
+  final ValueChanged<TrainingConfig> onChanged;
+
+  const DisplayToggles({
+    super.key,
+    required this.config,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.gb;
+    final items = [
+      (
+        '音名',
+        config.showNoteNames,
+        () => onChanged(config.copyWith(showNoteNames: !config.showNoteNames)),
+      ),
+      (
+        '级数',
+        config.showDegrees,
+        () => onChanged(config.copyWith(showDegrees: !config.showDegrees)),
+      ),
+      (
+        '品号',
+        config.showFretNumbers,
+        () => onChanged(
+          config.copyWith(showFretNumbers: !config.showFretNumbers),
         ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  selected
-                      ? Icons.check_box_rounded
-                      : Icons.check_box_outline_blank_rounded,
-                  size: 15,
-                  color: selected
-                      ? AppTheme.secondaryColor
-                      : AppTheme.textMuted,
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: selected
-                        ? AppTheme.secondaryColor
-                        : AppTheme.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+      ),
+    ];
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: c.surfaceMuted,
+        borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final (label, selected, toggle) in items)
+            Semantics(
+              button: true,
+              toggled: selected,
+              label: '显示$label',
+              excludeSemantics: true,
+              child: GestureDetector(
+                onTap: toggle,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected ? c.surface : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: selected
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withAlpha(14),
+                                blurRadius: 3,
+                                offset: const Offset(0, 1),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                        color: selected ? c.textPrimary : c.textMuted,
+                      ),
+                    ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
+        ],
       ),
     );
   }

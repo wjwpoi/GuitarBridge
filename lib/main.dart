@@ -1,24 +1,23 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'core/theme.dart';
 import 'engine/audio_engine.dart';
+import 'models/practice_record.dart';
 import 'services/storage_service.dart';
 import 'services/streak_manager.dart';
-import 'ui/screens/onboarding_screen.dart';
-import 'models/practice_record.dart';
-import 'core/theme.dart';
 import 'ui/screens/home_screen.dart';
+import 'ui/screens/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 初始化服务
   final prefs = await SharedPreferences.getInstance();
   final storage = StorageService(prefs);
   final streakManager = StreakManager(storage);
   final audioEngine = AudioEngine();
 
-  // 加载数据
   await streakManager.loadData();
   // Browsers only unlock Web Audio from a user gesture. Rendering the app
   // first lets onboarding, the start button, or a fret tap perform that
@@ -38,6 +37,12 @@ void main() async {
     ),
   );
 }
+
+ThemeMode themeModeFromName(String name) => switch (name) {
+  'light' => ThemeMode.light,
+  'dark' => ThemeMode.dark,
+  _ => ThemeMode.system,
+};
 
 class GuitarBridgeApp extends StatefulWidget {
   final AudioEngine audioEngine;
@@ -59,30 +64,41 @@ class GuitarBridgeApp extends StatefulWidget {
 
 class _GuitarBridgeAppState extends State<GuitarBridgeApp> {
   late bool _showOnboarding;
+  late final ValueNotifier<ThemeMode> _themeMode;
 
   @override
   void initState() {
     super.initState();
     _showOnboarding = !widget.userPreferences.hasCompletedOnboarding;
+    _themeMode = ValueNotifier(
+      themeModeFromName(widget.userPreferences.themeMode),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'GuitarBridge',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.trainingTheme(),
-      home: _showOnboarding
-          ? OnboardingScreen(
-              requiresAudioActivation: kIsWeb && !widget.audioEngine.isReady,
-              onComplete: _onOnboardingComplete,
-            )
-          : HomeScreen(
-              audioEngine: widget.audioEngine,
-              storage: widget.storage,
-              streakManager: widget.streakManager,
-              initialPreferences: widget.userPreferences,
-            ),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: _themeMode,
+      builder: (context, mode, _) => MaterialApp(
+        title: 'GuitarBridge',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light(),
+        darkTheme: AppTheme.dark(),
+        themeMode: mode,
+        themeAnimationDuration: const Duration(milliseconds: 220),
+        home: _showOnboarding
+            ? OnboardingScreen(
+                requiresAudioActivation: kIsWeb && !widget.audioEngine.isReady,
+                onComplete: _onOnboardingComplete,
+              )
+            : HomeScreen(
+                audioEngine: widget.audioEngine,
+                storage: widget.storage,
+                streakManager: widget.streakManager,
+                initialPreferences: widget.userPreferences,
+                themeMode: _themeMode,
+              ),
+      ),
     );
   }
 
@@ -97,6 +113,7 @@ class _GuitarBridgeAppState extends State<GuitarBridgeApp> {
 
   @override
   void dispose() {
+    _themeMode.dispose();
     widget.audioEngine.dispose();
     super.dispose();
   }

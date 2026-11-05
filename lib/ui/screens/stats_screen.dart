@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
-import '../../engine/training_engine.dart';
-import '../widgets/interval_breakdown.dart';
+import '../../engine/adaptive_planner.dart';
 import '../../models/practice_record.dart';
+import '../../models/training_config.dart';
 import '../../services/streak_manager.dart';
+import '../widgets/common.dart';
+import '../widgets/interval_breakdown.dart';
 
 class StatsScreen extends StatelessWidget {
   final StreakManager streakManager;
@@ -25,37 +27,21 @@ class StatsScreen extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, List<PracticeRecord> records) {
-    final totalSessions = records.length;
-    final totalCorrect = records.fold<int>(
-      0,
-      (sum, r) => sum + r.correctAnswers,
-    );
-    final totalAttempts = records.fold<int>(
-      0,
-      (sum, r) => sum + r.totalAttempts,
-    );
-    final overallAccuracy = totalAttempts == 0
+    final c = context.gb;
+    final sorted = [...records]..sort((a, b) => b.date.compareTo(a.date));
+    final totalCorrect = records.fold<int>(0, (s, r) => s + r.correctAnswers);
+    final totalAttempts = records.fold<int>(0, (s, r) => s + r.totalAttempts);
+    final accuracy = totalAttempts == 0
         ? 0.0
         : totalCorrect / totalAttempts * 100;
     final totalDuration = records.fold<double>(
       0,
-      (sum, record) => sum + record.durationSeconds,
+      (s, r) => s + r.durationSeconds,
     );
-    final globalBestStreak = records.fold<int>(
+    final bestStreak = records.fold<int>(
       0,
-      (best, record) => best > record.bestStreak ? best : record.bestStreak,
+      (best, r) => best > r.bestStreak ? best : r.bestStreak,
     );
-    final intervalTallies = <int, IntervalTally>{};
-    for (final record in records.reversed.take(30)) {
-      for (final entry in record.intervalResults.entries) {
-        final tally = IntervalTally(entry.value.$1, entry.value.$2);
-        intervalTallies.update(
-          entry.key,
-          (existing) => existing + tally,
-          ifAbsent: () => tally,
-        );
-      }
-    }
     final now = DateTime.now();
     // Monday 00:00 local time, so sessions earlier on Monday still count.
     final weekStart = DateTime(
@@ -64,8 +50,9 @@ class StatsScreen extends StatelessWidget {
       now.day,
     ).subtract(Duration(days: now.weekday - 1));
     final sessionsThisWeek = records
-        .where((record) => !record.date.toLocal().isBefore(weekStart))
+        .where((r) => !r.date.toLocal().isBefore(weekStart))
         .length;
+    final history = AdaptivePlanner.historyFrom(records);
 
     return Scaffold(
       appBar: AppBar(
@@ -77,135 +64,115 @@ class StatsScreen extends StatelessWidget {
               tooltip: '清除统计',
               onPressed: () => _showClearDialog(context),
             ),
+          const SizedBox(width: 8),
         ],
       ),
       body: records.isEmpty
           ? const _EmptyStats()
           : ListView(
-              padding: const EdgeInsets.fromLTRB(18, 8, 18, 36),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
               children: [
                 Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 980),
+                    constraints: const BoxConstraints(maxWidth: 760),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final columns = constraints.maxWidth >= 720 ? 4 : 2;
-                            const gap = 10.0;
-                            final width =
-                                (constraints.maxWidth - gap * (columns - 1)) /
-                                columns;
-                            return Wrap(
-                              spacing: gap,
-                              runSpacing: gap,
-                              children: [
-                                _MetricCard(
-                                  width: width,
-                                  label: '总练习',
-                                  value: '$totalSessions',
-                                  icon: Icons.layers_rounded,
-                                  accent: AppTheme.primaryColor,
-                                ),
-                                _MetricCard(
-                                  width: width,
-                                  label: '本周',
-                                  value: '$sessionsThisWeek',
-                                  icon: Icons.calendar_today_rounded,
-                                  accent: AppTheme.secondaryColor,
-                                ),
-                                _MetricCard(
-                                  width: width,
-                                  label: '准确率',
-                                  value:
-                                      '${overallAccuracy.toStringAsFixed(0)}%',
-                                  icon: Icons.track_changes_rounded,
-                                  accent: AppTheme.accentColor,
-                                ),
-                                _MetricCard(
-                                  width: width,
-                                  label: '连续天数',
-                                  value: '${streakManager.currentStreak}',
-                                  icon: Icons.local_fire_department_rounded,
-                                  accent: AppTheme.wrongColor,
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Wrap(
-                              spacing: 28,
-                              runSpacing: 14,
-                              children: [
-                                _InlineMetric(
-                                  label: '累计答题',
-                                  value: '$totalAttempts',
-                                ),
-                                _InlineMetric(
-                                  label: '正确数',
-                                  value: '$totalCorrect',
-                                ),
-                                _InlineMetric(
-                                  label: '练习时长',
-                                  value: _formatDuration(totalDuration),
-                                ),
-                                _InlineMetric(
-                                  label: '最佳连击',
-                                  value: '$globalBestStreak',
-                                ),
-                              ],
-                            ),
+                        Panel(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final columns = constraints.maxWidth >= 480
+                                      ? 4
+                                      : 2;
+                                  final width =
+                                      (constraints.maxWidth -
+                                          16 * (columns - 1)) /
+                                      columns;
+                                  return Wrap(
+                                    spacing: 16,
+                                    runSpacing: 20,
+                                    children: [
+                                      for (final (value, label) in [
+                                        ('${records.length}', '练习轮数'),
+                                        ('$sessionsThisWeek', '本周'),
+                                        (
+                                          '${accuracy.toStringAsFixed(0)}%',
+                                          '首答正确率',
+                                        ),
+                                        (
+                                          '${streakManager.currentStreak}',
+                                          '连续天数',
+                                        ),
+                                      ])
+                                        SizedBox(
+                                          width: width,
+                                          child: _BigNumber(
+                                            value: value,
+                                            label: label,
+                                          ),
+                                        ),
+                                    ],
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 20),
+                              const Divider(),
+                              const SizedBox(height: 14),
+                              Text(
+                                '累计 $totalAttempts 题 · 练习 ${_formatDuration(totalDuration)} · 最佳连击 $bestStreak',
+                                style: context.text.bodySmall,
+                              ),
+                            ],
                           ),
                         ),
-                        if (intervalTallies.isNotEmpty) ...[
-                          const SizedBox(height: 14),
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                20,
-                                16,
-                                20,
-                                16,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '音程掌握度',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleMedium,
-                                  ),
-                                  const SizedBox(height: 2),
-                                  const Text(
-                                    '按首次作答是否正确统计，最近 30 轮',
-                                    style: TextStyle(
-                                      color: AppTheme.textMuted,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  IntervalBreakdown(tallies: intervalTallies),
-                                ],
-                              ),
+                        if (history.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          Panel(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('音程掌握度', style: context.text.titleLarge),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '最近 ${AdaptivePlanner.historyWindow} 轮的首答结果。智能出题会多安排较弱的音程。',
+                                  style: context.text.bodySmall,
+                                ),
+                                const SizedBox(height: 14),
+                                IntervalBreakdown(tallies: history),
+                              ],
                             ),
                           ),
                         ],
-                        const SizedBox(height: 24),
-                        Text(
-                          '最近记录',
-                          style: Theme.of(context).textTheme.titleLarge,
+                        const SizedBox(height: 28),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4, bottom: 8),
+                          child: Text('最近记录', style: context.text.labelMedium),
                         ),
-                        const SizedBox(height: 10),
-                        for (final record in records.reversed.take(20))
+                        Card(
+                          clipBehavior: Clip.antiAlias,
+                          child: Column(
+                            children: [
+                              for (final (i, record)
+                                  in sorted.take(20).indexed) ...[
+                                if (i > 0) const Divider(indent: 20),
+                                _RecordRow(record: record),
+                              ],
+                            ],
+                          ),
+                        ),
+                        if (sorted.length > 20)
                           Padding(
-                            padding: const EdgeInsets.only(bottom: 9),
-                            child: _RecordCard(record: record),
+                            padding: const EdgeInsets.only(top: 10),
+                            child: Text(
+                              '仅显示最近 20 轮',
+                              textAlign: TextAlign.center,
+                              style: context.text.bodySmall?.copyWith(
+                                color: c.textMuted,
+                              ),
+                            ),
                           ),
                       ],
                     ),
@@ -216,10 +183,11 @@ class StatsScreen extends StatelessWidget {
     );
   }
 
-  String _formatDuration(double seconds) {
+  static String _formatDuration(double seconds) {
     final minutes = seconds ~/ 60;
-    final remainder = (seconds % 60).toInt();
-    return minutes > 0 ? '${minutes}m ${remainder}s' : '${remainder}s';
+    if (minutes >= 60) return '${minutes ~/ 60} 小时 ${minutes % 60} 分';
+    if (minutes > 0) return '$minutes 分钟';
+    return '${seconds.toInt()} 秒';
   }
 
   void _showClearDialog(BuildContext context) {
@@ -227,7 +195,7 @@ class StatsScreen extends StatelessWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('清除所有统计？'),
-        content: const Text('练习历史与连续天数将被永久删除，此操作无法撤销。'),
+        content: const Text('练习记录、音程掌握度与连续天数将被永久删除，无法撤销。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
@@ -238,8 +206,10 @@ class StatsScreen extends StatelessWidget {
               streakManager.clearAll();
               Navigator.pop(dialogContext);
             },
-            style: TextButton.styleFrom(foregroundColor: AppTheme.wrongColor),
-            child: const Text('确认清除'),
+            style: TextButton.styleFrom(
+              foregroundColor: dialogContext.gb.wrong,
+            ),
+            child: const Text('清除'),
           ),
         ],
       ),
@@ -247,152 +217,76 @@ class StatsScreen extends StatelessWidget {
   }
 }
 
-class _MetricCard extends StatelessWidget {
-  final double width;
-  final String label;
+class _BigNumber extends StatelessWidget {
   final String value;
-  final IconData icon;
-  final Color accent;
-
-  const _MetricCard({
-    required this.width,
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.accent,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: accent, size: 20),
-              const SizedBox(height: 16),
-              Text(
-                value,
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _InlineMetric extends StatelessWidget {
   final String label;
-  final String value;
 
-  const _InlineMetric({required this.label, required this.value});
+  const _BigNumber({required this.value, required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          value,
-          style: const TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 17,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        Text(
-          label,
-          style: const TextStyle(color: AppTheme.textMuted, fontSize: 10),
-        ),
+        Text(value, style: context.text.displaySmall?.copyWith(fontSize: 30)),
+        const SizedBox(height: 2),
+        Text(label, style: context.text.bodySmall),
       ],
     );
   }
 }
 
-class _RecordCard extends StatelessWidget {
+class _RecordRow extends StatelessWidget {
   final PracticeRecord record;
 
-  const _RecordCard({required this.record});
+  const _RecordRow({required this.record});
 
   @override
   Widget build(BuildContext context) {
-    final accent = record.accuracy >= 80
-        ? AppTheme.correctColor
-        : record.accuracy >= 60
-        ? AppTheme.accentColor
-        : AppTheme.wrongColor;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: accent.withAlpha(16),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: accent.withAlpha(70)),
-              ),
-              child: Center(
-                child: Text(
-                  '${record.accuracy.toStringAsFixed(0)}%',
-                  style: TextStyle(
-                    color: accent,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                  ),
+    final c = context.gb;
+    final date = record.date.toLocal();
+    final color = record.accuracy >= 80
+        ? c.correct
+        : record.accuracy >= 50
+        ? c.textPrimary
+        : c.wrong;
+    final difficulty = record.difficulty == null
+        ? ''
+        : ' · ${TrainingConfig.difficultyLabel(record.difficulty!)}';
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${record.keySignature} ${record.scaleType}$difficulty',
+                  style: context.text.bodyLarge,
                 ),
-              ),
+                const SizedBox(height: 2),
+                Text(
+                  '${date.month}月${date.day}日 '
+                  '${date.hour}:${date.minute.toString().padLeft(2, '0')} · '
+                  '${record.correctAnswers}/${record.totalAttempts} 首答正确',
+                  style: context.text.bodySmall,
+                ),
+              ],
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${record.keySignature} ${record.scaleType}',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${record.correctAnswers}/${record.totalAttempts} 正确 · '
-                    '${_duration(record.durationSeconds)}',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
-              ),
+          ),
+          Text(
+            '${record.accuracy.toStringAsFixed(0)}%',
+            style: TextStyle(
+              fontFamily: AppTheme.serif,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: color,
             ),
-            Text(
-              '${record.date.month}/${record.date.day} '
-              '${record.date.hour}:${record.date.minute.toString().padLeft(2, '0')}',
-              style: const TextStyle(color: AppTheme.textMuted, fontSize: 10),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
-  }
-
-  String _duration(double seconds) {
-    final minutes = seconds ~/ 60;
-    final remainder = (seconds % 60).toInt();
-    return minutes > 0 ? '${minutes}m ${remainder}s' : '${remainder}s';
   }
 }
 
@@ -402,31 +296,20 @@ class _EmptyStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceColor,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppTheme.outlineColor),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('还没有练习记录', style: context.text.titleLarge),
+            const SizedBox(height: 8),
+            Text(
+              '完成一轮训练后，这里会显示正确率、连续天数和各音程的掌握情况。',
+              textAlign: TextAlign.center,
+              style: context.text.bodyMedium,
             ),
-            child: const Icon(
-              Icons.insights_rounded,
-              color: AppTheme.textMuted,
-              size: 28,
-            ),
-          ),
-          const SizedBox(height: 18),
-          Text('还没有练习记录', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 6),
-          const Text(
-            '完成第一轮训练后，这里会显示你的趋势。',
-            style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

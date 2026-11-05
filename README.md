@@ -60,6 +60,8 @@ Web 版复用同一套训练引擎、等宽指板、真实吉他采样和本地�
 - 桌面、平板和手机使用同一网址，布局会自动适配；
 - 支持浏览器「添加到主屏幕」或「安装应用」；
 - 设置、练习记录与连续练习天数保存在当前浏览器；
+- 中文字体（思源黑体 / 宋体子集）与引擎兜底字体均随包发布，运行时不访问 Google 域名，适合国内网络；
+- 支持浅色 / 深色 / 跟随系统；
 - Release 构建包含 PWA 离线缓存、SoLoud WebAssembly 和 19 个真实吉他采样。
 
 ```bash
@@ -144,6 +146,15 @@ idle → playingRoot → waitingAnswer ⟲（答错重试）→ showingResult �
 - **Pitch-based answers** — 按音高判定，任何同音高位置都算对
 - **Balanced interval sampling** — 每轮按音程均衡抽题，不受指板位置组合数量干扰；错题音程本轮回炉
 - **First-try scoring** — 正确率、连击、音程掌握度都基于首次作答
+- **Adaptive planning** — 按最近 30 轮的首答表现给薄弱音程多分配题目，每个音程至少保留一题
+- **Design tokens** — `GbColors` 定义浅色/深色两套语义色，所有界面共享同一视觉系统
+
+修改界面中文文案后需重新生成字体子集（否则 `test/font_coverage_test.dart` 会失败）：
+
+```bash
+pip install fonttools
+python3 tool/subset_fonts.py --sans NotoSansSC[wght].ttf --serif NotoSerifSC[wght].ttf
+```
 
 ## 实施文档
 

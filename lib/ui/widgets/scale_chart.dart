@@ -21,6 +21,7 @@ class ScaleChartWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.gb;
     final tonic = NoteName.values.firstWhere(
       (note) => note.sharpName == selectedKey || note.flatName == selectedKey,
       orElse: () => NoteName.c,
@@ -29,87 +30,48 @@ class ScaleChartWidget extends StatelessWidget {
     final notes = keySig.notesInKey(octave: 4);
 
     final chips = Wrap(
-      spacing: 6,
+      spacing: 14,
       runSpacing: 6,
       children: [
         for (var index = 0; index < notes.length; index++)
-          _scaleNote(
-            degree: keySig.degreeLabel(notes[index]) ?? '',
-            note: NoteName.values[notes[index] % 12].sharpName,
-            isTonic: index == 0,
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '${keySig.degreeLabel(notes[index]) ?? ''} ',
+                  style: TextStyle(
+                    color: index == 0 ? c.accent : c.textMuted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                TextSpan(
+                  text: NoteName.values[notes[index] % 12].sharpName,
+                  style: TextStyle(
+                    color: c.textPrimary,
+                    fontSize: 13,
+                    fontWeight: index == 0 ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
       ],
     );
 
-    if (embedded) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-        child: chips,
-      );
-    }
+    if (embedded) return chips;
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    keySig.displayName,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                Text(
-                  '${notes.length} 个音',
-                  style: Theme.of(context).textTheme.labelMedium,
-                ),
-              ],
-            ),
+            Text(keySig.displayName, style: context.text.titleMedium),
             const SizedBox(height: 10),
             chips,
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _scaleNote({
-    required String degree,
-    required String note,
-    required bool isTonic,
-  }) {
-    final color = isTonic ? AppTheme.primaryColor : AppTheme.secondaryColor;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-      decoration: BoxDecoration(
-        color: isTonic ? color.withAlpha(20) : AppTheme.subtleSurfaceColor,
-        borderRadius: BorderRadius.circular(9),
-        border: Border.all(color: isTonic ? color : AppTheme.outlineColor),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            degree,
-            style: TextStyle(
-              color: isTonic ? color : AppTheme.textMuted,
-              fontSize: 10.5,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            note,
-            style: const TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
       ),
     );
   }

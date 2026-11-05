@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:guitar_bridge/core/theme.dart';
 import 'package:guitar_bridge/ui/screens/onboarding_screen.dart';
 import 'package:guitar_bridge/ui/widgets/completion_animation.dart';
 import 'package:guitar_bridge/ui/widgets/training_status.dart';
@@ -51,7 +52,8 @@ void main() {
         ),
       );
 
-      expect(find.text('训练完成！'), findsOneWidget);
+      expect(find.text('本轮结束'), findsOneWidget);
+      expect(find.text('不错的一轮'), findsOneWidget);
       expect(find.text('80%'), findsOneWidget);
       expect(find.text('首次即答对 8 / 10 题'), findsOneWidget);
       expect(find.text('5'), findsOneWidget);
@@ -75,7 +77,7 @@ void main() {
       expect(dismissed, true);
     });
 
-    testWidgets('shows trophy for high accuracy', (tester) async {
+    testWidgets('praises high accuracy', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: CompletionAnimationWidget(
@@ -88,7 +90,7 @@ void main() {
       );
 
       expect(find.text('100%'), findsOneWidget);
-      expect(find.byIcon(Icons.emoji_events), findsOneWidget);
+      expect(find.text('耳朵很准'), findsOneWidget);
     });
   });
 
@@ -197,6 +199,48 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('4–10 品'), findsOneWidget);
+    });
+  });
+
+  group('Dark theme', () {
+    testWidgets('training stage and fretboard render with dark tokens', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final engine = TrainingEngine();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          themeMode: ThemeMode.dark,
+          home: Scaffold(
+            body: Column(
+              children: [
+                TrainingStatusWidget(
+                  engine: engine,
+                  onStart: () {},
+                  onReplayRoot: () {},
+                  onReplayTarget: () {},
+                ),
+                FretboardWidget(
+                  trainingEngine: engine,
+                  tuning: Tuning.standard,
+                  scaleType: ScaleType.major,
+                  selectedKey: 'C',
+                  onFretTapped: (_) {},
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      final context = tester.element(find.byType(TrainingStatusWidget));
+      expect(Theme.of(context).brightness, Brightness.dark);
+      expect(context.gb.canvas, GbColors.dark.canvas);
+      expect(tester.takeException(), isNull);
+      // Wide enough to show the whole neck without navigation arrows.
+      expect(find.byTooltip('向高把位移动'), findsNothing);
     });
   });
 }

@@ -568,3 +568,39 @@ CMake Error at CMakeLists.txt:3 (project):
 - 中文字体仍由 Flutter 运行时从 `fonts.gstatic.com` 回退加载；如主要用户在中国大陆，需要考虑打包子集化的中文字体或自托管字体。
 - 尚未提供深色模式。
 - 跨轮次的自适应出题（按历史音程掌握度加权）尚未实现；本轮只做轮内错题回炉，保持「音程均衡」验收不变。
+
+## 当前阶段：国内可用性、自适应出题与视觉系统（2026-11-05）
+
+### 决策（来自产品负责人）
+
+- 主要用户在中国大陆：Web 版运行时不得依赖任何 Google 域名。
+- 启用跨轮次自适应出题。
+- 提供深色模式。
+- 视觉风格：克制、简约、有质感，参考 Claude / Google 系产品。
+
+### 字体与网络
+
+- 打包 Noto Sans SC（400/500/600）与 Noto Serif SC（600）子集，SIL OFL 1.1，许可证见 `assets/fonts/OFL.txt`；四个文件共约 800 KB，覆盖 App 实际使用的 523 个字符。
+- `tool/subset_fonts.py` 扫描 `lib/` 重新生成子集；`test/font_coverage_test.dart` 在新增中文字符未进入子集时让 CI 失败。
+- 自定义 `web/flutter_bootstrap.js`，把引擎的 `fontFallbackBaseUrl` 指向本站 `fonts/`，并自托管引擎默认兜底字体 Roboto（`web/fonts/roboto/`）。
+- 验收：无头 Chromium 加载首页、开始训练、打开统计/设置的全过程中，除 localhost 外 **0 个外部请求**。
+
+### 自适应出题
+
+- `lib/engine/adaptive_planner.dart`：取最近 30 轮记录的 `intervalResults`，每个音程的出错估计为 `(未首答正确 + 1) / (总数 + 2)`，没练过的音程按 50% 处理。
+- 权重 = 0.15 + 出错估计；题量 ≥ 音程数时每个音程至少 1 题，其余按权重以最大余数法分配；题量不足时优先最弱的音程。
+- `TrainingEngine.intervalWeights` 为 null 时保持原有「音程均衡、相差不超过 1」的行为与测试；开启时由 HomeScreen 在每轮开始前计算。
+- 设置中新增「智能出题」开关（默认开启），首页空闲状态提示「本轮侧重 …」，统计页「音程掌握度」与出题共用同一份历史。
+
+### 深色模式与视觉系统
+
+- `GbColors` ThemeExtension 定义浅色/深色两套语义 token（canvas、surface、hairline、ink、accent、correct、wrong 等）；所有界面通过 `context.gb` 取色，不再引用静态颜色常量。
+- 设置中新增主题：跟随系统 / 浅色 / 深色，持久化在 `UserPreferences.themeMode`；Web 加载页与 `theme-color` 也随系统明暗切换。
+- 视觉调整：暖中性底色 + 单一陶土色强调；标题用衬线宋体，正文用黑体；卡片只用细线描边，去掉渐变、彩色图标块和装饰光斑；基准音用墨色、答案用绿色、尝试用红色描边；统计数字与按钮快捷键提示做了统一。
+- 宽屏下题目卡片把统计数字放到操作按钮右侧，1440×900 首屏可同时看到设置、题目和完整 0–22 品指板。
+
+### 验证
+
+- `dart format --output=none --set-exit-if-changed .`、`flutter analyze`：通过
+- `flutter test`：146 项全部通过（新增自适应分配、历史窗口、焦点音程、加权会话、主题/开关偏好、深色渲染、字体覆盖等测试）
+- `flutter build web --release --no-web-resources-cdn`：通过；浅色/深色 × 桌面/手机、引导页、统计页、设置页截图检查。
