@@ -86,6 +86,13 @@ class _GuitarBridgeAppState extends State<GuitarBridgeApp> {
         darkTheme: AppTheme.dark(),
         themeMode: mode,
         themeAnimationDuration: const Duration(milliseconds: 220),
+        // Tooltips, menus and other overlays sit above every Scaffold, where
+        // only this default text style applies. Without the bundled Chinese
+        // family they would fall back to Roboto and render CJK as boxes.
+        builder: (context, child) => DefaultTextStyle.merge(
+          style: const TextStyle(fontFamily: AppTheme.sans),
+          child: child ?? const SizedBox.shrink(),
+        ),
         home: _showOnboarding
             ? OnboardingScreen(
                 requiresAudioActivation: kIsWeb && !widget.audioEngine.isReady,

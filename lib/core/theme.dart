@@ -248,8 +248,16 @@ class AppTheme {
         filled: true,
         fillColor: c.surfaceMuted,
         isDense: true,
-        labelStyle: TextStyle(color: c.textMuted, fontSize: 13),
-        floatingLabelStyle: TextStyle(color: c.textMuted, fontSize: 13),
+        labelStyle: TextStyle(
+          fontFamily: sans,
+          color: c.textMuted,
+          fontSize: 13,
+        ),
+        floatingLabelStyle: TextStyle(
+          fontFamily: sans,
+          color: c.textMuted,
+          fontSize: 13,
+        ),
         contentPadding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(controlRadius),
@@ -361,7 +369,11 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(color: c.hairline),
         ),
-        textStyle: TextStyle(color: c.textPrimary, fontSize: 14),
+        textStyle: TextStyle(
+          fontFamily: sans,
+          color: c.textPrimary,
+          fontSize: 14,
+        ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: c.surface,
@@ -372,7 +384,11 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: c.ink,
-        contentTextStyle: TextStyle(color: c.onInk, fontSize: 13.5),
+        contentTextStyle: TextStyle(
+          fontFamily: sans,
+          color: c.onInk,
+          fontSize: 13.5,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),
@@ -381,7 +397,7 @@ class AppTheme {
           color: c.ink,
           borderRadius: BorderRadius.circular(8),
         ),
-        textStyle: TextStyle(color: c.onInk, fontSize: 12),
+        textStyle: TextStyle(fontFamily: sans, color: c.onInk, fontSize: 12),
       ),
       listTileTheme: ListTileThemeData(
         iconColor: c.textSecondary,
