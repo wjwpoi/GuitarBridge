@@ -604,3 +604,13 @@ CMake Error at CMakeLists.txt:3 (project):
 - `dart format --output=none --set-exit-if-changed .`、`flutter analyze`：通过
 - `flutter test`：146 项全部通过（新增自适应分配、历史窗口、焦点音程、加权会话、主题/开关偏好、深色渲染、字体覆盖等测试）
 - `flutter build web --release --no-web-resources-cdn`：通过；浅色/深色 × 桌面/手机、引导页、统计页、设置页截图检查。
+
+## 当前阶段：真实吉他采样替换（2026-11-05）
+
+- 决策：先使用 clean 电吉他音色（方案 A），原声吉他视后续需要再评估。
+- 发现并修复：旧采样包（String Studio 转封装）照搬了 Karoryfer 的音名，每个采样实际比文件名低一个八度；App 播放的每个音都比指板显示低八度，6 弦低把位被移调到 E1。
+- 新采样：Karoryfer Black And Green Guitars（CC0）原始包，green 吉他普通拨弦 mf 力度，E2–D6 逐半音 47 个音 × 2 个轮替 = 94 个 Ogg Vorbis 文件，共 2.7 MB（旧版 19 个 WAV 6.6 MB）。
+- 处理脚本 `tool/prepare_guitar_samples.py`：音名换算并逐个测音高校验、裁掉起音前静音、响度统一到 −15 dBFS、保留 3 秒自然余音并淡出、测量残余音分偏差生成 `lib/engine/sample_tuning.g.dart`。
+- 播放：每个音使用自己的录音，只做 ±15 音分以内的校准；同一个音连续播放时交替使用两个轮替；不再在 1.6 秒处强制淡出，新音开始时上一个音 70 ms 淡出；预加载先加载中音区第一轮替。
+- CI：样本校验改为 94 个 `.ogg`。
+- 验证：`flutter analyze` 通过；全量测试通过；Web Release 在无头 Chromium 中 94 个 Ogg 全部加载成功、训练正常推进、控制台无错误。音色主观效果需人工试听。

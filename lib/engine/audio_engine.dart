@@ -17,18 +17,17 @@ enum AudioEngineState { uninitialized, loading, ready, error }
 /// to the target avoids the extreme artifacts of folding one octave across
 /// the full guitar range.
 ///
-/// Decoded samples are cached for the lifetime of the engine (19 short WAVs),
-/// so repeated cues never hit the asset bundle again. Voices are released
-/// with a short fade instead of a hard stop to avoid clicks, and a new cue
-/// fades the previous one out.
+/// Every semitone of the guitar has its own recording (two round robins), so
+/// cues are only nudged by a few cents to land exactly in tune. Decoded
+/// samples are cached for the lifetime of the engine, consecutive plays of
+/// the same note alternate between takes, voices ring out naturally (the
+/// files carry their own fade) and a new cue fades the previous one out.
 class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   /// How long [playNote] waits before reporting the cue as heard.
   static const Duration cueDuration = Duration(milliseconds: 900);
 
-  /// How long a voice keeps ringing before it is faded out on its own.
-  static const Duration ringDuration = Duration(milliseconds: 1600);
-  static const Duration releaseFade = Duration(milliseconds: 260);
-  static const Duration interruptFade = Duration(milliseconds: 45);
+  /// Fade applied to the previous voice when a new cue starts.
+  static const Duration interruptFade = Duration(milliseconds: 70);
 
   SoLoud get _soloud => SoLoud.instance;
 
@@ -40,8 +39,12 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
   SoundHandle? _activeHandle;
   int _playbackGeneration = 0;
   Future<void>? _initialization;
+
+  /// Decoded recordings keyed by `midi * 10 + roundRobin`.
   final Map<int, AudioSource> _sources = {};
   final Map<int, Future<AudioSource>> _pendingSources = {};
+  final Map<int, int> _lastRoundRobin = {};
+  final Random _random = Random();
   Future<void> _loadQueue = Future<void>.value();
 
   AudioEngineState get state => _state;
@@ -97,46 +100,53 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
     if (!_disposed) notifyListeners();
   }
 
+  /// Loads the first take of every note (middle of the neck first), then the
+  /// second takes.
   Future<void> _preloadSamples() async {
-    for (final root in SampleConfig.rootMidis) {
-      if (_disposed || !_soloud.isInitialized) return;
-      // Leave room for cues requested by the user to jump the queue.
-      await Future<void>.delayed(const Duration(milliseconds: 30));
-      try {
-        await _sourceForRoot(root);
-      } catch (error) {
-        debugPrint('[AudioEngine] preload of $root failed: $error');
+    final byUsefulness = [...SampleConfig.rootMidis]
+      ..sort((a, b) => (a - 60).abs().compareTo((b - 60).abs()));
+    for (var rr = 1; rr <= SampleConfig.roundRobins; rr++) {
+      for (final root in byUsefulness) {
+        if (_disposed || !_soloud.isInitialized) return;
+        // Leave room for cues requested by the user to jump the queue.
+        await Future<void>.delayed(const Duration(milliseconds: 15));
+        try {
+          await _sourceFor(root, rr);
+        } catch (error) {
+          debugPrint('[AudioEngine] preload of $root/$rr failed: $error');
+        }
       }
     }
   }
 
-  /// Loads (once) and caches the sample for [rootMidi].
+  /// Loads (once) and caches one recording.
   ///
   /// Loads are serialised: the SoLoud web loader does not support several
   /// concurrent `loadAsset` calls, and a cue requested during background
   /// preloading must not hang waiting on a lost completion.
-  Future<AudioSource> _sourceForRoot(int rootMidi) {
-    final cached = _sources[rootMidi];
+  Future<AudioSource> _sourceFor(int rootMidi, int roundRobin) {
+    final key = rootMidi * 10 + roundRobin;
+    final cached = _sources[key];
     if (cached != null) return Future.value(cached);
-    final pending = _pendingSources[rootMidi];
+    final pending = _pendingSources[key];
     if (pending != null) return pending;
     final load = _loadQueue
         .catchError((_) {})
         .then((_) async {
-          final ready = _sources[rootMidi];
+          final ready = _sources[key];
           if (ready != null) return ready;
           final source = await _soloud.loadAsset(
-            SampleConfig.samplePathForRoot(rootMidi),
+            SampleConfig.samplePathForRoot(rootMidi, roundRobin),
           );
-          _sources[rootMidi] = source;
+          _sources[key] = source;
           return source;
         })
         // Block body on purpose: returning the removed future (this very
         // load) from whenComplete would make it wait on itself forever.
         .whenComplete(() {
-          _pendingSources.remove(rootMidi);
+          _pendingSources.remove(key);
         });
-    _pendingSources[rootMidi] = load;
+    _pendingSources[key] = load;
     _loadQueue = load;
     return load;
   }
@@ -156,9 +166,9 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
     notifyListeners();
 
     try {
-      final source = await _sourceForRoot(
-        SampleConfig.nearestSampleMidi(midiNote),
-      );
+      final root = SampleConfig.nearestSampleMidi(midiNote);
+      final roundRobin = _chooseRoundRobin(root);
+      final source = await _sourceFor(root, roundRobin);
       if (generation != _playbackGeneration || _disposed) return true;
       final handle = await _soloud.play(
         source,
@@ -166,14 +176,13 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
       );
       _soloud.setRelativePlaySpeed(
         handle,
-        SampleConfig.playbackSpeedForMidi(midiNote),
+        SampleConfig.playbackSpeedForMidi(midiNote, roundRobin: roundRobin),
       );
       if (generation != _playbackGeneration) {
         _release(handle, interruptFade);
         return true;
       }
       _activeHandle = handle;
-      _scheduleNaturalRelease(handle);
       await Future<void>.delayed(cueDuration);
       return !_disposed;
     } catch (error) {
@@ -190,11 +199,24 @@ class AudioEngine extends ChangeNotifier implements TrainingAudioPort {
     }
   }
 
-  void _scheduleNaturalRelease(SoundHandle handle) {
-    Timer(ringDuration, () {
-      if (identical(_activeHandle, handle)) _activeHandle = null;
-      _release(handle, releaseFade);
-    });
+  /// Alternates takes for repeated notes. Prefers an already decoded take so
+  /// a cue never waits on loading while another take is ready.
+  int _chooseRoundRobin(int root) {
+    final last = _lastRoundRobin[root];
+    final preferred = last == null
+        ? 1 + _random.nextInt(SampleConfig.roundRobins)
+        : last % SampleConfig.roundRobins + 1;
+    var chosen = preferred;
+    if (!_sources.containsKey(root * 10 + preferred)) {
+      for (var rr = 1; rr <= SampleConfig.roundRobins; rr++) {
+        if (_sources.containsKey(root * 10 + rr)) {
+          chosen = rr;
+          break;
+        }
+      }
+    }
+    _lastRoundRobin[root] = chosen;
+    return chosen;
   }
 
   void _releaseActiveHandle(Duration fade) {

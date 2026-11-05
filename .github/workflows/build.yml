@@ -48,7 +48,7 @@ jobs:
       - name: Validate bundled samples
         shell: bash
         run: |
-          test "$(find assets/samples/guitar -type f -name '*.wav' | wc -l)" -eq 19
+          test "$(find assets/samples/guitar -type f -name '*.ogg' | wc -l)" -eq 94
 
   build-android:
     name: Build Android APKs
@@ -338,7 +338,7 @@ jobs:
           test -f dist/client/index.html
           test -f dist/client/og.png
           test -f dist/client/assets/packages/flutter_soloud/web/libflutter_soloud_plugin.wasm
-          test "$(find dist/client/assets/assets/samples/guitar -type f -name '*.wav' | wc -l)" -eq 19
+          test "$(find dist/client/assets/assets/samples/guitar -type f -name '*.ogg' | wc -l)" -eq 94
       - name: Package Web bundle
         shell: bash
         run: |

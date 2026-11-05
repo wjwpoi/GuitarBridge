@@ -62,7 +62,7 @@ Web 版复用同一套训练引擎、等宽指板、真实吉他采样和本地�
 - 设置、练习记录与连续练习天数保存在当前浏览器；
 - 中文字体（思源黑体 / 宋体子集）与引擎兜底字体均随包发布，运行时不访问 Google 域名，适合国内网络；
 - 支持浅色 / 深色 / 跟随系统；
-- Release 构建包含 PWA 离线缓存、SoLoud WebAssembly 和 19 个真实吉他采样。
+- Release 构建包含 PWA 离线缓存、SoLoud WebAssembly 和 94 个真实吉他采样（E2–D6 逐半音，每音 2 个轮替）。
 
 ```bash
 # --no-web-resources-cdn 会把 CanvasKit 一起打包，不再依赖 www.gstatic.com
@@ -142,7 +142,7 @@ idle → playingRoot → waitingAnswer ⟲（答错重试）→ showingResult �
 ## 技术亮点
 
 - **自适应等宽指板** — 宽屏一次显示 0–22 品；窄屏保持 44px 触控目标并自动滚动到基准音
-- **SoLoud audio backend** — CC0 真实吉他多采样，按 MIDI 就近根音重调；采样首次解码后缓存，换音时淡出避免爆音
+- **SoLoud audio backend** — CC0 真实吉他逐半音采样（每音两个轮替、保留自然余音），逐个校准到十二平均律；详见 [`docs/REAL_GUITAR_SAMPLES.md`](docs/REAL_GUITAR_SAMPLES.md)
 - **Pitch-based answers** — 按音高判定，任何同音高位置都算对
 - **Balanced interval sampling** — 每轮按音程均衡抽题，不受指板位置组合数量干扰；错题音程本轮回炉
 - **First-try scoring** — 正确率、连击、音程掌握度都基于首次作答
