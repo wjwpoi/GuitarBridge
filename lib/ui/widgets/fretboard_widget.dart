@@ -26,6 +26,11 @@ class FretboardWidget extends StatefulWidget {
   final bool showDegrees;
   final bool showNoteNames;
   final bool showFretNumbers;
+
+  /// False hides every scale-note marker and draws only the fret inlays of a
+  /// real guitar (3, 5, 7, 9, 12…), so positions must be found by orientation.
+  /// The root, attempted frets and the revealed answer stay highlighted.
+  final bool showScaleNotes;
   final ValueChanged<FretPosition> onFretTapped;
   final int startFret;
   final int visibleFrets;
@@ -43,6 +48,7 @@ class FretboardWidget extends StatefulWidget {
     this.showDegrees = false,
     this.showNoteNames = true,
     this.showFretNumbers = true,
+    this.showScaleNotes = true,
     required this.onFretTapped,
     this.startFret = 0,
     this.visibleFrets = 23,
@@ -209,15 +215,20 @@ class _FretboardWidgetState extends State<FretboardWidget> {
               builder: (context, _) {
                 final board = SizedBox(
                   width: visibleFrets * _cellWidth,
-                  child: Column(
+                  child: Stack(
                     children: [
-                      _buildFretHeader(c),
-                      for (
-                        var stringIndex = 0;
-                        stringIndex < tuning.stringCount;
-                        stringIndex++
-                      )
-                        _buildStringRow(c, stringIndex, keySig),
+                      Column(
+                        children: [
+                          _buildFretHeader(c),
+                          for (
+                            var stringIndex = 0;
+                            stringIndex < tuning.stringCount;
+                            stringIndex++
+                          )
+                            _buildStringRow(c, stringIndex, keySig),
+                        ],
+                      ),
+                      if (!widget.showScaleNotes) ..._buildInlays(c),
                     ],
                   ),
                 );
@@ -377,7 +388,7 @@ class _FretboardWidgetState extends State<FretboardWidget> {
                               : FontWeight.w400,
                         ),
                       )
-                    : _markerFrets.contains(fret)
+                    : _markerFrets.contains(fret) && widget.showScaleNotes
                     ? Dot(color: c.strongLine, size: 4)
                     : null,
               ),
@@ -419,8 +430,14 @@ class _FretboardWidgetState extends State<FretboardWidget> {
         state == TrainingState.showingResult;
 
     final role = _roleFor(position, questionVisible);
-    final label = _noteLabel(position.midi, keySig);
     final highlighted = role != _CellRole.none;
+    // In the inlay-only mode nothing names a note until the answer is shown,
+    // then the revealed positions are labelled so the result can be learned.
+    final label = widget.showScaleNotes
+        ? _noteLabel(position.midi, keySig)
+        : role == _CellRole.correct || role == _CellRole.target
+        ? GuitarMath.noteNameAt(position.midi).sharpName
+        : null;
 
     final (Color fill, Color border, Color textColor) = switch (role) {
       _CellRole.root => (c.ink, c.ink, c.onInk),
@@ -441,7 +458,8 @@ class _FretboardWidgetState extends State<FretboardWidget> {
       _CellRole.none => '',
     };
 
-    final showNode = highlighted || inKey || label != null;
+    final showNode =
+        highlighted || (widget.showScaleNotes && (inKey || label != null));
     final dim = !inFocus && !highlighted;
 
     return Semantics(
@@ -533,6 +551,41 @@ class _FretboardWidgetState extends State<FretboardWidget> {
     if (engine.rootPosition == position) return _CellRole.root;
     if (engine.wrongPositions.contains(position)) return _CellRole.wrong;
     return _CellRole.none;
+  }
+
+  /// Fret-marker inlays between the strings: single dots in the middle of
+  /// the neck, a double dot at the 12th fret, as on a real guitar.
+  List<Widget> _buildInlays(GbColors c) {
+    const size = 9.0;
+    final strings = tuning.stringCount;
+    final middle = _headerHeight + strings / 2 * _rowHeight;
+    final pair = [
+      _headerHeight + (strings / 2 - 1) * _rowHeight,
+      _headerHeight + (strings / 2 + 1) * _rowHeight,
+    ];
+    return [
+      for (var fret = startFret; fret <= _lastFret; fret++)
+        if (_markerFrets.contains(fret))
+          for (final (i, y) in (fret % 12 == 0 ? pair : [middle]).indexed)
+            Positioned(
+              key: ValueKey('inlay-$fret-$i'),
+              left: (fret - startFret + 0.5) * _cellWidth - size / 2,
+              top: y - size / 2,
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: _inFocus(fret) ? 1 : 0.4,
+                  child: Container(
+                    width: size,
+                    height: size,
+                    decoration: BoxDecoration(
+                      color: c.strongLine,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+    ];
   }
 
   String? _noteLabel(int midi, KeySignature keySig) {

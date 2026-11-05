@@ -116,6 +116,10 @@ class UserPreferences {
   /// 'system' | 'light' | 'dark'.
   String themeMode;
 
+  /// What the fretboard shows for scale notes: 'names' | 'degrees' |
+  /// 'hidden' (only fret-marker inlays, the hardest mode).
+  String fretLabels;
+
   /// Weight question selection towards historically weak intervals.
   bool adaptiveTraining;
 
@@ -133,6 +137,7 @@ class UserPreferences {
     this.hasCompletedOnboarding = false,
     this.maxFailedAttempts = 3,
     this.themeMode = 'system',
+    this.fretLabels = 'names',
     this.adaptiveTraining = true,
   });
 
@@ -150,6 +155,7 @@ class UserPreferences {
     'hasCompletedOnboarding': hasCompletedOnboarding,
     'maxFailedAttempts': maxFailedAttempts,
     'themeMode': themeMode,
+    'fretLabels': fretLabels,
     'adaptiveTraining': adaptiveTraining,
   };
 
@@ -174,5 +180,12 @@ class UserPreferences {
       _ => 'system',
     },
     adaptiveTraining: json['adaptiveTraining'] as bool? ?? true,
+    fretLabels: switch (json['fretLabels']) {
+      'names' => 'names',
+      'degrees' => 'degrees',
+      'hidden' => 'hidden',
+      // Before the label mode existed, degrees won when both were enabled.
+      _ => (json['showDegrees'] as bool? ?? false) ? 'degrees' : 'names',
+    },
   );
 }

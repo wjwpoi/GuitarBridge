@@ -158,7 +158,9 @@ class TrainingOptionsWidget extends StatelessWidget {
   }
 }
 
-/// Note name / degree / fret number toggles as one quiet button group.
+/// Fretboard display controls: one exclusive choice of what scale notes
+/// show (names, degrees, or nothing but fret inlays) plus a fret-number
+/// toggle.
 class DisplayToggles extends StatelessWidget {
   final TrainingConfig config;
   final ValueChanged<TrainingConfig> onChanged;
@@ -171,77 +173,120 @@ class DisplayToggles extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.gb;
-    final items = [
-      (
-        '音名',
-        config.showNoteNames,
-        () => onChanged(config.copyWith(showNoteNames: !config.showNoteNames)),
-      ),
-      (
-        '级数',
-        config.showDegrees,
-        () => onChanged(config.copyWith(showDegrees: !config.showDegrees)),
-      ),
-      (
-        '品号',
-        config.showFretNumbers,
-        () => onChanged(
-          config.copyWith(showFretNumbers: !config.showFretNumbers),
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        _SegmentGroup(
+          children: [
+            for (final mode in FretLabels.values)
+              _Segment(
+                label: mode.label,
+                tooltip: switch (mode) {
+                  FretLabels.noteNames => '在调内音上显示音名',
+                  FretLabels.degrees => '在调内音上显示相对主音的级数',
+                  FretLabels.hidden => '不标出调内音，只保留品记圆点（更难）',
+                },
+                semanticsLabel: '指板标记：${mode.label}',
+                selected: config.labels == mode,
+                onTap: () => onChanged(config.copyWith(labels: mode)),
+              ),
+          ],
         ),
-      ),
-    ];
+        _SegmentGroup(
+          children: [
+            _Segment(
+              label: '品号',
+              tooltip: '显示指板上方的品位编号',
+              semanticsLabel: '显示品号',
+              selected: config.showFretNumbers,
+              onTap: () => onChanged(
+                config.copyWith(showFretNumbers: !config.showFretNumbers),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _SegmentGroup extends StatelessWidget {
+  final List<Widget> children;
+
+  const _SegmentGroup({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: c.surfaceMuted,
+        color: context.gb.surfaceMuted,
         borderRadius: BorderRadius.circular(AppTheme.controlRadius),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final (label, selected, toggle) in items)
-            Semantics(
-              button: true,
-              toggled: selected,
-              label: '显示$label',
-              excludeSemantics: true,
-              child: GestureDetector(
-                onTap: toggle,
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: selected ? c.surface : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: selected
-                          ? [
-                              BoxShadow(
-                                color: Colors.black.withAlpha(14),
-                                blurRadius: 3,
-                                offset: const Offset(0, 1),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
-                        color: selected ? c.textPrimary : c.textMuted,
-                      ),
-                    ),
-                  ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: children),
+    );
+  }
+}
+
+class _Segment extends StatelessWidget {
+  final String label;
+  final String tooltip;
+  final String semanticsLabel;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _Segment({
+    required this.label,
+    required this.tooltip,
+    required this.semanticsLabel,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.gb;
+    return Tooltip(
+      message: tooltip,
+      waitDuration: const Duration(milliseconds: 500),
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: semanticsLabel,
+        excludeSemantics: true,
+        child: GestureDetector(
+          onTap: onTap,
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                color: selected ? c.surface : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: selected
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withAlpha(14),
+                          blurRadius: 3,
+                          offset: const Offset(0, 1),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  color: selected ? c.textPrimary : c.textMuted,
                 ),
               ),
             ),
-        ],
+          ),
+        ),
       ),
     );
   }

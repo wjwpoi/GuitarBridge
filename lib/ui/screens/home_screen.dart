@@ -393,6 +393,7 @@ class _HomeScreenState extends State<HomeScreen> {
               showDegrees: _config.showDegrees,
               showNoteNames: _config.showNoteNames,
               showFretNumbers: _config.showFretNumbers,
+              showScaleNotes: _config.showScaleNotes,
               focusFretRange: _config.difficultyConfig.fretRange,
               onFretTapped: _onFretTapped,
             ),
@@ -563,8 +564,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     setState(() {
       _config = _config.copyWith(
-        showDegrees: prefs.showDegrees,
-        showNoteNames: prefs.showNoteNames,
+        labels: FretLabels.fromStorage(prefs.fretLabels),
         showFretNumbers: prefs.showFretNumbers,
       );
     });

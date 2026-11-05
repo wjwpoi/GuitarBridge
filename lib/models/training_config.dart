@@ -4,6 +4,24 @@ import 'practice_record.dart';
 import 'scale.dart';
 import 'tuning.dart';
 
+/// What the fretboard shows on scale notes.
+enum FretLabels {
+  noteNames('names', '音名'),
+  degrees('degrees', '级数'),
+
+  /// No scale-note markers at all, only fret inlays like a real guitar.
+  hidden('hidden', '仅品记');
+
+  final String storageName;
+  final String label;
+  const FretLabels(this.storageName, this.label);
+
+  static FretLabels fromStorage(String value) => FretLabels.values.firstWhere(
+    (mode) => mode.storageName == value,
+    orElse: () => FretLabels.noteNames,
+  );
+}
+
 /// The user-selected training setup plus fretboard display toggles.
 ///
 /// Immutable so the home screen can hold one value, hand it to every widget
@@ -13,8 +31,7 @@ class TrainingConfig {
   final ScaleType scale;
   final Tuning tuning;
   final String difficulty;
-  final bool showNoteNames;
-  final bool showDegrees;
+  final FretLabels labels;
   final bool showFretNumbers;
 
   const TrainingConfig({
@@ -22,8 +39,7 @@ class TrainingConfig {
     this.scale = ScaleType.major,
     this.tuning = Tuning.standard,
     this.difficulty = 'easy',
-    this.showNoteNames = true,
-    this.showDegrees = false,
+    this.labels = FretLabels.noteNames,
     this.showFretNumbers = true,
   });
 
@@ -56,11 +72,14 @@ class TrainingConfig {
       difficulty: AppConstants.difficulties.containsKey(prefs.difficulty)
           ? prefs.difficulty
           : 'easy',
-      showNoteNames: prefs.showNoteNames,
-      showDegrees: prefs.showDegrees,
+      labels: FretLabels.fromStorage(prefs.fretLabels),
       showFretNumbers: prefs.showFretNumbers,
     );
   }
+
+  bool get showNoteNames => labels == FretLabels.noteNames;
+  bool get showDegrees => labels == FretLabels.degrees;
+  bool get showScaleNotes => labels != FretLabels.hidden;
 
   DifficultyConfig get difficultyConfig =>
       AppConstants.difficulties[difficulty] ??
@@ -81,8 +100,9 @@ class TrainingConfig {
       ..selectedScale = scale.chineseName
       ..selectedTuning = tuning.name
       ..difficulty = difficulty
-      ..showNoteNames = showNoteNames
-      ..showDegrees = showDegrees
+      ..fretLabels = labels.storageName
+      ..showNoteNames = labels == FretLabels.noteNames
+      ..showDegrees = labels == FretLabels.degrees
       ..showFretNumbers = showFretNumbers;
   }
 
@@ -98,8 +118,7 @@ class TrainingConfig {
     ScaleType? scale,
     Tuning? tuning,
     String? difficulty,
-    bool? showNoteNames,
-    bool? showDegrees,
+    FretLabels? labels,
     bool? showFretNumbers,
   }) {
     return TrainingConfig(
@@ -107,8 +126,7 @@ class TrainingConfig {
       scale: scale ?? this.scale,
       tuning: tuning ?? this.tuning,
       difficulty: difficulty ?? this.difficulty,
-      showNoteNames: showNoteNames ?? this.showNoteNames,
-      showDegrees: showDegrees ?? this.showDegrees,
+      labels: labels ?? this.labels,
       showFretNumbers: showFretNumbers ?? this.showFretNumbers,
     );
   }

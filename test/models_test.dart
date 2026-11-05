@@ -377,12 +377,13 @@ void main() {
       expect(config.tuning, Tuning.dropD);
       expect(config.difficulty, 'hard');
 
-      final next = config.copyWith(key: 'A', showDegrees: true);
+      final next = config.copyWith(key: 'A', labels: FretLabels.degrees);
       final saved = UserPreferences();
       next.writeTo(saved);
       expect(saved.selectedKey, 'A');
       expect(saved.selectedScale, '多利亚调式');
       expect(saved.showDegrees, true);
+      expect(saved.fretLabels, 'degrees');
     });
 
     test('falls back to defaults for unknown stored values', () {
@@ -403,7 +404,7 @@ void main() {
     test('only question-relevant changes lock during a session', () {
       const config = TrainingConfig();
       expect(
-        config.affectsQuestions(config.copyWith(showDegrees: true)),
+        config.affectsQuestions(config.copyWith(labels: FretLabels.hidden)),
         false,
       );
       expect(config.affectsQuestions(config.copyWith(key: 'D')), true);
@@ -411,6 +412,38 @@ void main() {
         config.affectsQuestions(config.copyWith(difficulty: 'hard')),
         true,
       );
+    });
+  });
+
+  group('Fretboard label mode', () {
+    test('legacy preferences map to names or degrees', () {
+      expect(UserPreferences.fromJson({}).fretLabels, 'names');
+      expect(
+        UserPreferences.fromJson({'showDegrees': true}).fretLabels,
+        'degrees',
+      );
+      expect(
+        UserPreferences.fromJson({
+          'showDegrees': false,
+          'showNoteNames': false,
+        }).fretLabels,
+        'names',
+      );
+      expect(
+        UserPreferences.fromJson({'fretLabels': 'bogus'}).fretLabels,
+        'names',
+      );
+    });
+
+    test('hidden mode round-trips and turns scale notes off', () {
+      final prefs = UserPreferences.fromJson(
+        UserPreferences(fretLabels: 'hidden').toJson(),
+      );
+      final config = TrainingConfig.fromPreferences(prefs);
+      expect(config.labels, FretLabels.hidden);
+      expect(config.showScaleNotes, isFalse);
+      expect(config.showNoteNames, isFalse);
+      expect(config.showDegrees, isFalse);
     });
   });
 }

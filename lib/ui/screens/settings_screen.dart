@@ -133,20 +133,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _Group(
                     children: [
                       _Row(
-                        title: '显示音名',
-                        trailing: Switch(
-                          value: _prefs.showNoteNames,
-                          onChanged: (value) =>
-                              _update((p) => p.showNoteNames = value),
-                        ),
-                      ),
-                      _Row(
-                        title: '显示级数',
-                        subtitle: '以主音为 1，标出 b3、5、b7 等',
-                        trailing: Switch(
-                          value: _prefs.showDegrees,
-                          onChanged: (value) =>
-                              _update((p) => p.showDegrees = value),
+                        title: '调内音标记',
+                        subtitle: _prefs.fretLabels == 'hidden'
+                            ? '不标出调内音，只保留 3、5、7、9、12 品等品记圆点，需要靠位置判断音高。'
+                            : _prefs.fretLabels == 'degrees'
+                            ? '以主音为 1，标出 b3、5、b7 等级数。'
+                            : '在调内音上显示 C、D、E 等音名。',
+                        below: _Choices<String>(
+                          values: const ['names', 'degrees', 'hidden'],
+                          selected: _prefs.fretLabels,
+                          label: (value) => switch (value) {
+                            'degrees' => '级数',
+                            'hidden' => '仅品记（更难）',
+                            _ => '音名',
+                          },
+                          onSelected: (value) => _update((p) {
+                            p
+                              ..fretLabels = value
+                              ..showNoteNames = value == 'names'
+                              ..showDegrees = value == 'degrees';
+                          }),
                         ),
                       ),
                       _Row(

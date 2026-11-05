@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guitar_bridge/core/theme.dart';
+import 'package:guitar_bridge/engine/training_audio_port.dart';
 import 'package:guitar_bridge/ui/screens/onboarding_screen.dart';
 import 'package:guitar_bridge/ui/widgets/completion_animation.dart';
 import 'package:guitar_bridge/ui/widgets/training_status.dart';
@@ -243,4 +244,84 @@ void main() {
       expect(find.byTooltip('向高把位移动'), findsNothing);
     });
   });
+
+  group('FretboardWidget inlay-only mode', () {
+    Future<TrainingEngine> pumpBoard(
+      WidgetTester tester, {
+      required bool showScaleNotes,
+    }) async {
+      await tester.binding.setSurfaceSize(const Size(1400, 600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final engine = TrainingEngine(delay: (_) async {});
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(
+            body: FretboardWidget(
+              trainingEngine: engine,
+              tuning: Tuning.standard,
+              scaleType: ScaleType.major,
+              selectedKey: 'C',
+              showScaleNotes: showScaleNotes,
+              onFretTapped: (_) {},
+            ),
+          ),
+        ),
+      );
+      return engine;
+    }
+
+    testWidgets('hides scale-note labels and draws fret inlays', (
+      tester,
+    ) async {
+      await pumpBoard(tester, showScaleNotes: false);
+      // The string rail still names the open strings (E B G D A E); no
+      // other note may be labelled. C and F appear on no open string.
+      expect(find.text('C'), findsNothing);
+      expect(find.text('F'), findsNothing);
+      for (final fret in [3, 5, 7, 9, 15, 17, 19, 21]) {
+        expect(find.byKey(ValueKey('inlay-$fret-0')), findsOneWidget);
+        expect(find.byKey(ValueKey('inlay-$fret-1')), findsNothing);
+      }
+      // Double dot at the 12th fret.
+      expect(find.byKey(const ValueKey('inlay-12-0')), findsOneWidget);
+      expect(find.byKey(const ValueKey('inlay-12-1')), findsOneWidget);
+      expect(find.byKey(const ValueKey('inlay-4-0')), findsNothing);
+    });
+
+    testWidgets('normal mode keeps note names and no board inlays', (
+      tester,
+    ) async {
+      await pumpBoard(tester, showScaleNotes: true);
+      expect(find.text('C'), findsWidgets);
+      expect(find.byKey(const ValueKey('inlay-12-0')), findsNothing);
+    });
+
+    testWidgets('the root is still highlighted during a question', (
+      tester,
+    ) async {
+      final engine = await pumpBoard(tester, showScaleNotes: false);
+      engine.configure(engine: _ReadyAudio(), tuning: Tuning.standard);
+      engine.start();
+      await tester.pump();
+      final root = engine.rootPosition!;
+      expect(
+        find.bySemanticsLabel(
+          RegExp('${root.stringIndex + 1}弦 ${root.fret}品.*基准音'),
+        ),
+        findsOneWidget,
+      );
+      engine.reset();
+      await tester.pump();
+    });
+  });
+}
+
+class _ReadyAudio implements TrainingAudioPort {
+  @override
+  bool get isReady => true;
+  @override
+  Future<bool> playNote(int midiNote) async => true;
+  @override
+  Future<void> stopAll() async {}
 }

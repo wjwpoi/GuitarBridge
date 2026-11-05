@@ -614,3 +614,17 @@ CMake Error at CMakeLists.txt:3 (project):
 - 播放：每个音使用自己的录音，只做 ±15 音分以内的校准；同一个音连续播放时交替使用两个轮替；不再在 1.6 秒处强制淡出，新音开始时上一个音 70 ms 淡出；预加载先加载中音区第一轮替。
 - CI：样本校验改为 94 个 `.ogg`。
 - 验证：`flutter analyze` 通过；全量测试通过；Web Release 在无头 Chromium 中 94 个 Ogg 全部加载成功、训练正常推进、控制台无错误。音色主观效果需人工试听。
+
+## 分支与交付流水线（2026-11-05）
+
+- `main` 已快进到原 `agent/web-app`，此后以 `main` 为主分支。
+- 推送到 `main`：CI 跑格式/分析/测试/样本与字体校验，并构建 Android、iOS（unsigned）、macOS（unsigned）、Windows、Linux、Web；全部通过后 `deploy-web` 把同一份 Web 产物发布到 GitHub Pages（https://wjwpoi.github.io/GuitarBridge/），部署时把 `<base href>` 改为 `/<仓库名>/`。
+- 各平台安装包在对应 CI 运行的 Artifacts 中下载；推送 `v<pubspec 版本>` 标签走 Release 流水线（需要 Android 正式签名 Secrets）。
+- 修复：`ubuntu-latest` 默认 JDK 变为 25，Gradle 8.12 无法识别，Android 任务固定 Temurin JDK 17；iOS 模拟器冒烟测试按新界面更新，并新增无设备的 `test/app_smoke_test.dart` 镜像同一流程。
+
+## 指板「仅品记」模式（2026-11-05）
+
+- 需求：增加一个更难的显示模式，不标出调内音，但指板上保留品记。
+- 「音名 / 级数」由两个独立开关改为三选一：音名、级数、仅品记；「品号」仍为独立开关。旧偏好自动迁移（开过级数的为「级数」，其余为「音名」），新字段 `UserPreferences.fretLabels`。
+- 仅品记模式：不绘制任何调内/调外音节点；在面板上按真吉他位置绘制品记（3/5/7/9/15/17/19/21 品弦间单点，12 品双点），难度范围外的品记同样调暗。基准音、已尝试位置照常高亮；答案揭晓时只在高亮的答案位置显示音名。读屏标签仍包含音名。
+- 验证：新增模式迁移、品记绘制、隐藏标签与基准音高亮测试；全量 154 项测试通过；字体子集重新生成（528 字）。
