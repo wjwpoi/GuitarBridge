@@ -5,12 +5,15 @@
     "start_url": ".",
     "scope": ".",
     "display": "standalone",
-    "background_color": "#F3F0E9",
-    "theme_color": "#F3F0E9",
+    "background_color": "#FAF9F5",
+    "theme_color": "#FAF9F5",
     "description": "真实吉他采样、相对音准与等宽指板训练，打开浏览器即可练习。",
     "lang": "zh-CN",
     "orientation": "any",
-    "categories": ["education", "music"],
+    "categories": [
+        "education",
+        "music"
+    ],
     "prefer_related_applications": false,
     "icons": [
         {

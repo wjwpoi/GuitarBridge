@@ -1,6 +1,6 @@
 ﻿name: guitar_bridge
 description: 跨平台吉他练耳训练工具 - 相对音准识别与指板训练
-version: 3.0.0
+version: 3.1.0
 
 environment:
   sdk: '>=3.8.0 <4.0.0'
@@ -23,3 +23,19 @@ flutter:
   assets:
     - assets/samples/
     - assets/samples/guitar/
+  # Subsetted Noto Sans SC / Noto Serif SC (SIL OFL 1.1, see
+  # assets/fonts/OFL.txt). Bundled so Chinese text never depends on
+  # fonts.gstatic.com. Regenerate with tool/subset_fonts.py.
+  fonts:
+    - family: NotoSansSC
+      fonts:
+        - asset: assets/fonts/NotoSansSC-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSansSC-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/NotoSansSC-SemiBold.ttf
+          weight: 600
+    - family: NotoSerifSC
+      fonts:
+        - asset: assets/fonts/NotoSerifSC-SemiBold.ttf
+          weight: 600

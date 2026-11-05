@@ -19,8 +19,9 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#F3F0E9">
-  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#FAF9F5" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1E1D1B" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
   <meta name="description" content="GuitarBridge 用真实吉他采样连接相对音准与等宽指板训练，打开浏览器即可练习。">
   <meta property="og:type" content="website">
   <meta property="og:title" content="GuitarBridge · 听见音程，看懂指板">
@@ -43,16 +44,32 @@
   <title>GuitarBridge · 吉他音程与指板训练</title>
   <link rel="manifest" href="manifest.json">
   <style>
+    :root {
+      --gb-canvas: #faf9f5;
+      --gb-text: #1f1e1b;
+      --gb-muted: #8f8b82;
+      --gb-accent: #c6613f;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --gb-canvas: #1e1d1b;
+        --gb-text: #edebe5;
+        --gb-muted: #8c887f;
+        --gb-accent: #db7c5a;
+      }
+    }
+
     html, body {
       width: 100%;
       min-height: 100%;
       margin: 0;
-      background: #f3f0e9;
+      background: var(--gb-canvas);
     }
 
     body {
       overflow: hidden;
-      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
     }
 
     #gb-loading {
@@ -61,52 +78,53 @@
       z-index: 9999;
       display: grid;
       place-items: center;
-      color: #1d2a2b;
-      background:
-        radial-gradient(circle at 85% 12%, rgba(36, 92, 88, .12), transparent 34%),
-        radial-gradient(circle at 12% 88%, rgba(215, 97, 77, .13), transparent 36%),
-        #f3f0e9;
-      transition: opacity 180ms ease;
+      color: var(--gb-text);
+      background: var(--gb-canvas);
+      transition: opacity 200ms ease;
     }
 
-    .gb-loading-card {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 18px 22px;
-      border: 1px solid #d8d3c8;
-      border-radius: 22px;
-      background: rgba(255, 252, 247, .9);
-      box-shadow: 0 18px 60px rgba(29, 42, 43, .08);
+    .gb-loading-copy { text-align: center; }
+    .gb-loading-copy strong {
+      display: block;
+      font-family: "Songti SC", "Noto Serif SC", "SimSun", serif;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: .2px;
     }
-
-    .gb-loading-mark {
-      display: grid;
-      width: 46px;
-      height: 46px;
-      place-items: center;
-      border-radius: 14px;
-      color: white;
-      background: linear-gradient(135deg, #d7614d, #245c58);
-      font-size: 15px;
-      font-weight: 800;
-      letter-spacing: -.5px;
+    .gb-loading-copy span {
+      display: block;
+      margin-top: 10px;
+      color: var(--gb-muted);
+      font-size: 12px;
     }
-
-    .gb-loading-copy strong,
-    .gb-loading-copy span { display: block; }
-    .gb-loading-copy strong { font-size: 16px; }
-    .gb-loading-copy span { margin-top: 4px; color: #7c8989; font-size: 11px; }
+    .gb-loading-bar {
+      width: 120px;
+      height: 2px;
+      margin: 18px auto 0;
+      overflow: hidden;
+      border-radius: 2px;
+      background: color-mix(in srgb, var(--gb-muted) 25%, transparent);
+    }
+    .gb-loading-bar::after {
+      content: "";
+      display: block;
+      width: 40%;
+      height: 100%;
+      background: var(--gb-accent);
+      animation: gb-slide 1.1s ease-in-out infinite;
+    }
+    @keyframes gb-slide {
+      from { transform: translateX(-100%); }
+      to { transform: translateX(250%); }
+    }
   </style>
 </head>
 <body>
   <div id="gb-loading" role="status" aria-live="polite">
-    <div class="gb-loading-card">
-      <div class="gb-loading-mark" aria-hidden="true">GB</div>
-      <div class="gb-loading-copy">
-        <strong>GuitarBridge</strong>
-        <span>正在准备指板与真实吉他采样…</span>
-      </div>
+    <div class="gb-loading-copy">
+      <strong>GuitarBridge</strong>
+      <span>正在准备指板与吉他采样</span>
+      <div class="gb-loading-bar" aria-hidden="true"></div>
     </div>
   </div>
   <noscript>GuitarBridge 需要启用 JavaScript 才能运行训练。</noscript>
