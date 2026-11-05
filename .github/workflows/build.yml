@@ -63,6 +63,13 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
+      # ubuntu-latest now defaults to Java 25, which Gradle 8.12 cannot parse
+      # ("What went wrong: 25.0.5"). Pin the JDK the Android toolchain supports.
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
