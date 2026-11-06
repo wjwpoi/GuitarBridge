@@ -34,7 +34,7 @@ void main() {
     expect(find.text('GuitarBridge'), findsOneWidget);
     expect(find.byType(TrainingStatusWidget), findsOneWidget);
     expect(find.byType(FretboardWidget), findsOneWidget);
-    expect(find.text('指板'), findsOneWidget);
+    expect(find.byType(FretboardLegend), findsOneWidget);
     // Audio is not started in unit tests, so the button asks to enable it.
     // On a device main() starts audio first and the label is '开始训练'.
     expect(find.text('开启声音并开始'), findsOneWidget);

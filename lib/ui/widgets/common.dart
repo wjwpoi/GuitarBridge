@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
 
-/// A hairline-bordered surface with consistent padding.
+/// A section of a page: separated by a hairline rule and whitespace, not a
+/// card. Only overlays (dialogs, sheets, the round summary) get a frame.
 class Panel extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -13,13 +14,13 @@ class Panel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 600;
-    return Card(
-      color: color,
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: padding ?? EdgeInsets.all(compact ? 16 : 24),
-        child: child,
+    return Container(
+      decoration: BoxDecoration(
+        color: color,
+        border: Border(top: BorderSide(color: context.gb.hairline)),
       ),
+      padding: padding ?? EdgeInsets.symmetric(vertical: compact ? 20 : 28),
+      child: child,
     );
   }
 }
@@ -102,7 +103,7 @@ class KeyCap extends StatelessWidget {
   }
 }
 
-/// The GuitarBridge wordmark.
+/// The GuitarBridge wordmark: set in the serif, nothing else.
 class Wordmark extends StatelessWidget {
   final bool compact;
 
@@ -110,66 +111,13 @@ class Wordmark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.gb;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        CustomPaint(
-          size: Size.square(compact ? 22 : 24),
-          painter: _MarkPainter(c.accent, c.textPrimary),
-        ),
-        const SizedBox(width: 10),
-        Text(
-          'GuitarBridge',
-          style: TextStyle(
-            fontFamily: AppTheme.serif,
-            fontSize: compact ? 18 : 20,
-            fontWeight: FontWeight.w600,
-            color: c.textPrimary,
-            height: 1.2,
-          ),
-        ),
-      ],
+    return Text(
+      'GuitarBridge',
+      style: AppTheme.serifStyle(
+        size: compact ? 19 : 22,
+        color: context.gb.textPrimary,
+        height: 1.2,
+      ),
     );
   }
-}
-
-/// Six strings with two notes bridged by an arc.
-class _MarkPainter extends CustomPainter {
-  final Color accent;
-  final Color ink;
-
-  _MarkPainter(this.accent, this.ink);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final line = Paint()
-      ..color = ink.withAlpha(90)
-      ..strokeWidth = 1.2;
-    for (var i = 0; i < 4; i++) {
-      final y = w * (0.22 + i * 0.19);
-      canvas.drawLine(Offset(0, y), Offset(w, y), line);
-    }
-    final dot = Paint()..color = ink;
-    canvas.drawCircle(Offset(w * 0.24, w * 0.79), w * 0.11, dot);
-    canvas.drawCircle(
-      Offset(w * 0.76, w * 0.22),
-      w * 0.11,
-      Paint()..color = accent,
-    );
-    final arc = Paint()
-      ..color = accent
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
-      ..strokeCap = StrokeCap.round;
-    final path = Path()
-      ..moveTo(w * 0.24, w * 0.66)
-      ..quadraticBezierTo(w * 0.3, w * 0.2, w * 0.64, w * 0.22);
-    canvas.drawPath(path, arc);
-  }
-
-  @override
-  bool shouldRepaint(covariant _MarkPainter old) =>
-      old.accent != accent || old.ink != ink;
 }

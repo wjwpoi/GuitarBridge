@@ -12,11 +12,9 @@ import '../../models/training_question.dart';
 import '../../services/haptic_manager.dart';
 import '../../services/storage_service.dart';
 import '../../services/streak_manager.dart';
-import '../widgets/common.dart';
 import '../widgets/completion_animation.dart';
 import '../widgets/fretboard_widget.dart';
 import '../widgets/interval_breakdown.dart';
-import '../widgets/scale_chart.dart';
 import '../widgets/training_options.dart';
 import '../widgets/training_status.dart';
 import 'settings_screen.dart';
@@ -45,8 +43,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const double _wideBreakpoint = 1000;
-
   late final TrainingEngine _trainingEngine;
   late final AudioEngine _audioEngine;
   late TrainingConfig _config;
@@ -85,14 +81,19 @@ class _HomeScreenState extends State<HomeScreen> {
           : null;
   }
 
-  String? get _planNote {
-    if (!_prefs.adaptiveTraining) return null;
-    final focus = AdaptivePlanner.focusIntervals(
-      _config.difficultyConfig.allowedIntervals,
-      _history,
-    );
-    if (focus.isEmpty) return null;
-    return '智能出题：本轮侧重 ${focus.map(IntervalBreakdown.nameFor).join('、')}';
+  List<FocusInterval> get _focus {
+    if (!_prefs.adaptiveTraining) return const [];
+    final history = _history;
+    return [
+      for (final interval in AdaptivePlanner.focusIntervals(
+        _config.difficultyConfig.allowedIntervals,
+        history,
+      ))
+        (
+          name: IntervalBreakdown.nameFor(interval),
+          accuracy: history[interval]!.accuracy,
+        ),
+    ];
   }
 
   @override
@@ -115,7 +116,34 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final compact = width < 600;
+    final c = context.gb;
     return Scaffold(
+      bottomNavigationBar: compact
+          ? ListenableBuilder(
+              listenable: _trainingEngine,
+              builder: (context, _) {
+                final show =
+                    _trainingEngine.isSessionActive &&
+                    _trainingEngine.state != TrainingState.showingResult;
+                if (!show) return const SizedBox.shrink();
+                return DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: c.canvas,
+                    border: Border(top: BorderSide(color: c.hairline)),
+                  ),
+                  child: SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+                      child: _actions(bar: true),
+                    ),
+                  ),
+                );
+              },
+            )
+          : null,
       body: Focus(
         autofocus: true,
         onKeyEvent: _handleKey,
@@ -125,22 +153,13 @@ class _HomeScreenState extends State<HomeScreen> {
             SafeArea(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final width = constraints.maxWidth;
-                  final isWide = width >= _wideBreakpoint;
-                  final compact = width < 600;
-                  final padding = compact ? 12.0 : 32.0;
-                  final gap = compact ? 12.0 : 16.0;
+                  final padding = compact ? 16.0 : 56.0;
                   return SingleChildScrollView(
-                    padding: EdgeInsets.fromLTRB(
-                      padding,
-                      compact ? 8 : 18,
-                      padding,
-                      40,
-                    ),
+                    padding: EdgeInsets.fromLTRB(padding, 0, padding, 40),
                     child: Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(
-                          maxWidth: AppTheme.contentMaxWidth,
+                          maxWidth: AppTheme.contentMaxWidth + 112,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -148,23 +167,22 @@ class _HomeScreenState extends State<HomeScreen> {
                             _buildHeader(compact: compact),
                             if (_audioEngine.state ==
                                 AudioEngineState.error) ...[
-                              SizedBox(height: gap),
                               _buildAudioError(),
+                              const SizedBox(height: 12),
                             ],
-                            SizedBox(height: compact ? 8 : 20),
-                            if (isWide) ...[
-                              _buildToolbar(),
-                              SizedBox(height: gap),
-                              _buildStatus(),
-                              SizedBox(height: gap),
-                              _buildFretboardPanel(),
-                            ] else ...[
-                              _buildStatus(),
-                              SizedBox(height: gap),
-                              _buildFretboardPanel(),
-                              SizedBox(height: gap),
-                              _buildCollapsedOptions(),
-                            ],
+                            SetupStrip(
+                              config: _config,
+                              locked: _trainingEngine.isSessionActive,
+                              compact: width < 1000,
+                              onChanged: _onConfigChanged,
+                            ),
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: compact ? 22 : 38,
+                              ),
+                              child: _buildStatus(compact: compact),
+                            ),
+                            _buildFretboardSection(compact: compact),
                           ],
                         ),
                       ),
@@ -180,8 +198,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   totalQuestions: _trainingEngine.totalQuestions,
                   streak: _trainingEngine.bestStreak,
                   intervalTallies: _trainingEngine.intervalTallies,
+                  outcomes: _trainingEngine.outcomes,
                   averageResponseSeconds: _trainingEngine.averageResponseTime,
                   adaptive: _prefs.adaptiveTraining,
+                  subtitle: _summarySubtitle(),
                   onDismiss: () => setState(() => _showCompletion = false),
                   onRestart: () {
                     setState(() => _showCompletion = false);
@@ -195,47 +215,56 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  String _summarySubtitle() {
+    final now = DateTime.now();
+    final time =
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    return '${now.month} 月 ${now.day} 日 $time · '
+        '${_config.key} ${_config.scale.chineseName} · '
+        '${TrainingConfig.difficultyLabel(_config.difficulty)}';
+  }
+
   Widget _buildHeader({required bool compact}) {
     final c = context.gb;
     final streakDays = widget.streakManager.currentStreak;
     return SizedBox(
-      height: 48,
+      height: compact ? 60 : 76,
       child: Row(
         children: [
-          Wordmark(compact: compact),
-          const Spacer(),
-          if (streakDays > 0)
-            Tooltip(
-              message: '已连续练习 $streakDays 天',
-              child: Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '$streakDays',
-                        style: TextStyle(
-                          color: c.accent,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const TextSpan(text: ' 天连续'),
-                    ],
-                  ),
-                  style: context.text.bodySmall?.copyWith(fontSize: 12.5),
-                ),
+          Expanded(
+            child: Text(
+              'GuitarBridge',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTheme.serifStyle(
+                size: compact ? 19 : 22,
+                color: c.textPrimary,
               ),
             ),
-          IconButton(
-            tooltip: '练习统计',
-            icon: const Icon(Icons.bar_chart_rounded),
-            onPressed: _openStats,
           ),
-          IconButton(
-            tooltip: '设置',
-            icon: const Icon(Icons.tune_rounded),
-            onPressed: _openSettings,
-          ),
+          if (streakDays > 0 && !compact)
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const TextSpan(text: '连续 '),
+                    TextSpan(
+                      text: '$streakDays',
+                      style: AppTheme.monoStyle(
+                        size: 14,
+                        color: c.accent,
+                        weight: FontWeight.w500,
+                      ),
+                    ),
+                    const TextSpan(text: ' 天'),
+                  ],
+                ),
+                style: TextStyle(fontSize: 14, color: c.textSecondary),
+              ),
+            ),
+          TextButton(onPressed: _openStats, child: const Text('统计')),
+          TextButton(onPressed: _openSettings, child: const Text('设置')),
         ],
       ),
     );
@@ -244,17 +273,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildAudioError() {
     final c = context.gb;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+      padding: const EdgeInsets.fromLTRB(16, 6, 6, 6),
       decoration: BoxDecoration(
         color: c.wrongSoft,
-        borderRadius: BorderRadius.circular(AppTheme.radius),
+        borderRadius: BorderRadius.circular(AppTheme.controlRadius),
       ),
       child: Row(
         children: [
           Expanded(
             child: Text(
               _audioEngine.error ?? '音频初始化失败',
-              style: context.text.bodyMedium?.copyWith(color: c.wrong),
+              style: TextStyle(fontSize: 13.5, color: c.wrong),
             ),
           ),
           TextButton(onPressed: _ensureAudioReady, child: const Text('重试')),
@@ -263,89 +292,30 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildToolbar() {
-    final locked = _trainingEngine.isSessionActive;
-    return Panel(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          TrainingOptionsWidget(
-            inline: true,
-            config: _config,
-            locked: locked,
-            onChanged: _onConfigChanged,
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: ScaleChartWidget(
-                  embedded: true,
-                  selectedKey: _config.key,
-                  scaleType: _config.scale,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Text(
-                locked
-                    ? '训练中已锁定，结束本轮后可修改'
-                    : TrainingConfig.difficultyDescription(_config.difficulty),
-                style: context.text.bodySmall,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _actions({bool bar = false}) => TrainingActions(
+    engine: _trainingEngine,
+    bar: bar,
+    showShortcuts: _hasKeyboard && !bar,
+    onReplayRoot: _trainingEngine.replayRoot,
+    onReplayTarget: _trainingEngine.replayTarget,
+    onReplayQuestion: _trainingEngine.replayQuestion,
+    onReveal: _trainingEngine.revealAnswer,
+    onFinish: _trainingEngine.finishEarly,
+  );
 
-  Widget _buildCollapsedOptions() {
-    final locked = _trainingEngine.isSessionActive;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
-        title: Text('训练设置', style: context.text.titleSmall),
-        subtitle: Text(
-          '${_config.key} ${_config.scale.chineseName} · '
-          '${TrainingConfig.difficultyLabel(_config.difficulty)}'
-          '${locked ? ' · 训练中已锁定' : ''}',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: context.text.bodySmall,
-        ),
-        childrenPadding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-        children: [
-          TrainingOptionsWidget(
-            config: _config,
-            locked: locked,
-            onChanged: _onConfigChanged,
-          ),
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: ScaleChartWidget(
-              embedded: true,
-              selectedKey: _config.key,
-              scaleType: _config.scale,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatus() {
+  Widget _buildStatus({required bool compact}) {
     final needsActivation =
         _audioEngine.state == AudioEngineState.uninitialized;
     return Semantics(
       label: '训练状态与控制',
+      container: true,
       child: TrainingStatusWidget(
         engine: _trainingEngine,
-        showShortcuts: _hasKeyboard && MediaQuery.sizeOf(context).width >= 700,
+        showShortcuts: _hasKeyboard && !compact,
+        showActions: !compact,
         startLabel: needsActivation ? '开启声音并开始' : null,
-        planNote: _planNote,
+        focus: _focus,
+        inlayOnly: !_config.showScaleNotes,
         onStart: _onStartTraining,
         onReplayRoot: _trainingEngine.replayRoot,
         onReplayTarget: _trainingEngine.replayTarget,
@@ -356,31 +326,30 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFretboardPanel() {
-    final compact = MediaQuery.sizeOf(context).width < 600;
-    return Panel(
-      padding: EdgeInsets.fromLTRB(
-        compact ? 10 : 20,
-        compact ? 14 : 18,
-        compact ? 10 : 20,
-        compact ? 10 : 20,
+  Widget _buildFretboardSection({required bool compact}) {
+    final c = context.gb;
+    return Container(
+      padding: EdgeInsets.only(top: compact ? 16 : 22),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: c.hairline)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 0),
-            child: Wrap(
-              spacing: 20,
-              runSpacing: 6,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text('指板', style: context.text.titleMedium),
-                const FretboardLegend(),
-                if (!compact)
-                  Text('点击任意音符试听；答题时点击即作答', style: context.text.bodySmall),
-              ],
-            ),
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 20,
+            runSpacing: 8,
+            children: [
+              Text(
+                compact ? '指板' : '点任意位置试听；答题时点击即作答，同音高的位置都算对。',
+                style: compact
+                    ? context.text.titleSmall
+                    : TextStyle(fontSize: 13, color: c.textMuted),
+              ),
+              const FretboardLegend(),
+            ],
           ),
           SizedBox(height: compact ? 8 : 14),
           Semantics(
@@ -398,6 +367,14 @@ class _HomeScreenState extends State<HomeScreen> {
               onFretTapped: _onFretTapped,
             ),
           ),
+          if (!_config.showScaleNotes && !_config.showFretNumbers)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '品号已关闭。指板上只剩品记，和你手里的琴一样。',
+                style: TextStyle(fontSize: 13, color: c.textMuted),
+              ),
+            ),
         ],
       ),
     );

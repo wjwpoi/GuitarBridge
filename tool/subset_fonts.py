@@ -10,10 +10,12 @@ Usage (after changing any user-visible Chinese text):
 
     pip install fonttools
     python3 tool/subset_fonts.py --sans NotoSansSC[wght].ttf \
-        --serif NotoSerifSC[wght].ttf
+        --serif NotoSerifSC[wght].ttf --mono JetBrainsMono[wght].ttf
 
 The variable source fonts come from https://github.com/google/fonts
-(ofl/notosanssc, ofl/notoserifsc). `test/font_coverage_test.dart` fails when
+(ofl/notosanssc, ofl/notoserifsc, ofl/jetbrainsmono). JetBrains Mono is
+only used for numbers, fret numbers and key hints; Chinese in a mono style
+falls back to Noto Sans SC. `test/font_coverage_test.dart` fails when
 lib/ uses a character missing from assets/fonts/glyphs.txt.
 """
 
@@ -31,6 +33,8 @@ OUT = ROOT / "assets" / "fonts"
 # Weights actually used by the theme.
 SANS_WEIGHTS = {"Regular": 400, "Medium": 500, "SemiBold": 600}
 SERIF_WEIGHTS = {"SemiBold": 600}
+MONO_WEIGHTS = {"Regular": 400, "Medium": 500}
+MONO_TEXT = "".join(chr(c) for c in range(0x20, 0x7F)) + "·–—→×■□○●"
 
 EXTRA = (
     "，。、；：？！“”‘’（）《》【】「」…—–·～・"
@@ -71,6 +75,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--sans", required=True, type=pathlib.Path)
     parser.add_argument("--serif", required=True, type=pathlib.Path)
+    parser.add_argument("--mono", required=True, type=pathlib.Path)
     args = parser.parse_args()
 
     OUT.mkdir(parents=True, exist_ok=True)
@@ -83,6 +88,13 @@ def main() -> None:
 
     build(args.sans, "NotoSansSC", SANS_WEIGHTS, covered)
     build(args.serif, "NotoSerifSC", SERIF_WEIGHTS, covered)
+    mono_cmap = TTFont(args.mono).getBestCmap()
+    build(
+        args.mono,
+        "JetBrainsMono",
+        MONO_WEIGHTS,
+        "".join(ch for ch in MONO_TEXT if ord(ch) in mono_cmap),
+    )
     (OUT / "glyphs.txt").write_text(
         re.sub(r"\s", "", covered) + "\n", encoding="utf-8"
     )

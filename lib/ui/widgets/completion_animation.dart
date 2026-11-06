@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
 import '../../engine/training_engine.dart';
+import '../../models/training_question.dart';
 import 'interval_breakdown.dart';
+import 'training_status.dart';
 
-/// Session summary shown over the workspace when a round ends.
+/// The end-of-round sheet: one sentence of result, three numbers, every
+/// question in order, and the intervals that need work.
 class CompletionAnimationWidget extends StatelessWidget {
   /// Questions answered correctly on the first attempt.
   final int correctCount;
@@ -13,7 +16,11 @@ class CompletionAnimationWidget extends StatelessWidget {
   final VoidCallback onDismiss;
   final VoidCallback? onRestart;
   final Map<int, IntervalTally> intervalTallies;
+  final List<QuestionOutcome> outcomes;
   final double averageResponseSeconds;
+
+  /// Date, key and difficulty, e.g. "11 月 6 日 21:40 · C 自然大调 · 进阶".
+  final String? subtitle;
 
   /// Whether the next round will weight weak intervals.
   final bool adaptive;
@@ -26,36 +33,31 @@ class CompletionAnimationWidget extends StatelessWidget {
     required this.onDismiss,
     this.onRestart,
     this.intervalTallies = const {},
+    this.outcomes = const [],
     this.averageResponseSeconds = 0,
+    this.subtitle,
     this.adaptive = false,
   });
 
   double get accuracy =>
       totalQuestions > 0 ? correctCount / totalQuestions * 100 : 0;
 
-  String get _headline => accuracy >= 90
-      ? '耳朵很准'
-      : accuracy >= 70
-      ? '不错的一轮'
-      : accuracy >= 40
-      ? '在进步'
-      : '慢慢来';
-
   @override
   Widget build(BuildContext context) {
     final c = context.gb;
     final weakest = IntervalBreakdown.weakest(intervalTallies);
+    final compact = MediaQuery.sizeOf(context).width < 600;
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOutCubic,
       builder: (context, t, child) => Material(
-        color: Colors.black.withAlpha((90 * t).round()),
+        color: Colors.black.withAlpha((80 * t).round()),
         child: Opacity(
           opacity: t,
           child: Transform.translate(
-            offset: Offset(0, 12 * (1 - t)),
+            offset: Offset(0, 10 * (1 - t)),
             child: child,
           ),
         ),
@@ -63,85 +65,110 @@ class CompletionAnimationWidget extends StatelessWidget {
       child: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Card(
-                elevation: 0,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text('本轮结束', style: context.text.labelMedium),
-                      const SizedBox(height: 6),
-                      Text(_headline, style: context.text.headlineSmall),
-                      const SizedBox(height: 4),
-                      Text(
-                        '首次即答对 $correctCount / $totalQuestions 题',
-                        style: context.text.bodyMedium,
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: c.canvas,
+                  borderRadius: BorderRadius.circular(AppTheme.radius),
+                  border: Border.all(color: c.controlLine),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(16),
+                      blurRadius: 2,
+                      offset: const Offset(0, 1),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withAlpha(26),
+                      blurRadius: 32,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+                padding: EdgeInsets.fromLTRB(
+                  compact ? 22 : 36,
+                  compact ? 26 : 36,
+                  compact ? 22 : 36,
+                  compact ? 22 : 28,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      subtitle ?? '本轮结束',
+                      style: AppTheme.monoStyle(size: 12, color: c.textMuted),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      TrainingStatusWidget.conclusion(
+                        correctCount,
+                        totalQuestions,
                       ),
+                      style: AppTheme.serifStyle(
+                        size: compact ? 24 : 28,
+                        color: c.textPrimary,
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    _numbers(context),
+                    if (outcomes.isNotEmpty) ...[
                       const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          _stat(
-                            context,
-                            '${accuracy.toStringAsFixed(0)}%',
-                            '正确率',
-                            emphasize: true,
-                          ),
-                          _stat(context, '$streak', '最佳连击'),
-                          _stat(
-                            context,
-                            averageResponseSeconds == 0
-                                ? '—'
-                                : '${averageResponseSeconds.toStringAsFixed(1)}s',
-                            '平均反应',
-                          ),
-                        ],
+                      _sequence(context),
+                    ],
+                    if (intervalTallies.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      Text(
+                        '各音程',
+                        style: TextStyle(fontSize: 13, color: c.textSecondary),
                       ),
-                      if (intervalTallies.isNotEmpty) ...[
-                        const SizedBox(height: 24),
-                        const Divider(),
-                        const SizedBox(height: 16),
-                        Text('各音程首答表现', style: context.text.labelMedium),
-                        const SizedBox(height: 8),
-                        IntervalBreakdown(tallies: intervalTallies),
-                        if (weakest != null) ...[
-                          const SizedBox(height: 14),
-                          Text(
-                            '${adaptive ? '下一轮会多安排一些' : '建议多练'}'
-                            '${IntervalBreakdown.nameFor(weakest)}。'
-                            '练习时可以先在心里唱出基准音，再数音阶级数。',
-                            style: context.text.bodySmall?.copyWith(
-                              color: c.textSecondary,
+                      const SizedBox(height: 8),
+                      IntervalBreakdown(tallies: intervalTallies),
+                    ],
+                    if (weakest != null) ...[
+                      const SizedBox(height: 20),
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(text: adaptive ? '下一轮会多出几道' : '建议多练'),
+                            TextSpan(
+                              text: IntervalBreakdown.nameFor(weakest),
+                              style: AppTheme.serifStyle(
+                                size: 14.5,
+                                color: c.textPrimary,
+                                height: 1.7,
+                              ),
                             ),
+                            const TextSpan(text: '。听的时候先在心里唱出基准音，再往上数音阶级数。'),
+                          ],
+                        ),
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.7,
+                          color: c.textBody,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          onPressed: onDismiss,
+                          child: const Text('完成'),
+                        ),
+                        if (onRestart != null) ...[
+                          const SizedBox(width: 10),
+                          FilledButton(
+                            onPressed: onRestart,
+                            child: const Text('再练一轮'),
                           ),
                         ],
                       ],
-                      const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: onDismiss,
-                              child: const Text('完成'),
-                            ),
-                          ),
-                          if (onRestart != null) ...[
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: FilledButton(
-                                onPressed: onRestart,
-                                child: const Text('再练一轮'),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -151,31 +178,167 @@ class CompletionAnimationWidget extends StatelessWidget {
     );
   }
 
-  Widget _stat(
-    BuildContext context,
-    String value,
-    String label, {
-    bool emphasize = false,
-  }) {
+  Widget _numbers(BuildContext context) {
     final c = context.gb;
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: AppTheme.serif,
-              fontSize: 28,
-              height: 1.1,
-              color: emphasize ? c.accent : c.textPrimary,
-              fontWeight: FontWeight.w600,
+    Widget cell(
+      String value,
+      String label, {
+      Color? color,
+      bool first = false,
+    }) => Expanded(
+      child: Container(
+        padding: EdgeInsets.fromLTRB(first ? 0 : 18, 14, 0, 14),
+        decoration: first
+            ? null
+            : BoxDecoration(
+                border: Border(left: BorderSide(color: c.hairline)),
+              ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              style: AppTheme.serifStyle(
+                size: 30,
+                color: color ?? c.textPrimary,
+                height: 1.1,
+              ),
             ),
+            const SizedBox(height: 4),
+            Text(label, style: TextStyle(fontSize: 12.5, color: c.textMuted)),
+          ],
+        ),
+      ),
+    );
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.symmetric(horizontal: BorderSide(color: c.hairline)),
+      ),
+      child: Row(
+        children: [
+          cell(
+            '${accuracy.toStringAsFixed(0)}%',
+            '首答正确率',
+            color: c.accent,
+            first: true,
           ),
-          const SizedBox(height: 4),
-          Text(label, style: context.text.bodySmall),
+          cell('$streak', '最长连对'),
+          cell(
+            averageResponseSeconds == 0
+                ? '—'
+                : '${averageResponseSeconds.toStringAsFixed(1)}s',
+            '平均反应',
+          ),
         ],
       ),
     );
   }
+
+  Widget _sequence(BuildContext context) {
+    final c = context.gb;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('逐题', style: TextStyle(fontSize: 13, color: c.textSecondary)),
+        const SizedBox(height: 10),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            // A fixed ten-column grid, so a short round keeps the same scale.
+            const perRow = 10;
+            final width = (constraints.maxWidth - 6 * (perRow - 1)) / perRow;
+            return Wrap(
+              spacing: 6,
+              runSpacing: 10,
+              children: [
+                for (final (i, o) in outcomes.indexed)
+                  SizedBox(
+                    width: width,
+                    child: Semantics(
+                      label:
+                          '第 ${i + 1} 题 ${o.question.interval.chineseName}，'
+                          '${o.firstTryCorrect
+                              ? '首答对'
+                              : o.solved
+                              ? '重试后对'
+                              : '未答出'}',
+                      excludeSemantics: true,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _OutcomeMark(outcome: o),
+                          const SizedBox(height: 6),
+                          Text(
+                            o.question.interval.abbreviation,
+                            textAlign: TextAlign.center,
+                            style: AppTheme.monoStyle(
+                              size: 10.5,
+                              color: c.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '■ 首答对  □ 重试后对  ／ 未答出',
+          style: AppTheme.monoStyle(size: 11.5, color: c.textMuted),
+        ),
+      ],
+    );
+  }
+}
+
+class _OutcomeMark extends StatelessWidget {
+  final QuestionOutcome outcome;
+
+  const _OutcomeMark({required this.outcome});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.gb;
+    final o = outcome;
+    return Container(
+      height: 26,
+      decoration: BoxDecoration(
+        color: o.firstTryCorrect ? c.ink : null,
+        borderRadius: BorderRadius.circular(3),
+        border: o.firstTryCorrect
+            ? null
+            : Border.all(
+                color: o.solved ? c.ink : c.wrong,
+                width: o.solved ? 2 : 1.5,
+              ),
+      ),
+      child: !o.firstTryCorrect && !o.solved
+          ? CustomPaint(painter: _Slash(c.wrong))
+          : null,
+    );
+  }
+}
+
+class _Slash extends CustomPainter {
+  final Color color;
+
+  _Slash(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    canvas.drawLine(
+      Offset(cx - 5, size.height * 0.72),
+      Offset(cx + 5, size.height * 0.28),
+      Paint()
+        ..color = color
+        ..strokeWidth = 1.5
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _Slash old) => old.color != color;
 }

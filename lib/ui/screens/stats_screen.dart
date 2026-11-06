@@ -148,16 +148,20 @@ class StatsScreen extends StatelessWidget {
                         ],
                         const SizedBox(height: 28),
                         Padding(
-                          padding: const EdgeInsets.only(left: 4, bottom: 8),
+                          padding: const EdgeInsets.only(bottom: 4),
                           child: Text('最近记录', style: context.text.labelMedium),
                         ),
-                        Card(
-                          clipBehavior: Clip.antiAlias,
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            border: Border.symmetric(
+                              horizontal: BorderSide(color: c.hairline),
+                            ),
+                          ),
                           child: Column(
                             children: [
                               for (final (i, record)
                                   in sorted.take(20).indexed) ...[
-                                if (i > 0) const Divider(indent: 20),
+                                if (i > 0) const Divider(),
                                 _RecordRow(record: record),
                               ],
                             ],
@@ -254,7 +258,7 @@ class _RecordRow extends StatelessWidget {
         ? ''
         : ' · ${TrainingConfig.difficultyLabel(record.difficulty!)}';
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
         children: [
           Expanded(

@@ -54,9 +54,8 @@ void main() {
       );
 
       expect(find.text('本轮结束'), findsOneWidget);
-      expect(find.text('不错的一轮'), findsOneWidget);
+      expect(find.text('十题里，八题一次听对。'), findsOneWidget);
       expect(find.text('80%'), findsOneWidget);
-      expect(find.text('首次即答对 8 / 10 题'), findsOneWidget);
       expect(find.text('5'), findsOneWidget);
       expect(find.text('完成'), findsOneWidget);
     });
@@ -91,7 +90,7 @@ void main() {
       );
 
       expect(find.text('100%'), findsOneWidget);
-      expect(find.text('耳朵很准'), findsOneWidget);
+      expect(find.text('十题全部一次听对。'), findsOneWidget);
     });
   });
 
@@ -193,13 +192,13 @@ void main() {
         ),
       );
 
-      expect(find.text('0–6 品'), findsOneWidget);
+      expect(find.text('0–7 品'), findsOneWidget);
       expect(find.byTooltip('向高把位移动'), findsOneWidget);
 
       await tester.tap(find.byTooltip('向高把位移动'));
       await tester.pumpAndSettle();
 
-      expect(find.text('4–10 品'), findsOneWidget);
+      expect(find.text('4–11 品'), findsOneWidget);
     });
   });
 

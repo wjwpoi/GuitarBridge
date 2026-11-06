@@ -6,26 +6,70 @@ import 'package:flutter/material.dart';
 /// The palette is intentionally small: warm neutrals for structure, one clay
 /// accent for actions, ink for the root note, and muted green / red for
 /// feedback. Everything else is expressed with hairlines and spacing.
+/// Semantic colour tokens. Widgets read them through `context.gb` so light and
+/// dark mode switch together and nothing hard-codes a colour.
+///
+/// The palette follows docs/DESIGN.md: warm paper, ink, one clay accent, and
+/// muted green / red that only appear on the fretboard and the score marks.
 @immutable
 class GbColors extends ThemeExtension<GbColors> {
+  /// Page background (paper).
   final Color canvas;
+
+  /// Raised surfaces: dialogs, menus, note chips.
   final Color surface;
+
+  /// Filled controls.
   final Color surfaceMuted;
+
+  /// Fretboard background.
   final Color sunken;
+
+  /// 1 px section rules.
   final Color hairline;
+
+  /// Separators that must read on [hairline] areas.
   final Color strongLine;
+
+  /// Outlined button borders.
+  final Color controlLine;
+
+  /// Borders of in-key note chips.
+  final Color chip;
   final Color textPrimary;
+
+  /// Body copy on the fretboard and in summaries.
+  final Color textBody;
   final Color textSecondary;
   final Color textMuted;
+
+  /// The one accent: primary button and the current state only.
   final Color accent;
   final Color onAccent;
   final Color accentSoft;
+
+  /// Root note and first-try marks.
   final Color ink;
   final Color onInk;
   final Color correct;
   final Color correctSoft;
   final Color wrong;
   final Color wrongSoft;
+
+  /// Strings 1–3.
+  final Color stringPlain;
+
+  /// Strings 4–6.
+  final Color stringWound;
+
+  /// Fret wires.
+  final Color fretWire;
+
+  /// The nut.
+  final Color nut;
+
+  /// Fret-marker inlays.
+  final Color inlay;
 
   const GbColors({
     required this.canvas,
@@ -34,7 +78,10 @@ class GbColors extends ThemeExtension<GbColors> {
     required this.sunken,
     required this.hairline,
     required this.strongLine,
+    required this.controlLine,
+    required this.chip,
     required this.textPrimary,
+    required this.textBody,
     required this.textSecondary,
     required this.textMuted,
     required this.accent,
@@ -46,48 +93,69 @@ class GbColors extends ThemeExtension<GbColors> {
     required this.correctSoft,
     required this.wrong,
     required this.wrongSoft,
+    required this.stringPlain,
+    required this.stringWound,
+    required this.fretWire,
+    required this.nut,
+    required this.inlay,
   });
 
   static const light = GbColors(
     canvas: Color(0xFFFAF9F5),
     surface: Color(0xFFFFFFFF),
-    surfaceMuted: Color(0xFFF2F0EA),
-    sunken: Color(0xFFF5F3EE),
-    hairline: Color(0xFFE7E4DC),
-    strongLine: Color(0xFFCFCBC0),
+    surfaceMuted: Color(0xFFF1EFE8),
+    sunken: Color(0xFFF1EFE8),
+    hairline: Color(0xFFE5E2D9),
+    strongLine: Color(0xFFC9C5B9),
+    controlLine: Color(0xFFDAD6CB),
+    chip: Color(0xFFD8D4C8),
     textPrimary: Color(0xFF1F1E1B),
-    textSecondary: Color(0xFF5C5952),
-    textMuted: Color(0xFF8F8B82),
-    accent: Color(0xFFC6613F),
+    textBody: Color(0xFF3A3935),
+    textSecondary: Color(0xFF57554F),
+    textMuted: Color(0xFF75736C),
+    accent: Color(0xFFB5552F),
     onAccent: Color(0xFFFFFFFF),
-    accentSoft: Color(0xFFF7E9E3),
+    accentSoft: Color(0xFFF6E9E2),
     ink: Color(0xFF1F1E1B),
-    onInk: Color(0xFFFAF9F5),
-    correct: Color(0xFF2F7A52),
-    correctSoft: Color(0xFFE4F1E8),
-    wrong: Color(0xFFB3412F),
-    wrongSoft: Color(0xFFF8E5E1),
+    onInk: Color(0xFFFFFFFF),
+    correct: Color(0xFF2E6F4E),
+    correctSoft: Color(0xFFE3EFE7),
+    wrong: Color(0xFFA8402E),
+    wrongSoft: Color(0xFFF6E4DF),
+    stringPlain: Color(0xFFB4B0A5),
+    stringWound: Color(0xFF9C988D),
+    fretWire: Color(0xFFD3CFC3),
+    nut: Color(0xFF57554F),
+    inlay: Color(0xFFD3CFC3),
   );
 
   static const dark = GbColors(
     canvas: Color(0xFF1E1D1B),
-    surface: Color(0xFF262523),
-    surfaceMuted: Color(0xFF302F2C),
-    sunken: Color(0xFF22211F),
-    hairline: Color(0xFF383733),
-    strongLine: Color(0xFF4D4B46),
-    textPrimary: Color(0xFFEDEBE5),
-    textSecondary: Color(0xFFB9B5AC),
-    textMuted: Color(0xFF8C887F),
+    surface: Color(0xFF262522),
+    surfaceMuted: Color(0xFF2C2B28),
+    sunken: Color(0xFF262522),
+    hairline: Color(0xFF34332F),
+    strongLine: Color(0xFF4A4843),
+    controlLine: Color(0xFF45433E),
+    chip: Color(0xFF4A4843),
+    textPrimary: Color(0xFFECEAE3),
+    textBody: Color(0xFFD6D3CA),
+    textSecondary: Color(0xFFB8B4AA),
+    textMuted: Color(0xFF8F8B82),
     accent: Color(0xFFDB7C5A),
     onAccent: Color(0xFF1E1D1B),
-    accentSoft: Color(0xFF3B2B24),
-    ink: Color(0xFFEDEBE5),
+    accentSoft: Color(0xFF3A2A23),
+    ink: Color(0xFFECEAE3),
     onInk: Color(0xFF1E1D1B),
     correct: Color(0xFF74C394),
-    correctSoft: Color(0xFF243329),
+    correctSoft: Color(0xFF23332A),
     wrong: Color(0xFFEA8A78),
     wrongSoft: Color(0xFF3B2622),
+    stringPlain: Color(0xFF6B6860),
+    stringWound: Color(0xFF7D7A71),
+    fretWire: Color(0xFF3D3B37),
+    nut: Color(0xFFB8B4AA),
+    inlay: Color(0xFF57554F),
   );
 
   @override
@@ -104,7 +172,10 @@ class GbColors extends ThemeExtension<GbColors> {
       sunken: l(sunken, other.sunken),
       hairline: l(hairline, other.hairline),
       strongLine: l(strongLine, other.strongLine),
+      controlLine: l(controlLine, other.controlLine),
+      chip: l(chip, other.chip),
       textPrimary: l(textPrimary, other.textPrimary),
+      textBody: l(textBody, other.textBody),
       textSecondary: l(textSecondary, other.textSecondary),
       textMuted: l(textMuted, other.textMuted),
       accent: l(accent, other.accent),
@@ -116,6 +187,11 @@ class GbColors extends ThemeExtension<GbColors> {
       correctSoft: l(correctSoft, other.correctSoft),
       wrong: l(wrong, other.wrong),
       wrongSoft: l(wrongSoft, other.wrongSoft),
+      stringPlain: l(stringPlain, other.stringPlain),
+      stringWound: l(stringWound, other.stringWound),
+      fretWire: l(fretWire, other.fretWire),
+      nut: l(nut, other.nut),
+      inlay: l(inlay, other.inlay),
     );
   }
 }
@@ -131,10 +207,42 @@ class AppTheme {
 
   static const String sans = 'NotoSansSC';
   static const String serif = 'NotoSerifSC';
+  static const String mono = 'JetBrainsMono';
+
+  /// Numbers, fret numbers, question counters and key hints. Chinese inside a
+  /// mono run falls back to the sans family.
+  static TextStyle monoStyle({
+    double size = 12.5,
+    Color? color,
+    FontWeight weight = FontWeight.w400,
+  }) => TextStyle(
+    fontFamily: mono,
+    fontFamilyFallback: const [sans],
+    fontSize: size,
+    fontWeight: weight,
+    color: color,
+    height: 1.4,
+  );
+
+  /// The serif display face used for note names and conclusions.
+  static TextStyle serifStyle({
+    double size = 22,
+    Color? color,
+    FontWeight weight = FontWeight.w600,
+    double height = 1.25,
+    bool italic = false,
+  }) => TextStyle(
+    fontFamily: serif,
+    fontSize: size,
+    fontWeight: weight,
+    color: color,
+    height: height,
+    fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+  );
 
   static const double contentMaxWidth = 1280;
-  static const double radius = 16;
-  static const double controlRadius = 10;
+  static const double radius = 12;
+  static const double controlRadius = 8;
 
   static ThemeData light() => _build(Brightness.light, GbColors.light);
   static ThemeData dark() => _build(Brightness.dark, GbColors.dark);
@@ -295,7 +403,7 @@ class AppTheme {
           disabledForegroundColor: c.textMuted,
           minimumSize: const Size(44, 44),
           padding: buttonPadding,
-          side: BorderSide(color: c.hairline),
+          side: BorderSide(color: c.controlLine),
           shape: controlShape,
           textStyle: buttonText,
         ),

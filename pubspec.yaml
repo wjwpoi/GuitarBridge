@@ -39,3 +39,10 @@ flutter:
       fonts:
         - asset: assets/fonts/NotoSerifSC-SemiBold.ttf
           weight: 600
+    # Numbers, fret numbers and key hints (SIL OFL 1.1).
+    - family: JetBrainsMono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/JetBrainsMono-Medium.ttf
+          weight: 500

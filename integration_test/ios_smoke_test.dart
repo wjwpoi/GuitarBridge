@@ -27,7 +27,7 @@ void main() {
     expect(find.text('GuitarBridge'), findsOneWidget);
     expect(find.byType(TrainingStatusWidget), findsOneWidget);
     expect(find.byType(FretboardWidget), findsOneWidget);
-    expect(find.text('指板'), findsOneWidget);
+    expect(find.byType(FretboardLegend), findsOneWidget);
     expect(find.text('开始训练'), findsOneWidget);
 
     await tester.tap(find.text('开始训练'));
@@ -38,7 +38,12 @@ void main() {
     final trainingState = find.byWidgetPredicate(
       (widget) =>
           widget is Text &&
-          const {'正在准备题目', '仔细听', '找到目标音', '声音没有正常播放'}.contains(widget.data),
+          const {
+            '正在准备题目…',
+            '仔细听：先基准音，再目标音。',
+            '目标在基准音之上，八度以内。点出它，同音高的位置都算对。',
+            '声音没有正常播放',
+          }.contains(widget.data),
     );
     expect(trainingState, findsWidgets);
   });

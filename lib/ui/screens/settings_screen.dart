@@ -169,7 +169,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _Group(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+                        padding: const EdgeInsets.fromLTRB(0, 16, 0, 18),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -214,7 +214,7 @@ class _GroupLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 24, 4, 8),
+      padding: const EdgeInsets.fromLTRB(0, 32, 0, 4),
       child: Text(text, style: context.text.labelMedium),
     );
   }
@@ -227,12 +227,16 @@ class _Group extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.symmetric(
+          horizontal: BorderSide(color: context.gb.hairline),
+        ),
+      ),
       child: Column(
         children: [
           for (var i = 0; i < children.length; i++) ...[
-            if (i > 0) const Divider(indent: 20),
+            if (i > 0) const Divider(),
             children[i],
           ],
         ],
@@ -252,7 +256,7 @@ class _Row extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(20, 12, 16, below == null ? 12 : 14),
+      padding: EdgeInsets.fromLTRB(0, 14, 0, below == null ? 14 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
