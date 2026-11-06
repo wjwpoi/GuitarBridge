@@ -62,3 +62,11 @@
 | 数字 | 数字和正文混用同一字体 | 数字等宽，音名宋体 |
 | 指板 | 一张表格，每格一个色块 | 弦、品丝、琴枕、品记 |
 | 装饰 | emoji、奖杯、火焰、庆祝动画 | 一句宋体结论：“十题里，七题一次听对。” |
+
+## 图标
+
+陶土色方块上，一个实心音（基准）和一个空心圈（目标）由一道连音线连起来，背后衬三根琴弦。连音线在乐谱里表示“把两个音连起来”，也就是 GuitarBridge 里的 bridge。
+
+- 源：`tool/icon_svg.py`（`rounded` 应用图标、`full` 满版用于 maskable 与 iOS、`small` 去掉琴弦并加粗用于 16–32 px、`mac` 带 macOS 图标网格边距）。
+- 生成：`python3 tool/generate_icons.py`（需要 Pillow 和带 Chromium 的 Playwright），一次写出网页 favicon（SVG + PNG）、PWA、Apple 触控图标、Android、iOS（无透明通道）、macOS 与 Windows `.ico`。
+- maskable 图案必须落在中心 80% 的圆内。
